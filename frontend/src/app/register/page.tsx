@@ -14,9 +14,7 @@ import SummaryCard from "@/components/summaryCard";
 export default function RegisterPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#080b15] bg-[url('/bg-network.svg')] bg-cover bg-center bg-blend-overlay">
-      <SummaryCard count={1} title={"katz"} description={"pakaya"} icon={KeyRound} iconColor="text-yellow-400" />
-      <SummaryCard count={1} title={"Site Scans"} description={"ponnaya"} icon={Shield} iconColor="text-yellow-400" />
-      <div className="w-full max-w-md rounded-xl bg-[#0c1222]/90 p-8 shadow-2xl backdrop-blur-sm">
+            <div className="w-full max-w-md rounded-xl bg-[#0c1222]/90 p-8 shadow-2xl backdrop-blur-sm">
         <h1 className="mb-10 text-center text-3xl font-bold text-white">Fortisafe</h1>
 
         <div className="space-y-3">
