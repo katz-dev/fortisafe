@@ -12,12 +12,6 @@ export class AuthService {
     private configService: ConfigService,
   ) { }
 
-  async validateUser(auth0Id: string, email: string): Promise<any> {
-    // Find or create user in our database based on Auth0 ID
-    const user = await this.usersService.findOrCreateByAuth0Id(auth0Id, email);
-    return user;
-  }
-
   async getUserProfile(accessToken: string) {
     try {
       // Call Auth0's userinfo endpoint to get user profile

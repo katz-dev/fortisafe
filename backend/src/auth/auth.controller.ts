@@ -11,6 +11,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
+import { CreateUserDto } from 'src/users/dto/create-user.dto';
+import { UsersService } from 'src/users/users.service';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -18,6 +20,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
+    private readonly userService: UsersService,
   ) { }
 
   @Get('login')
@@ -41,7 +44,7 @@ export class AuthController {
 
   @Get('callback')
   @ApiOperation({ summary: 'Auth0 callback endpoint' })
-  @ApiResponse({ status: 302, description: 'Redirect with token' })
+  @ApiResponse({ status: 302, description: 'Redirect with token and user data' })
   async callback(@Query('code') code: string, @Res() res: Response) {
     try {
       // Exchange authorization code for tokens
@@ -63,17 +66,50 @@ export class AuthController {
       const tokenData = await tokenResponse.json();
 
       if (tokenData.error) {
+        console.error('Token error:', tokenData.error);
         return res.redirect('/auth/login-failed');
       }
 
-      // Redirect to frontend with access token
+      // Now fetch user profile using the access token
+      const userInfoResponse = await fetch(
+        `https://${this.configService.get('AUTH0_DOMAIN')}/userinfo`,
+        {
+          headers: {
+            Authorization: `Bearer ${tokenData.access_token}`,
+          },
+        },
+      );
+
+      const userInfo = await userInfoResponse.json();
+
+      const user: CreateUserDto = {
+        auth0Id: userInfo.sub,
+        email: userInfo.email,
+        firstName: userInfo.given_name,
+        lastName: userInfo.family_name,
+        picture: userInfo.picture,
+      }
+
+      const createdUser = await this.userService.create(user);
+
+      if (!userInfo || !userInfo.sub) {
+        console.error('Failed to get user info');
+        return res.redirect('/auth/login-failed');
+      }
+
+      console.log('User profile from Auth0:', userInfo);
+
+
+      // Redirect to frontend with tokens and encoded user data
       return res.redirect(
-        `/auth/success?access_token=${tokenData.access_token}`,
+        `/auth/success?access_token=${tokenData.access_token}&id_token=${tokenData.id_token}`,
       );
     } catch (error) {
+      console.error('Auth callback error:', error);
       return res.redirect('/auth/login-failed');
     }
   }
+
 
   @Get('profile')
   @UseGuards(AuthGuard('jwt'))

@@ -16,15 +16,6 @@ export class CreateUserDto {
     @IsEmail({}, { message: 'Please provide a valid email' })
     email: string;
 
-    @ApiProperty({
-        example: 'Password123!',
-        description: 'The password of the user',
-    })
-    @IsString()
-    @IsOptional() // Make password optional for Auth0 integration
-    @MinLength(8, { message: 'Password must be at least 8 characters long' })
-    password?: string;
-
     @ApiPropertyOptional({
         example: 'John',
         description: 'The first name of the user',
@@ -66,4 +57,12 @@ export class CreateUserDto {
     @IsString()
     @IsOptional()
     auth0Id?: string;
+
+    @ApiPropertyOptional({
+        example: 'picture.jpg',
+        description: 'User Image',
+    })
+    @IsString()
+    @IsOptional()
+    picture?: string;
 }

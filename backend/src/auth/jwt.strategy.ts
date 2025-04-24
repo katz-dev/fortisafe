@@ -26,27 +26,20 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     async validate(payload: any) {
+        // The sub claim in the JWT token contains the Auth0 user ID
         try {
-            // Extract user information from JWT payload
-            const userData = {
-                auth0Id: payload.sub,
-                email: payload.email,
-                name: payload.name,
-                nickname: payload.nickname,
-                picture: payload.picture
-            };
-
-            // Find or create user in MongoDB based on Auth0 ID
+            // Check if user exists in our database, if not create them
             const user = await this.usersService.findOrCreateByAuth0Id(
-                userData.auth0Id,
-                userData.email,
-                userData
+                payload.sub,
+                payload.email || '',
             );
 
-            // Return the user document to attach to the request object
-            return user;
+            return {
+                userId: user._id,
+                auth0Id: payload.sub,
+                email: payload.email,
+            };
         } catch (error) {
-            console.error('JWT validation error:', error);
             throw new UnauthorizedException('Invalid token');
         }
     }
