@@ -28,7 +28,7 @@ export class User {
         example: 'user@example.com',
         description: 'The email of the user',
     })
-    @Prop({ required: true, unique: true })
+    @Prop({ required: true })
     email: string;
 
     @ApiProperty({
@@ -44,6 +44,13 @@ export class User {
     })
     @Prop()
     lastName: string;
+
+    @ApiProperty({
+        example: 'https://example.com/profile.jpg',
+        description: 'URL to user profile picture',
+    })
+    @Prop()
+    picture: string;
 
     @ApiProperty({
         example: true,

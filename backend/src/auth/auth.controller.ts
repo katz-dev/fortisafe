@@ -1,63 +1,78 @@
 import {
   Controller,
-  Post,
-  Body,
   Get,
   UseGuards,
   Req,
   Res,
+  Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
-import { CreateUserDto } from '../users/dto/create-user.dto';
-import { LoginDto } from './dto/login.dto';
+import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
+  ) { }
 
-  @Post('register')
-  @ApiOperation({ summary: 'Register a new user' })
-  @ApiResponse({
-    status: 201,
-    description: 'User has been successfully registered',
-  })
-  @ApiResponse({ status: 400, description: 'Bad request' })
-  async register(@Body() createUserDto: CreateUserDto) {
-    return this.authService.register(createUserDto);
-  }
-
-  @Post('login')
-  @ApiOperation({ summary: 'Login with email and password' })
-  @ApiResponse({ status: 200, description: 'User has been successfully logged in' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async login(@Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto);
-  }
-
-  @Get('login/auth0')
-  @UseGuards(AuthGuard('auth0'))
+  @Get('login')
   @ApiOperation({ summary: 'Redirect to Auth0 login page' })
   @ApiResponse({ status: 302, description: 'Redirect to Auth0' })
-  async auth0Login() {
-    // Auth0 will redirect to callback URL
+  login(@Res() res: Response) {
+    // Construct Auth0 login URL
+    const authorizationUrl = `https://${this.configService.get(
+      'AUTH0_DOMAIN',
+    )}/authorize?`;
+
+    const params = new URLSearchParams();
+    params.append('response_type', 'code');
+    params.append('client_id', this.configService.get('AUTH0_CLIENT_ID') || '');
+    params.append('redirect_uri', this.configService.get('AUTH0_CALLBACK_URL') || '');
+    params.append('scope', 'openid profile email');
+    params.append('audience', this.configService.get('AUTH0_AUDIENCE') || '');
+
+    return res.redirect(authorizationUrl + params.toString());
   }
 
   @Get('callback')
-  @UseGuards(AuthGuard('auth0'))
-  @ApiOperation({ summary: 'Auth0 callback URL' })
-  @ApiResponse({ status: 302, description: 'Redirect to frontend with tokens' })
-  async auth0Callback(@Req() req, @Res() res: Response) {
-    // After successful Auth0 authentication, redirect to frontend with tokens
-    const { accessToken } = req.user;
+  @ApiOperation({ summary: 'Auth0 callback endpoint' })
+  @ApiResponse({ status: 302, description: 'Redirect with token' })
+  async callback(@Query('code') code: string, @Res() res: Response) {
+    try {
+      // Exchange authorization code for tokens
+      const tokenResponse = await fetch(
+        `https://${this.configService.get('AUTH0_DOMAIN')}/oauth/token`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            grant_type: 'authorization_code',
+            client_id: this.configService.get('AUTH0_CLIENT_ID'),
+            client_secret: this.configService.get('AUTH0_CLIENT_SECRET'),
+            code,
+            redirect_uri: this.configService.get('AUTH0_CALLBACK_URL'),
+          }),
+        },
+      );
 
-    // Redirect to frontend with token
-    return res.redirect(
-      `${process.env.FRONTEND_URL}/auth/callback?token=${accessToken}`,
-    );
+      const tokenData = await tokenResponse.json();
+
+      if (tokenData.error) {
+        return res.redirect('/auth/login-failed');
+      }
+
+      // Redirect to frontend with access token
+      return res.redirect(
+        `/auth/success?access_token=${tokenData.access_token}`,
+      );
+    } catch (error) {
+      return res.redirect('/auth/login-failed');
+    }
   }
 
   @Get('profile')
@@ -66,7 +81,9 @@ export class AuthController {
   @ApiOperation({ summary: 'Get authenticated user profile' })
   @ApiResponse({ status: 200, description: 'User profile' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  getProfile(@Req() req) {
-    return req.user;
+  async getProfile(@Req() req) {
+    // The access token is available from the request
+    const accessToken = req.headers.authorization.split(' ')[1];
+    return this.authService.getUserProfile(accessToken);
   }
 }

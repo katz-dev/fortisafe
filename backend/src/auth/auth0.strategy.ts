@@ -2,10 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-auth0';
 import { ConfigService } from '@nestjs/config';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class Auth0Strategy extends PassportStrategy(Strategy, 'auth0') {
-    constructor(private configService: ConfigService) {
+    constructor(
+        private configService: ConfigService,
+        private usersService: UsersService,
+    ) {
         super({
             domain: configService.get<string>('AUTH0_DOMAIN'),
             clientID: configService.get<string>('AUTH0_CLIENT_ID'),
@@ -22,14 +26,26 @@ export class Auth0Strategy extends PassportStrategy(Strategy, 'auth0') {
         profile: any,
         done: any,
     ) {
-        const user = {
-            auth0Id: profile.id,
-            email: profile.emails[0]?.value,
-            firstName: profile.name.givenName,
-            lastName: profile.name.familyName,
-            accessToken,
-        };
+        try {
+            // Get user data from profile
+            const auth0Id = profile.id;
+            const email = profile.emails[0]?.value;
 
-        done(null, user);
+            // Find or create user in our database
+            const user = await this.usersService.findOrCreateByAuth0Id(auth0Id, email);
+
+            const userData = {
+                auth0Id,
+                email,
+                firstName: profile.name?.givenName || '',
+                lastName: profile.name?.familyName || '',
+                userId: user._id,
+                accessToken,
+            };
+
+            return done(null, userData);
+        } catch (error) {
+            return done(error);
+        }
     }
 }
