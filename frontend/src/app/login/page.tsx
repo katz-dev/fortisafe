@@ -20,13 +20,6 @@ export default function LoginPage() {
             <span>Continue with Google</span>
           </Button>
 
-          <Button
-            variant="outline"
-            className="flex w-full items-center justify-center gap-3 rounded-md bg-white py-6 text-black hover:bg-gray-100"
-          >
-            <Apple size={18} />
-            <span>Continue with Apple</span>
-          </Button>
         </div>
 
         <div className="my-6 flex items-center">
