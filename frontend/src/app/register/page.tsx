@@ -14,7 +14,7 @@ import SummaryCard from "@/components/summaryCard";
 export default function RegisterPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#080b15] bg-[url('/bg-network.svg')] bg-cover bg-center bg-blend-overlay">
-            <div className="w-full max-w-md rounded-xl bg-[#0c1222]/90 p-8 shadow-2xl backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-xl bg-[#0c1222]/90 p-8 shadow-2xl backdrop-blur-sm">
         <h1 className="mb-10 text-center text-3xl font-bold text-white">Fortisafe</h1>
 
         <div className="space-y-3">
@@ -27,13 +27,6 @@ export default function RegisterPage() {
             <span>Continue with Google</span>
           </Button>
 
-          <Button
-            variant="outline"
-            className="flex w-full items-center justify-center gap-3 rounded-md bg-white py-6 text-black hover:bg-gray-100"
-          >
-            <Apple size={18} />
-            <span>Continue with Apple</span>
-          </Button>
         </div>
 
         <div className="my-6 flex items-center">
@@ -86,30 +79,15 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <div className="mt-1 text-right">
-            <Link
-              href="/forgot-password"
-              className="text-sm text-blue-400 hover:text-blue-300"
-            >
-              Forgot password?
-            </Link>
-          </div>
-
           <Button
             type="submit"
             className="mt-2 w-full rounded-md bg-[#4f46e5] py-6 hover:bg-[#4338ca]"
           >
             <LogIn className="mr-2" size={18} />
-            Login
+            Register
           </Button>
         </form>
 
-        <div className="mt-4 text-center text-sm text-gray-400">
-          Don't have an account?{" "}
-          <Link href="/sign-up" className="text-blue-400 hover:text-blue-300">
-            Sign up
-          </Link>
-        </div>
       </div>
     </div>
   );
