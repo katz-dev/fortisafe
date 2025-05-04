@@ -10,7 +10,7 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private configService: ConfigService,
-  ) { }
+  ) {}
 
   async getUserProfile(accessToken: string) {
     try {
@@ -40,9 +40,7 @@ export class AuthService {
         },
       };
     } catch (error) {
-      throw new UnauthorizedException(
-        'Failed to get user profile from Auth0',
-      );
+      throw new UnauthorizedException('Failed to get user profile from Auth0');
     }
   }
 }
