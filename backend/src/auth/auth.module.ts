@@ -29,4 +29,4 @@ import { HttpModule } from '@nestjs/axios';
   providers: [AuthService, JwtStrategy, Auth0Strategy],
   exports: [AuthService, JwtModule],
 })
-export class AuthModule { }
+export class AuthModule {}
