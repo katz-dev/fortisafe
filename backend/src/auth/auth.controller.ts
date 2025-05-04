@@ -1,10 +1,12 @@
-import { Controller, Get, UseGuards, Req, Res, Query } from '@nestjs/common';
 import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
+  Controller,
+  Get,
+  UseGuards,
+  Req,
+  Res,
+  Query,
+} from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { ConfigService } from '@nestjs/config';
@@ -19,7 +21,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
     private readonly userService: UsersService,
-  ) {}
+  ) { }
 
   @Get('login')
   @ApiOperation({ summary: 'Redirect to Auth0 login page' })
@@ -33,10 +35,7 @@ export class AuthController {
     const params = new URLSearchParams();
     params.append('response_type', 'code');
     params.append('client_id', this.configService.get('AUTH0_CLIENT_ID') || '');
-    params.append(
-      'redirect_uri',
-      this.configService.get('AUTH0_CALLBACK_URL') || '',
-    );
+    params.append('redirect_uri', this.configService.get('AUTH0_CALLBACK_URL') || '');
     params.append('scope', 'openid profile email');
     params.append('audience', this.configService.get('AUTH0_AUDIENCE') || '');
 
@@ -45,10 +44,7 @@ export class AuthController {
 
   @Get('callback')
   @ApiOperation({ summary: 'Auth0 callback endpoint' })
-  @ApiResponse({
-    status: 302,
-    description: 'Redirect with token and user data',
-  })
+  @ApiResponse({ status: 302, description: 'Redirect with token and user data' })
   async callback(@Query('code') code: string, @Res() res: Response) {
     try {
       // Exchange authorization code for tokens
@@ -92,7 +88,7 @@ export class AuthController {
         firstName: userInfo.given_name,
         lastName: userInfo.family_name,
         picture: userInfo.picture,
-      };
+      }
 
       const createdUser = await this.userService.create(user);
 
@@ -103,6 +99,7 @@ export class AuthController {
 
       console.log('User profile from Auth0:', userInfo);
 
+
       // Redirect to frontend with tokens and encoded user data
       return res.redirect(
         `/auth/success?access_token=${tokenData.access_token}&id_token=${tokenData.id_token}`,
@@ -112,6 +109,7 @@ export class AuthController {
       return res.redirect('/auth/login-failed');
     }
   }
+
 
   @Get('profile')
   @UseGuards(AuthGuard('jwt'))

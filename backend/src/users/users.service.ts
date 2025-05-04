@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -9,7 +9,9 @@ import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  constructor(
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+  ) { }
 
   async create(createUserDto: CreateUserDto): Promise<UserDocument> {
     const newUser = new this.userModel(createUserDto);
@@ -28,13 +30,12 @@ export class UsersService {
     return user;
   }
 
-  async update(
-    id: string,
-    updateUserDto: UpdateUserDto,
-  ): Promise<UserDocument> {
-    const updatedUser = await this.userModel
-      .findByIdAndUpdate(id, { $set: updateUserDto }, { new: true })
-      .exec();
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<UserDocument> {
+    const updatedUser = await this.userModel.findByIdAndUpdate(
+      id,
+      { $set: updateUserDto },
+      { new: true },
+    ).exec();
 
     if (!updatedUser) {
       throw new NotFoundException(`User with ID ${id} not found`);
@@ -56,7 +57,7 @@ export class UsersService {
   async findOrCreateByAuth0Id(
     auth0Id: string,
     email: string,
-    userData?: any,
+    userData?: any
   ): Promise<UserDocument> {
     // Try to find existing user
     let user = await this.userModel.findOne({ auth0Id }).exec();
@@ -78,20 +79,21 @@ export class UsersService {
       const updatedData = {
         email: email || user.email,
         firstName: userData?.name?.split(' ')[0] || user.firstName,
-        lastName:
-          userData?.name?.split(' ').slice(1).join(' ') || user.lastName,
+        lastName: userData?.name?.split(' ').slice(1).join(' ') || user.lastName,
         picture: userData?.picture || user.picture,
       };
 
       // Only update if there are changes
       const needsUpdate = Object.entries(updatedData).some(
-        ([key, value]) => user && value !== user[key],
+        ([key, value]) => user && value !== user[key]
       );
 
       if (needsUpdate && user) {
-        const updatedUser = await this.userModel
-          .findOneAndUpdate({ auth0Id }, { $set: updatedData }, { new: true })
-          .exec();
+        const updatedUser = await this.userModel.findOneAndUpdate(
+          { auth0Id },
+          { $set: updatedData },
+          { new: true }
+        ).exec();
 
         if (updatedUser) {
           user = updatedUser;
@@ -101,9 +103,7 @@ export class UsersService {
     }
 
     if (!user) {
-      throw new NotFoundException(
-        `Failed to find or create user with Auth0 ID ${auth0Id}`,
-      );
+      throw new NotFoundException(`Failed to find or create user with Auth0 ID ${auth0Id}`);
     }
 
     return user;
