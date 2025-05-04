@@ -90,28 +90,33 @@ export class AuthController {
 
       const userInfo = await userInfoResponse.json();
 
-      const user: CreateUserDto = {
-        auth0Id: userInfo.sub,
-        email: userInfo.email,
-        firstName: userInfo.given_name,
-        lastName: userInfo.family_name,
-        picture: userInfo.picture,
-      };
+      const existingUser = await this.userService.findByAuth0Id(userInfo.sub);
 
-      const createdUser = await this.userService.create(user);
+      let user;
 
-      console.info('User created:', createdUser);
+      if (existingUser) {
+        console.info('User already exists:', existingUser);
+        user = existingUser;
+      } else {
+        const createUserDto: CreateUserDto = {
+          auth0Id: userInfo.sub,
+          email: userInfo.email,
+          firstName: userInfo.given_name,
+          lastName: userInfo.family_name,
+          picture: userInfo.picture,
+        };
+        await this.userService.create(createUserDto);
+      }
 
+      console.info('User created:', user);
       if (!userInfo || !userInfo.sub) {
         console.error('Failed to get user info');
         return res.redirect('/auth/login-failed');
       }
 
-      console.log('User profile from Auth0:', userInfo);
-
       // Redirect to frontend with tokens and encoded user data
       return res.redirect(
-        `/auth/success?access_token=${tokenData.access_token}&id_token=${tokenData.id_token}`,
+        `${this.configService.get('FRONTEND_URL')}/auth/success?access_token=${tokenData.access_token}&id_token=${tokenData.id_token}`,
       );
     } catch (error) {
       console.error('Auth callback error:', error);

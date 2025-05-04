@@ -28,6 +28,14 @@ export class UsersService {
     return user;
   }
 
+  async findByAuth0Id(auth0Id: string): Promise<UserDocument> {
+    const user = await this.userModel.findOne({ auth0Id }).exec();
+    if (!user) {
+      throw new NotFoundException(`User with Auth0 ID ${auth0Id} not found`);
+    }
+    return user;
+  }
+
   async update(
     id: string,
     updateUserDto: UpdateUserDto,
