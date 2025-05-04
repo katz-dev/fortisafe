@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Controller, Get, UseGuards, Req, Res, Query } from '@nestjs/common';
 import {
   ApiTags,
@@ -95,6 +99,8 @@ export class AuthController {
       };
 
       const createdUser = await this.userService.create(user);
+
+      console.info('User created:', createdUser);
 
       if (!userInfo || !userInfo.sub) {
         console.error('Failed to get user info');
