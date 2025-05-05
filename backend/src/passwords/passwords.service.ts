@@ -1,0 +1,125 @@
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import * as crypto from 'crypto';
+import { ConfigService } from '@nestjs/config';
+import { Password, PasswordDocument } from './entities/password.schema';
+import { CreatePasswordDto } from './dto/create-password.dto';
+import { UpdatePasswordDto } from './dto/update-password.dto';
+
+@Injectable()
+export class PasswordsService {
+  private readonly encryptionKey: Buffer;
+  private readonly algorithm = 'aes-256-cbc';
+
+  constructor(
+    @InjectModel(Password.name) private passwordModel: Model<PasswordDocument>,
+    private configService: ConfigService,
+  ) {
+    // Get encryption key from environment variables
+    const key = this.configService.get<string>('PASSWORD_ENCRYPTION_KEY');
+    if (!key) {
+      throw new Error('PASSWORD_ENCRYPTION_KEY is not defined in environment variables');
+    }
+    // Create a fixed-length key using SHA-256
+    this.encryptionKey = crypto.createHash('sha256').update(key).digest();
+  }
+
+  private encrypt(text: string): string {
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv(this.algorithm, this.encryptionKey, iv);
+    let encrypted = cipher.update(text, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    return `${iv.toString('hex')}:${encrypted}`;
+  }
+
+  private decrypt(encryptedText: string): string {
+    const [ivHex, encryptedHex] = encryptedText.split(':');
+    const iv = Buffer.from(ivHex, 'hex');
+    const decipher = crypto.createDecipheriv(this.algorithm, this.encryptionKey, iv);
+    let decrypted = decipher.update(encryptedHex, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
+  }
+
+  async create(
+    userId: string,
+    createPasswordDto: CreatePasswordDto,
+    userEmail?: string
+  ): Promise<PasswordDocument> {
+    // Encrypt the password before storing
+    const encryptedPassword = this.encrypt(createPasswordDto.password);
+
+    const newPassword = new this.passwordModel({
+      ...createPasswordDto,
+      userId,
+      userEmail, // Store the user's email
+      password: encryptedPassword,
+      lastUpdated: createPasswordDto.lastUpdated || new Date(),
+    });
+
+    console.log(`[PasswordsService] Creating password for user ID: ${userId}, Email: ${userEmail}`);
+    return newPassword.save();
+  }
+
+  async findAll(userId: string): Promise<PasswordDocument[]> {
+    return this.passwordModel.find({ userId }).exec();
+  }
+
+  async findOne(userId: string, id: string): Promise<PasswordDocument> {
+    const password = await this.passwordModel.findById(id).exec();
+
+    if (!password) {
+      throw new NotFoundException(`Password with ID ${id} not found`);
+    }
+
+    // Check if the password belongs to the user
+    if (password.userId.toString() !== userId) {
+      throw new UnauthorizedException('You do not have permission to access this password');
+    }
+
+    return password;
+  }
+
+  async update(userId: string, id: string, updatePasswordDto: UpdatePasswordDto): Promise<PasswordDocument> {
+    // First check if the password exists and belongs to the user
+    await this.findOne(userId, id);
+
+    // If password field is provided, encrypt it
+    const updateData = { ...updatePasswordDto };
+    if (updateData.password) {
+      updateData.password = this.encrypt(updateData.password);
+    }
+
+    // Update the lastUpdated field
+    updateData.lastUpdated = new Date();
+
+    const updatedPassword = await this.passwordModel
+      .findByIdAndUpdate(id, { $set: updateData }, { new: true })
+      .exec();
+
+    if (!updatedPassword) {
+      throw new NotFoundException(`Password with ID ${id} not found after update`);
+    }
+
+    return updatedPassword;
+  }
+
+  async remove(userId: string, id: string): Promise<PasswordDocument> {
+    // First check if the password exists and belongs to the user
+    await this.findOne(userId, id);
+
+    const deletedPassword = await this.passwordModel.findByIdAndDelete(id).exec();
+
+    if (!deletedPassword) {
+      throw new NotFoundException(`Password with ID ${id} not found after deletion`);
+    }
+
+    return deletedPassword;
+  }
+
+  async decryptPassword(userId: string, id: string): Promise<string> {
+    const password = await this.findOne(userId, id);
+    return this.decrypt(password.password);
+  }
+}

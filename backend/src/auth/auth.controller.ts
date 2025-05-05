@@ -23,7 +23,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
     private readonly userService: UsersService,
-  ) {}
+  ) { }
 
   @Get('login')
   @ApiOperation({ summary: 'Redirect to Auth0 login page' })
