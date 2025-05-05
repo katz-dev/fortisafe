@@ -34,6 +34,21 @@ export class PasswordsService {
   }
 
   private decrypt(encryptedText: string): string {
+    // Handle legacy format (without prefix)
+    if (!encryptedText.startsWith('aes:') && encryptedText.includes(':')) {
+      return this.decryptAES(encryptedText);
+    }
+
+    // Handle AES encrypted passwords with prefix
+    if (encryptedText.startsWith('aes:')) {
+      return this.decryptAES(encryptedText.substring(4));
+    }
+
+    // If we can't determine the format, try the default approach
+    return this.decryptAES(encryptedText);
+  }
+
+  private decryptAES(encryptedText: string): string {
     const [ivHex, encryptedHex] = encryptedText.split(':');
     const iv = Buffer.from(ivHex, 'hex');
     const decipher = crypto.createDecipheriv(this.algorithm, this.encryptionKey, iv);
@@ -74,7 +89,10 @@ export class PasswordsService {
     }
 
     // Check if the password belongs to the user
-    if (password.userId.toString() !== userId) {
+    const passwordUserId = password.userId.toString();
+    const requestUserId = userId.toString();
+    console.log(`Comparing: "${passwordUserId}" === "${requestUserId}"`);
+    if (passwordUserId !== requestUserId) {
       throw new UnauthorizedException('You do not have permission to access this password');
     }
 
