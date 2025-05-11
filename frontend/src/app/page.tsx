@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar } from '@/components/ui/avatar';
+import NavBar from '@/components/NavBar';
 
 export default function LandingPage() {
   const testimonials = [
@@ -25,14 +25,7 @@ export default function LandingPage() {
 
   return (
     <main className="bg-[#f8f9fe] min-h-screen">
-      {/* Header */}      <header className="container mx-auto px-4 py-6 flex items-center justify-between">
-        <div className="text-2xl font-bold">Fortisafe</div>
-        <Button variant="default" className="bg-[#7e5efc] hover:bg-[#6a4de0]">
-          <Link href="/login">
-            Get started
-          </Link>
-        </Button>
-      </header>
+      <NavBar />
 
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-16 lg:py-20 bg-[#f0f1ff] rounded-3xl my-6">

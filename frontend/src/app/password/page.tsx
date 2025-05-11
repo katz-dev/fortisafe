@@ -4,10 +4,11 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Settings, Search, Plus, Eye, EyeOff, Copy } from "lucide-react";
+import { Search, Plus, Eye, EyeOff, Copy } from "lucide-react";
 import SummaryCard from "@/components/summaryCard";
 import PasswordGenerator from "@/components/passwordGenerator";
 import SavedLogins from "@/components/savedList";
+import PageLayout from "@/components/PageLayout";
 
 // Types
 interface LoginItem {
@@ -102,19 +103,10 @@ export default function FortisafeDashboard() {
   const getStrengthText = (strength: string) => {
     return strength.charAt(0).toUpperCase() + strength.slice(1);
   };
-
   return (
-    <div className="min-h-screen bg-slate-950">
-      {/* Header */}
-      <header className="p-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold text-white">Fortisafe</h1>
-        <Button variant="ghost" size="icon" className="text-gray-400">
-          <Settings className="h-5 w-5" />
-        </Button>
-      </header>
-
+    <PageLayout>
       {/* Summary Cards */}
-      <div className="container mx-auto p-4 max-w-6xl">
+      <div className="container mx-auto max-w-6xl">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           {/* Vault Summary Card */}
           <SummaryCard
@@ -307,11 +299,10 @@ export default function FortisafeDashboard() {
                     </div>
                   </div>
                 </CardContent>
-              </Card>
-            </div>
+              </Card>            </div>
           )}
         </div>
       </div>
-    </div>
+    </PageLayout>
   );
 }

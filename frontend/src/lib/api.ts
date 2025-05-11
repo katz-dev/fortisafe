@@ -29,4 +29,13 @@ export async function getUserProfile() {
 
   const profileData = await response.json();
   return profileData;
-} 
+}
+
+export function logout() {
+  // Clear tokens from localStorage
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('id_token');
+
+  // Redirect to the login page
+  window.location.href = '/login';
+}
