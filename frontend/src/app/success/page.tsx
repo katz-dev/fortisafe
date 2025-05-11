@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import { useState, useEffect } from "react";
 import { ChevronRight, ArrowLeft } from "lucide-react";
 
@@ -28,7 +27,7 @@ export default function SuccessPage() {
         <h1 className="mb-4 text-center text-3xl font-bold text-white">Fortisafe</h1>
 
         <div className="mb-8 mt-12 text-center">
-          <h2 className="mb-4 text-2xl font-medium text-white">You're all set!</h2>
+          <h2 className="mb-4 text-2xl font-medium text-white">You&apos;re all set!</h2>
           <p className="text-center text-sm text-gray-400">
             Welcome back. You can return to the extension to continue, or head to your Fortisafe dashboard for more tools.
           </p>

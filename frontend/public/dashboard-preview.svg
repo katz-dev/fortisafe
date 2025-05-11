@@ -1,0 +1,22 @@
+<!-- Dashboard image that will be visible in the hero section -->
+<svg width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#1a1a2e"/>
+  <rect x="20" y="20" width="120" height="30" rx="5" fill="#252546"/>
+  <rect x="20" y="60" width="360" height="1" fill="#3a3a5a"/>
+  <rect x="20" y="80" width="80" height="20" rx="5" fill="#252546"/>
+  <rect x="110" y="80" width="80" height="20" rx="5" fill="#252546"/>
+  <rect x="200" y="80" width="80" height="20" rx="5" fill="#4a4a8a"/>
+  <rect x="20" y="110" width="360" height="170" rx="5" fill="#252546"/>
+  <rect x="30" y="130" width="340" height="30" rx="3" fill="#1a1a2e"/>
+  <rect x="30" y="170" width="340" height="30" rx="3" fill="#1a1a2e"/>
+  <rect x="30" y="210" width="340" height="30" rx="3" fill="#1a1a2e"/>
+  <rect x="40" y="138" width="20" height="14" rx="2" fill="#7e5efc"/>
+  <rect x="70" y="138" width="120" height="14" rx="2" fill="#3a3a5a"/>
+  <rect x="40" y="178" width="20" height="14" rx="2" fill="#7e5efc"/>
+  <rect x="70" y="178" width="120" height="14" rx="2" fill="#3a3a5a"/>
+  <rect x="40" y="218" width="20" height="14" rx="2" fill="#7e5efc"/>
+  <rect x="70" y="218" width="120" height="14" rx="2" fill="#3a3a5a"/>
+  <rect x="320" y="138" width="40" height="14" rx="7" fill="#7e5efc"/>
+  <rect x="320" y="178" width="40" height="14" rx="7" fill="#7e5efc"/>
+  <rect x="320" y="218" width="40" height="14" rx="7" fill="#7e5efc"/>
+</svg>

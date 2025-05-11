@@ -2,14 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Link from "next/link";
-import { KeyRound, Shield, LogIn } from "lucide-react";
-
-// Import icons from Lucide React
-// Note: Lucide doesn't have exact Google and Apple icons,
-// so we'll use the closest alternatives or you can install a specific package for these
-import { Mail, Lock, User, Github, Apple } from "lucide-react";
-import SummaryCard from "@/components/summaryCard";
+import { Mail, Lock, User, LogIn } from "lucide-react";
 
 export default function RegisterPage() {
   return (
@@ -26,7 +19,6 @@ export default function RegisterPage() {
             <Mail size={18} />
             <span>Continue with Google</span>
           </Button>
-
         </div>
 
         <div className="my-6 flex items-center">
@@ -87,7 +79,6 @@ export default function RegisterPage() {
             Register
           </Button>
         </form>
-
       </div>
     </div>
   );

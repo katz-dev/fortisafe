@@ -25,7 +25,6 @@ export default function FortisafeDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [savedLogins, setSavedLogins] = useState<LoginItem[]>([]);
   const [selectedLogin, setSelectedLogin] = useState<LoginItem | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
 
   // Load saved logins from JSON
@@ -41,7 +40,7 @@ export default function FortisafeDashboard() {
       } catch (error) {
         console.error('Error loading saved logins:', error);
         // Fallback data
-        const fallbackData = [
+        const fallbackData: LoginItem[] = [
           { id: '1', site: 'Google', username: 'john@toxic.com', password: 'Str0ngP@ssw0rd!', strength: 'strong', website: 'Google.com' },
           { id: '2', site: 'Google', username: 'john@toxic.com', password: 'weak123', strength: 'weak', website: 'Google.com' },
           { id: '3', site: 'Google', username: 'john@toxic.com', password: 'OkayP@ss', strength: 'okay', website: 'Google.com' },
@@ -50,8 +49,6 @@ export default function FortisafeDashboard() {
         ];
         setSavedLogins(fallbackData);
         setSelectedLogin(fallbackData[0]);
-      } finally {
-        setIsLoading(false);
       }
     };
 
@@ -64,7 +61,7 @@ export default function FortisafeDashboard() {
     if (activeTab === "weak" && login.strength !== "weak") return false;
     if (activeTab === "reused" && login.username !== "john@toxic.com") return false; // Just for demo, we'd need real reused detection
     if (activeTab === "security" && login.strength !== "weak") return false;
-    
+
     // Then filter by search term
     if (searchTerm) {
       return (
@@ -72,12 +69,12 @@ export default function FortisafeDashboard() {
         login.username.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-    
+
     return true;
   });
 
   const getStrengthColor = (strength: string) => {
-    switch(strength) {
+    switch (strength) {
       case 'weak':
         return 'bg-red-500';
       case 'okay':
@@ -90,7 +87,7 @@ export default function FortisafeDashboard() {
   };
 
   const getStrengthWidth = (strength: string) => {
-    switch(strength) {
+    switch (strength) {
       case 'weak':
         return 'w-1/3';
       case 'okay':
@@ -120,31 +117,31 @@ export default function FortisafeDashboard() {
       <div className="container mx-auto p-4 max-w-6xl">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           {/* Vault Summary Card */}
-          <SummaryCard 
-            count={savedLogins.length || 18} 
-            title="Vault Summary" 
-            description="Saved logins" 
+          <SummaryCard
+            count={savedLogins.length || 18}
+            title="Vault Summary"
+            description="Saved logins"
             icon={() => (
               <svg className="h-4 w-4 text-black" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 15V17M6 9V7C6 5.4087 6.63214 3.88258 7.75736 2.75736C8.88258 1.63214 10.4087 1 12 1C13.5913 1 15.1174 1.63214 16.2426 2.75736C17.3679 3.88258 18 5.4087 18 7V9M6 9H18M6 9C5.46957 9 4.96086 9.21071 4.58579 9.58579C4.21071 9.96086 4 10.4696 4 11V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V11C20 10.4696 19.7893 9.96086 19.4142 9.58579C19.0391 9.21071 18.5304 9 18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 15V17M6 9V7C6 5.4087 6.63214 3.88258 7.75736 2.75736C8.88258 1.63214 10.4087 1 12 1C13.5913 1 15.1174 1.63214 16.2426 2.75736C17.3679 3.88258 18 5.4087 18 7V9M6 9H18M6 9C5.46957 9 4.96086 9.21071 4.58579 9.58579C4.21071 9.96086 4 10.4696 4 11V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V11C20 10.4696 19.7893 9.96086 19.4142 9.58579C19.0391 9.21071 18.5304 9 18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             )}
-            iconColor="text-yellow-400" 
+            iconColor="text-yellow-400"
           />
-          
+
           {/* Site Scans Card */}
-          <SummaryCard 
-            count={5} 
-            title="Site scans" 
-            description="Threats blocked" 
+          <SummaryCard
+            count={5}
+            title="Site scans"
+            description="Threats blocked"
             icon={() => (
               <svg className="h-4 w-4 text-black" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9 12L11 14L15 10M20.6179 5.98434C20.4132 5.99472 20.2072 5.99997 20 5.99997C16.9265 5.99997 14.123 4.84453 11.9999 2.94434C9.87691 4.84446 7.07339 5.99985 4 5.99985C3.79277 5.99985 3.58678 5.9946 3.38213 5.98422C3.1327 6.94783 3 7.95842 3 9.00001C3 14.5915 6.82432 19.2898 12 20.622C17.1757 19.2898 21 14.5915 21 9.00001C21 7.95847 20.8673 6.94791 20.6179 5.98434Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M9 12L11 14L15 10M20.6179 5.98434C20.4132 5.99472 20.2072 5.99997 20 5.99997C16.9265 5.99997 14.123 4.84453 11.9999 2.94434C9.87691 4.84446 7.07339 5.99985 4 5.99985C3.79277 5.99985 3.58678 5.9946 3.38213 5.98422C3.1327 6.94783 3 7.95842 3 9.00001C3 14.5915 6.82432 19.2898 12 20.622C17.1757 19.2898 21 14.5915 21 9.00001C21 7.95847 20.8673 6.94791 20.6179 5.98434Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             )}
-            iconColor="text-blue-400" 
+            iconColor="text-blue-400"
           />
-          
+
           {/* Password Generator */}
           <PasswordGenerator />
         </div>
@@ -157,9 +154,9 @@ export default function FortisafeDashboard() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-400 h-8 w-8"
           >
             <Search className="h-4 w-4" />
@@ -170,56 +167,52 @@ export default function FortisafeDashboard() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex">
             <button
-              className={`flex items-center rounded-md px-4 py-2 ${
-                activeTab === "all" ? "bg-indigo-900 bg-opacity-50 text-white" : "text-gray-400 hover:text-gray-300"
-              }`}
+              className={`flex items-center rounded-md px-4 py-2 ${activeTab === "all" ? "bg-indigo-900 bg-opacity-50 text-white" : "text-gray-400 hover:text-gray-300"
+                }`}
               onClick={() => setActiveTab("all")}
             >
               <span className="flex items-center justify-center w-5 h-5 mr-2 rounded-sm bg-amber-500 text-black">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 12V19M12 19L9 16M12 19L15 16M19 6V5C19 3.89543 18.1046 3 17 3H7C5.89543 3 5 3.89543 5 5V6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M12 12V19M12 19L9 16M12 19L15 16M19 6V5C19 3.89543 18.1046 3 17 3H7C5.89543 3 5 3.89543 5 5V6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </span>
               All
             </button>
 
             <button
-              className={`flex items-center rounded-md px-4 py-2 ${
-                activeTab === "reused" ? "bg-indigo-900 bg-opacity-50 text-white" : "text-gray-400 hover:text-gray-300"
-              }`}
+              className={`flex items-center rounded-md px-4 py-2 ${activeTab === "reused" ? "bg-indigo-900 bg-opacity-50 text-white" : "text-gray-400 hover:text-gray-300"
+                }`}
               onClick={() => setActiveTab("reused")}
             >
               <span className="flex items-center justify-center w-5 h-5 mr-2 rounded-sm bg-teal-500 text-black">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M19 8L15 12H18C18 15.3137 15.3137 18 12 18C10.9071 18 9.89002 17.7024 9 17.1779M5 16L9 12H6C6 8.68629 8.68629 6 12 6C13.0929 6 14.11 6.29765 15 6.82209" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M19 8L15 12H18C18 15.3137 15.3137 18 12 18C10.9071 18 9.89002 17.7024 9 17.1779M5 16L9 12H6C6 8.68629 8.68629 6 12 6C13.0929 6 14.11 6.29765 15 6.82209" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </span>
               Reused
             </button>
 
             <button
-              className={`flex items-center rounded-md px-4 py-2 ${
-                activeTab === "weak" ? "bg-indigo-900 bg-opacity-50 text-white" : "text-gray-400 hover:text-gray-300"
-              }`}
+              className={`flex items-center rounded-md px-4 py-2 ${activeTab === "weak" ? "bg-indigo-900 bg-opacity-50 text-white" : "text-gray-400 hover:text-gray-300"
+                }`}
               onClick={() => setActiveTab("weak")}
             >
               <span className="flex items-center justify-center w-5 h-5 mr-2 rounded-sm bg-yellow-600 text-black">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 9V12M12 15H12.01M5.07183 19H18.9282C20.4678 19 21.4301 17.3333 20.6603 16L13.7321 4C12.9623 2.66667 11.0378 2.66667 10.268 4L3.33978 16C2.56998 17.3333 3.53223 19 5.07183 19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M12 9V12M12 15H12.01M5.07183 19H18.9282C20.4678 19 21.4301 17.3333 20.6603 16L13.7321 4C12.9623 2.66667 11.0378 2.66667 10.268 4L3.33978 16C2.56998 17.3333 3.53223 19 5.07183 19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </span>
               Weak
             </button>
 
             <button
-              className={`flex items-center rounded-md px-4 py-2 ${
-                activeTab === "security" ? "bg-indigo-900 bg-opacity-50 text-white" : "text-gray-400 hover:text-gray-300"
-              }`}
+              className={`flex items-center rounded-md px-4 py-2 ${activeTab === "security" ? "bg-indigo-900 bg-opacity-50 text-white" : "text-gray-400 hover:text-gray-300"
+                }`}
               onClick={() => setActiveTab("security")}
             >
               <span className="flex items-center justify-center w-5 h-5 mr-2 rounded-sm bg-orange-500 text-black">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 15H12.01M12 12V9M4.98207 19H19.0179C20.5615 19 21.5233 17.3333 20.7551 16L13.7372 4C12.9689 2.66667 11.0311 2.66667 10.2628 4L3.24485 16C2.47666 17.3333 3.43849 19 4.98207 19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M12 15H12.01M12 12V9M4.98207 19H19.0179C20.5615 19 21.5233 17.3333 20.7551 16L13.7372 4C12.9689 2.66667 11.0311 2.66667 10.2628 4L3.24485 16C2.47666 17.3333 3.43849 19 4.98207 19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </span>
               Security risks
@@ -236,7 +229,7 @@ export default function FortisafeDashboard() {
         <div className="grid grid-cols-12 gap-6">
           {/* Left Sidebar - Logins List */}
           <div className="col-span-5">
-            <SavedLogins />
+            <SavedLogins logins={filteredLogins} onSelectLogin={setSelectedLogin} />
           </div>
 
           {/* Right Content - Password Details */}
@@ -294,7 +287,7 @@ export default function FortisafeDashboard() {
                       {/* Password Strength Indicator */}
                       <div className="mt-2">
                         <div className="w-full bg-slate-800 rounded-full h-1.5 mb-1">
-                          <div 
+                          <div
                             className={`h-1.5 rounded-full ${getStrengthColor(selectedLogin.strength)} ${getStrengthWidth(selectedLogin.strength)}`}
                           ></div>
                         </div>
@@ -306,7 +299,7 @@ export default function FortisafeDashboard() {
                       <label className="text-gray-400 text-sm">Issues</label>
                       <div className="bg-slate-800 rounded-md p-3 mt-1">
                         <p className="text-sm text-gray-300">
-                          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis. 
+                          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis.
                           Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Curabitur tempus urna at
                           turpis condimentum lobortis.
                         </p>

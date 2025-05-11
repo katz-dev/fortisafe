@@ -1,64 +1,34 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-// Import the JSON file directly
-import savedLoginsData from "@/json/saved-login.json";
 
 interface LoginItem {
   id: string;
   site: string;
   username: string;
-  logo: string;
+  password: string;
+  strength: 'weak' | 'okay' | 'strong';
+  website?: string;
+  notes?: string;
 }
 
-export default function SavedLogins() {
-  const [logins, setLogins] = useState<LoginItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+interface SavedLoginsProps {
+  logins: LoginItem[];
+  onSelectLogin: (login: LoginItem) => void;
+}
 
-  useEffect(() => {
-    // Load data from the imported JSON file
-    try {
-      setLogins(savedLoginsData);
-      setLoading(false);
-    } catch (err) {
-      setError('Error loading saved logins');
-      console.error(err);
-      setLoading(false);
-    }
-  }, []);
-
-  if (loading) {
-    return (
-      <Card className="w-full bg-slate-900 text-white border-none shadow-md">
-        <CardContent className="p-4">
-          <p className="text-gray-400">Loading saved logins...</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card className="w-full bg-slate-900 text-white border-none shadow-md">
-        <CardContent className="p-4">
-          <p className="text-red-400">{error}</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
+export default function SavedLogins({ logins, onSelectLogin }: SavedLoginsProps) {
   return (
     <Card className="w-full bg-slate-900 text-white border-none shadow-md">
       <CardContent className="p-0">
         <ScrollArea className="h-72">
           <div className="space-y-px">
             {logins.map((login) => (
-              <div 
+              <div
                 key={login.id}
                 className="flex items-center p-3 hover:bg-slate-800 cursor-pointer transition-colors"
+                onClick={() => onSelectLogin(login)}
               >
                 <div className="h-8 w-8 rounded-md bg-white mr-3 flex items-center justify-center">
                   <GoogleIcon />

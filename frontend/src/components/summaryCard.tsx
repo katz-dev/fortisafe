@@ -1,7 +1,6 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Key } from "lucide-react";
 
 interface SummaryCardProps {
   count: number;
