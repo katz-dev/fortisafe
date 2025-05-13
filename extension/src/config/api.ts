@@ -1,23 +1,11 @@
 export const API_CONFIG = {
-    baseUrl: 'http://localhost:8080/api',
+    baseUrl: 'http://localhost:8080', // Update with your backend URL
     endpoints: {
         auth: {
-            login: '/auth/login',
-            callback: '/auth/callback',
-            profile: '/auth/profile'
-        },
-        users: {
-            profile: '/users/profile'
-        },
-        passwords: {
-            list: '/passwords',
-            create: '/passwords',
-            update: (id: string) => `/passwords/${id}`,
-            delete: (id: string) => `/passwords/${id}`
-        },
-        scanner: {
-            scan: '/scanner',
-            scanSavedPasswords: '/scanner/scan-saved-passwords'
+            login: '/api/auth/login',
+            callback: '/api/auth/callback',
+            profile: '/api/auth/profile',
+            logout: '/api/auth/logout'
         }
     }
-}; 
+};

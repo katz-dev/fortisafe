@@ -28,7 +28,7 @@ export class AuthController {
   @Get('login')
   @ApiOperation({ summary: 'Redirect to Auth0 login page' })
   @ApiResponse({ status: 302, description: 'Redirect to Auth0' })
-  login(@Res() res: Response) {
+  login(@Req() req, @Res() res: Response) {
     // Construct Auth0 login URL
     const authorizationUrl = `https://${this.configService.get(
       'AUTH0_DOMAIN',
@@ -44,6 +44,10 @@ export class AuthController {
     params.append('scope', 'openid profile email');
     params.append('audience', this.configService.get('AUTH0_AUDIENCE') || '');
 
+    // Add state parameter to identify client type (extension or frontend)
+    const clientType = req.query.client || 'frontend';
+    params.append('state', clientType);
+
     return res.redirect(authorizationUrl + params.toString());
   }
 
@@ -53,7 +57,7 @@ export class AuthController {
     status: 302,
     description: 'Redirect with token and user data',
   })
-  async callback(@Query('code') code: string, @Res() res: Response) {
+  async callback(@Query('code') code: string, @Query('state') state: string, @Res() res: Response) {
     try {
       // Exchange authorization code for tokens
       const tokenResponse = await fetch(
@@ -105,16 +109,25 @@ export class AuthController {
         user = await this.userService.create(createUserDto);
       }
 
-      console.info('User created:', user);
       if (!userInfo || !userInfo.sub) {
         console.error('Failed to get user info');
         return res.redirect('/auth/login-failed');
       }
 
-      // Redirect to frontend with tokens and encoded user data
-      return res.redirect(
-        `${this.configService.get('FRONTEND_URL')}/auth/success?access_token=${tokenData.access_token}&id_token=${tokenData.id_token}`,
-      );
+      // Check if this is a request from the extension (based on state param)
+      const isExtension = state === 'extension';
+
+      if (isExtension) {
+        // For extension, redirect to a special success page that will communicate with the extension
+        return res.redirect(
+          `${this.configService.get('EXTENSION_URL') || 'chrome-extension://callback'}/auth/success?access_token=${tokenData.access_token}&id_token=${tokenData.id_token}`,
+        );
+      } else {
+        // For frontend, redirect to the frontend success page
+        return res.redirect(
+          `${this.configService.get('FRONTEND_URL')}/auth/success?access_token=${tokenData.access_token}&id_token=${tokenData.id_token}`,
+        );
+      }
     } catch (error) {
       console.error('Auth callback error:', error);
       return res.redirect('/auth/login-failed');

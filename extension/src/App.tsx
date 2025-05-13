@@ -1,80 +1,28 @@
-import { useState, useEffect } from 'react'
 import './App.css'
-import HomePage from './components/HomePage'
-import { API_CONFIG } from './config/api'
-import { HashRouter as Router, Route, Routes, Navigate } from 'react-router-dom'
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-
-  // Check for existing token on mount
-  useEffect(() => {
-    chrome.storage.local.get(['token'], (result) => {
-      if (result.token) {
-        setIsLoggedIn(true)
-      }
-    })
-  }, [])
-
-  const handleLogin = () => {
-    setIsLoading(true)
-    // Redirect to the backend login endpoint which will handle Auth0 redirect
-    window.location.href = `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.auth.login}`
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    console.log('Login attempted')
+    // Here you would add actual authentication logic
   }
 
-  // Check for auth callback
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search)
-    const code = urlParams.get('code')
-
-    if (code) {
-      // Handle the Auth0 callback
-      fetch(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.auth.callback}?code=${code}`)
-        .then(response => response.json())
-        .then(data => {
-          if (data.access_token) {
-            // Store the token securely
-            chrome.storage.local.set({ token: data.access_token }, () => {
-              console.log('Token saved')
-              setIsLoggedIn(true)
-            })
-          }
-        })
-        .catch(error => {
-          console.error('Authentication error:', error)
-        })
-        .finally(() => {
-          setIsLoading(false)
-        })
-    }
-  }, [])
-
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={
-          isLoggedIn ? <Navigate to="/home" /> : (
-            <div className="login-container">
-              <h1 className="logo">Fortisafe</h1>
+    <div className="app">
+      <div className="login-container">
+        <h1 className="logo">Fortisafe</h1>
 
-              <button
-                onClick={handleLogin}
-                className="login-button"
-                disabled={isLoading}
-              >
-                {isLoading ? 'Logging in...' : 'Login'}
-              </button>
+        <form onSubmit={handleSubmit}>
+          <button type="submit" className="login-button">
+            Login
+          </button>
+        </form>
 
-              <div className="signup-prompt">
-                Don't have an account? <a href="#">Sign up</a>
-              </div>
-            </div>
-          )
-        } />
-        <Route path="/home" element={<HomePage />} />
-      </Routes>
-    </Router>
+        <div className="signup-prompt">
+          Don't have an account? <a href="#">Sign up</a>
+        </div>
+      </div>
+    </div>
   )
 }
 
