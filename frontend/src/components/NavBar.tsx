@@ -1,33 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getUserProfile, logout } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { LogOut, Menu, X, Shield, Lock, Activity, Settings, User as UserIcon } from 'lucide-react';
-
-type UserProfile = {
-    auth0Profile?: {
-        name?: string;
-        email?: string;
-        picture?: string;
-        nickname?: string;
-    };
-    _id?: string;
-    email?: string;
-    firstName?: string;
-    lastName?: string;
-    picture?: string;
-};
+import { useAuth } from '@/app/contexts/auth-context';
 
 export default function NavBar() {
-    const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+    const { user, isLoading, signOut } = useAuth();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-
     const pathname = usePathname();
 
     // Define navigation items
@@ -36,28 +20,6 @@ export default function NavBar() {
         { name: 'Passwords', href: '/password', icon: Lock },
         { name: 'Security', href: '/security', icon: Activity },
     ];
-
-    useEffect(() => {
-        const fetchProfile = async () => {
-            try {
-                // Only fetch profile if we have an access token
-                if (typeof window !== 'undefined' && localStorage.getItem('access_token')) {
-                    const profile = await getUserProfile();
-                    setUserProfile(profile);
-                }
-            } catch (err) {
-                console.error('Error fetching profile:', err);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchProfile();
-    }, []);
-
-    const handleLogout = () => {
-        logout();
-    };
 
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
@@ -68,13 +30,13 @@ export default function NavBar() {
     };
 
     // Get display name from profile
-    const displayName = userProfile?.auth0Profile?.name ||
-        userProfile?.auth0Profile?.nickname ||
-        (userProfile?.firstName && userProfile?.lastName ?
-            `${userProfile.firstName} ${userProfile.lastName}` :
-            userProfile?.email?.split('@')[0] || 'User');
+    const displayName = user?.auth0Profile?.name ||
+        user?.auth0Profile?.nickname ||
+        (user?.firstName && user?.lastName ?
+            `${user.firstName} ${user.lastName}` :
+            user?.email?.split('@')[0] || 'User');
 
-    const profilePicture = userProfile?.auth0Profile?.picture || userProfile?.picture;
+    const profilePicture = user?.auth0Profile?.picture || user?.picture;
 
     return (
         <nav className="bg-[#0c1222] border-b border-gray-800">
@@ -117,7 +79,7 @@ export default function NavBar() {
                     <div className="flex items-center">
                         {isLoading ? (
                             <div className="w-8 h-8 rounded-full bg-gray-700 animate-pulse"></div>
-                        ) : userProfile ? (
+                        ) : user ? (
                             <div className="relative ml-3">
                                 <div>
                                     <button
@@ -156,7 +118,7 @@ export default function NavBar() {
                                     >
                                         <div className="px-4 py-2 text-sm text-gray-200 border-b border-gray-800">
                                             <div className="font-semibold">{displayName}</div>
-                                            <div className="text-gray-400 text-xs truncate">{userProfile.auth0Profile?.email}</div>
+                                            <div className="text-gray-400 text-xs truncate">{user.auth0Profile?.email}</div>
                                         </div>
                                         <Link
                                             href="/profile"
@@ -177,7 +139,7 @@ export default function NavBar() {
                                             Settings
                                         </Link>
                                         <button
-                                            onClick={handleLogout}
+                                            onClick={signOut}
                                             className="flex w-full items-center px-4 py-2 text-sm text-red-400 hover:bg-gray-800"
                                             role="menuitem"
                                         >

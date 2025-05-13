@@ -90,14 +90,11 @@ export class AuthController {
 
       const userInfo = await userInfoResponse.json();
 
-      const existingUser = await this.userService.findByAuth0Id(userInfo.sub);
-
       let user;
-
-      if (existingUser) {
-        console.info('User already exists:', existingUser);
-        user = existingUser;
-      } else {
+      try {
+        user = await this.userService.findByAuth0Id(userInfo.sub);
+      } catch (error) {
+        // User doesn't exist, create new user
         const createUserDto: CreateUserDto = {
           auth0Id: userInfo.sub,
           email: userInfo.email,
@@ -105,7 +102,7 @@ export class AuthController {
           lastName: userInfo.family_name,
           picture: userInfo.picture,
         };
-        await this.userService.create(createUserDto);
+        user = await this.userService.create(createUserDto);
       }
 
       console.info('User created:', user);
@@ -134,5 +131,14 @@ export class AuthController {
     // The access token is available from the request
     const accessToken = req.headers.authorization.split(' ')[1];
     return this.authService.getUserProfile(accessToken);
+  }
+
+  @Get('logout')
+  @ApiOperation({ summary: 'Logout from Auth0' })
+  @ApiResponse({ status: 302, description: 'Redirect to Auth0 logout' })
+  logout(@Res() res: Response) {
+    const returnTo = encodeURIComponent(this.configService.get('FRONTEND_URL') || '');
+    const logoutUrl = `https://${this.configService.get('AUTH0_DOMAIN')}/v2/logout?client_id=${this.configService.get('AUTH0_CLIENT_ID')}&returnTo=${returnTo}`;
+    return res.redirect(logoutUrl);
   }
 }

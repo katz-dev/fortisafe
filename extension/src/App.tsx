@@ -2,10 +2,20 @@ import { useState, useEffect } from 'react'
 import './App.css'
 import HomePage from './components/HomePage'
 import { API_CONFIG } from './config/api'
+import { HashRouter as Router, Route, Routes, Navigate } from 'react-router-dom'
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+
+  // Check for existing token on mount
+  useEffect(() => {
+    chrome.storage.local.get(['token'], (result) => {
+      if (result.token) {
+        setIsLoggedIn(true)
+      }
+    })
+  }, [])
 
   const handleLogin = () => {
     setIsLoading(true)
@@ -41,27 +51,30 @@ function App() {
   }, [])
 
   return (
-    <div className="app">
-      {isLoggedIn ? (
-        <HomePage />
-      ) : (
-        <div className="login-container">
-          <h1 className="logo">Fortisafe</h1>
+    <Router>
+      <Routes>
+        <Route path="/" element={
+          isLoggedIn ? <Navigate to="/home" /> : (
+            <div className="login-container">
+              <h1 className="logo">Fortisafe</h1>
 
-          <button
-            onClick={handleLogin}
-            className="login-button"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Logging in...' : 'Login'}
-          </button>
+              <button
+                onClick={handleLogin}
+                className="login-button"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Logging in...' : 'Login'}
+              </button>
 
-          <div className="signup-prompt">
-            Don't have an account? <a href="#">Sign up</a>
-          </div>
-        </div>
-      )}
-    </div>
+              <div className="signup-prompt">
+                Don't have an account? <a href="#">Sign up</a>
+              </div>
+            </div>
+          )
+        } />
+        <Route path="/home" element={<HomePage />} />
+      </Routes>
+    </Router>
   )
 }
 

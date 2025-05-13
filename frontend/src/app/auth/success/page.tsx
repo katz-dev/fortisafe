@@ -2,29 +2,40 @@
 
 import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '@/app/contexts/auth-context';
 
 function TokenHandler() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { refreshProfile } = useAuth();
 
   useEffect(() => {
-    const accessToken = searchParams.get('access_token');
-    const idToken = searchParams.get('id_token');
+    async function handleAuth() {
+      const accessToken = searchParams.get('access_token');
+      const idToken = searchParams.get('id_token');
 
-    if (accessToken && idToken) {
-      console.log('Storing tokens...'); // Optional: for debugging
-      localStorage.setItem('access_token', accessToken);
-      localStorage.setItem('id_token', idToken);
+      if (accessToken && idToken) {
+        console.log('Storing tokens...');
+        localStorage.setItem('access_token', accessToken);
+        localStorage.setItem('id_token', idToken);
 
-      // Redirect to the home page or dashboard after storing tokens
-      router.push('/password');
-    } else {
-      // Handle the case where tokens are missing
-      console.error('Authentication tokens not found in URL');
-      // Optionally redirect to a login failed page or show an error message
-      // router.push('/login'); // Redirect back to login for simplicity
+        try {
+          // Use the refreshProfile function from auth context
+          await refreshProfile();
+          console.log('Profile loaded successfully');
+          router.push('/password');
+        } catch (error) {
+          console.error('Failed to load profile:', error);
+          router.push('/login');
+        }
+      } else {
+        console.error('Authentication tokens not found in URL');
+        router.push('/login');
+      }
     }
-  }, [router, searchParams]); // Dependencies for the effect
+
+    void handleAuth();
+  }, [router, searchParams, refreshProfile]);
 
   return null;
 }
