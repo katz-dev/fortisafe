@@ -16,9 +16,10 @@ export default function AuthSuccess(props) {
         const accessToken = params.get('access_token');
         const idToken = params.get('id_token');
 
-        if (accessToken) {
+        if (accessToken && idToken) {
+            // Store tokens
             localStorage.setItem('access_token', accessToken);
-            if (idToken) localStorage.setItem('id_token', idToken);
+            localStorage.setItem('id_token', idToken);
 
             // Fetch user profile
             fetch('http://localhost:8080/api/auth/profile', {
@@ -27,16 +28,17 @@ export default function AuthSuccess(props) {
                 .then((res) => res.json())
                 .then((profile) => {
                     console.log('Fetched user profile:', profile);
-                    localStorage.setItem('user', JSON.stringify(profile));
-                    setUser(profile);
+                    localStorage.setItem('user', JSON.stringify(profile.user));
+                    setUser(profile.user);
                     navigateToPage('dashboard');
                 })
-                .catch(() => {
-                    // On error, go back to login
-                    navigateToPage('dashboard');
+                .catch((error) => {
+                    console.error('Error fetching profile:', error);
+                    navigateToPage('login');
                 });
         } else {
-            navigateToPage('dashboard');
+            console.error('No tokens found in URL');
+            navigateToPage('login');
         }
     }, [navigateToPage, setUser, router]);
 

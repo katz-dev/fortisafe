@@ -118,10 +118,32 @@ export class AuthController {
       const isExtension = state === 'extension';
 
       if (isExtension) {
-        // For extension, redirect to a special success page that will communicate with the extension
-        return res.redirect(
-          `${this.configService.get('EXTENSION_URL') || 'chrome-extension://cdnncolckadjidjeinhkmamanfinfhcm'}/auth-success?access_token=${tokenData.access_token}&id_token=${tokenData.id_token}`,
-        );
+        // For extension, send a message to the opener window and close the popup
+        return res.send(`
+          <html>
+            <body>
+              <script>
+                if (window.opener) {
+                  window.opener.postMessage({
+                    type: 'auth-success',
+                    user: ${JSON.stringify({
+          id: user._id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          picture: user.picture,
+          accessToken: tokenData.access_token,
+          idToken: tokenData.id_token
+        })}
+                  }, '${this.configService.get('EXTENSION_URL') || 'chrome-extension://cdnncolckadjidjeinhkmamanfinfhcm'}');
+                  window.close();
+                } else {
+                  window.location.href = '${this.configService.get('EXTENSION_URL') || 'chrome-extension://cdnncolckadjidjeinhkmamanfinfhcm'}/auth-success?access_token=${tokenData.access_token}&id_token=${tokenData.id_token}';
+                }
+              </script>
+            </body>
+          </html>
+        `);
       } else {
         // For frontend, redirect to the frontend success page
         return res.redirect(
