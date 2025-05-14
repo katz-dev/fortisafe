@@ -30,15 +30,16 @@ export default function AuthSuccess(props) {
                     console.log('Fetched user profile:', profile);
                     localStorage.setItem('user', JSON.stringify(profile.user));
                     setUser(profile.user);
-                    navigateToPage('dashboard');
+                    // Use window.location to ensure a full page reload
+                    window.location.href = '/dashboard';
                 })
                 .catch((error) => {
                     console.error('Error fetching profile:', error);
-                    navigateToPage('login');
+                    window.location.href = '/login';
                 });
         } else {
             console.error('No tokens found in URL');
-            navigateToPage('login');
+            window.location.href = '/login';
         }
     }, [navigateToPage, setUser, router]);
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Index from '../components/Index';
 import New from '../components/New';
 import LoginSignup from '../components/login';
@@ -9,6 +9,18 @@ export default function Home() {
   const [activePage, setActivePage] = useState('index');
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    // Check for existing auth state
+    const storedUser = localStorage.getItem('user');
+    const accessToken = localStorage.getItem('access_token');
+
+    if (storedUser && accessToken) {
+      setUser(JSON.parse(storedUser));
+      setIsAuthenticated(true);
+      setActivePage('dashboard');
+    }
+  }, []);
 
   const navigateToPage = (page) => {
     setActivePage(page);
@@ -39,7 +51,7 @@ export default function Home() {
         // Update the UI state
         setIsAuthenticated(true);
         setUser(event.data.user);
-        navigateToPage('dashboard');
+        setActivePage('dashboard');
       }
     }, false);
   };
@@ -49,7 +61,13 @@ export default function Home() {
   };
 
   const handleLogout = () => {
+    // Clear auth state
+    localStorage.removeItem('user');
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('id_token');
+
     setUser(null);
+    setIsAuthenticated(false);
     setActivePage('login');
   };
 
@@ -57,10 +75,10 @@ export default function Home() {
     <>
       {activePage === 'index' && <Index navigateToPage={navigateToPage} />}
       {activePage === 'new' && <New navigateToPage={navigateToPage} />}
-      {activePage === 'login' && (
+      {activePage === 'login' && !isAuthenticated && (
         <LoginSignup onLogin={handleLogin} onSignup={handleSignup} />
       )}
-      {activePage === 'dashboard' && (
+      {activePage === 'dashboard' && isAuthenticated && (
         <Dashboard onLogout={handleLogout} user={user} />
       )}
       {activePage === 'auth-success' && (
