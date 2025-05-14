@@ -7,6 +7,13 @@ export default function Dashboard({ onLogout }) {
     const router = useRouter();
 
     useEffect(() => {
+        // First try to get user data from localStorage
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            setUser(JSON.parse(storedUser));
+        }
+
+        // Then fetch fresh data in the background
         const accessToken = localStorage.getItem('access_token');
         if (accessToken) {
             fetch('http://localhost:8080/api/auth/profile', {
@@ -18,9 +25,12 @@ export default function Dashboard({ onLogout }) {
                     localStorage.setItem('user', JSON.stringify(profile));
                 })
                 .catch(() => {
-                    setUser(null);
+                    // Only clear user if the token is invalid
+                    if (!storedUser) {
+                        setUser(null);
+                    }
                 });
-        } else {
+        } else if (!storedUser) {
             setUser(null);
         }
     }, []);
