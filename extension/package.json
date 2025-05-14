@@ -1,33 +1,24 @@
 {
-  "name": "chrome-extension-react-template",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "name": "next-chrome-starter",
+  "version": "0.0.1",
+  "description": "Next.js Chrome Extension Starter, Demo Example by ibnzUK. https://github.com/ibnzUK/next-chrome-starter",
+  "main": "index.js",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "build": "npm run prep",
+    "prep": "npm run exp && node out.js",
+    "exp": "next build && next export",
+    "run": "next start",
+    "dev": "next dev"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "dependencies": {
-    "@auth0/auth0-react": "^2.3.0",
-    "framer-motion": "^12.11.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-router-dom": "^7.6.0"
-  },
-  "devDependencies": {
-    "@types/chrome": "^0.0.260",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
-    "@typescript-eslint/eslint-plugin": "^7.13.1",
-    "@typescript-eslint/parser": "^7.13.1",
-    "@vitejs/plugin-react": "^4.3.1",
-    "eslint": "^8.57.0",
-    "eslint-plugin-react-hooks": "^4.6.2",
-    "eslint-plugin-react-refresh": "^0.4.7",
-    "typescript": "^5.2.2",
-    "vite": "^5.3.1",
-    "vite-plugin-static-copy": "^1.0.6"
+    "auth0-spa-js": "^1.6.5",
+    "glob": "^10.2.3",
+    "next": "^13.4.1",
+    "npm": "^11.3.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   }
 }

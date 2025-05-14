@@ -120,7 +120,7 @@ export class AuthController {
       if (isExtension) {
         // For extension, redirect to a special success page that will communicate with the extension
         return res.redirect(
-          `${this.configService.get('EXTENSION_URL') || 'chrome-extension://callback'}/auth/success?access_token=${tokenData.access_token}&id_token=${tokenData.id_token}`,
+          `${this.configService.get('EXTENSION_URL') || 'chrome-extension://cdnncolckadjidjeinhkmamanfinfhcm'}/auth-success?access_token=${tokenData.access_token}&id_token=${tokenData.id_token}`,
         );
       } else {
         // For frontend, redirect to the frontend success page
