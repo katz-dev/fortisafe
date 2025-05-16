@@ -1,0 +1,164 @@
+/* Custom Tailwind-like CSS */
+/* Base styles */
+.bg-indigo-950 {
+    background-color: #1e1b4b;
+}
+
+.text-white {
+    color: white;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-5xl {
+    font-size: 3rem;
+    line-height: 1;
+}
+
+.text-3xl {
+    font-size: 1.875rem;
+    line-height: 1.25;
+}
+
+.font-bold {
+    font-weight: 700;
+}
+
+.mb-12 {
+    margin-bottom: 3rem;
+}
+
+.mb-8 {
+    margin-bottom: 2rem;
+}
+
+.mb-6 {
+    margin-bottom: 1.5rem;
+}
+
+.mb-4 {
+    margin-bottom: 1rem;
+}
+
+.text-sm {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+}
+
+.text-xs {
+    font-size: 0.75rem;
+    line-height: 1rem;
+}
+
+.text-base {
+    font-size: 1rem;
+    line-height: 1.5rem;
+}
+
+.text-lg {
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+}
+
+.text-gray-400 {
+    color: #9ca3af;
+}
+
+/* Button styles */
+.bg-blue-500 {
+    background-color: #3b82f6;
+}
+
+.hover\:bg-blue-600:hover {
+    background-color: #2563eb;
+}
+
+.py-3 {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+}
+
+.py-2 {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+.px-20 {
+    padding-left: 5rem;
+    padding-right: 5rem;
+}
+
+.px-12 {
+    padding-left: 3rem;
+    padding-right: 3rem;
+}
+
+.rounded-lg {
+    border-radius: 0.5rem;
+}
+
+.shadow-md {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Link styles */
+.font-medium {
+    font-weight: 500;
+}
+
+.text-blue-400 {
+    color: #60a5fa;
+}
+
+.hover\:text-blue-300:hover {
+    color: #93c5fd;
+}
+
+.underline {
+    text-decoration: underline;
+}
+
+/* Layout utilities */
+.flex {
+    display: flex;
+}
+
+.flex-col {
+    flex-direction: column;
+}
+
+.items-center {
+    align-items: center;
+}
+
+.justify-center {
+    justify-content: center;
+}
+
+.p-6 {
+    padding: 1.5rem;
+}
+
+.h-full {
+    height: 100%;
+}
+
+.w-full {
+    width: 100%;
+}
+
+/* Remove all button default styles */
+button {
+    border: none;
+    cursor: pointer;
+    outline: none;
+}
+
+/* Additional styles */
+a {
+    color: inherit;
+    text-decoration: inherit;
+    cursor: pointer;
+}

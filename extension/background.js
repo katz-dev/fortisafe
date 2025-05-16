@@ -1,16 +1,21 @@
-// Listen for messages from content script
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.type === 'REGISTRATION_FORM_DETECTED') {
-        // Create notification
-        chrome.notifications.create({
-            type: 'basic',
-            iconUrl: 'icon48.png',
-            title: 'Registration Form Detected',
-            message: `Found registration data on ${new URL(message.data.url).hostname}`,
-            priority: 2
-        });
+// Background script for Form Data Saver extension
+// This script runs in the background
 
-        // Log the data (for testing)
-        console.log('Registration Form Data:', message.data);
-    }
-}); 
+console.log('Form Data Saver extension background script loaded');
+
+// Initialize storage if needed
+chrome.runtime.onInstalled.addListener(function () {
+    chrome.storage.sync.get(['savedUrls', 'savedCredentials', 'captureEnabled'], function (data) {
+        if (!data.savedUrls) {
+            chrome.storage.sync.set({ 'savedUrls': [] });
+        }
+
+        if (!data.savedCredentials) {
+            chrome.storage.sync.set({ 'savedCredentials': [] });
+        }
+
+        if (data.captureEnabled === undefined) {
+            chrome.storage.sync.set({ 'captureEnabled': false });
+        }
+    });
+});

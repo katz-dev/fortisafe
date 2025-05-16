@@ -1,16 +1,18 @@
 {
-    "manifest_version": 3,
-    "name": "Fortisafe",
+    "name": "Form Data Saver",
     "version": "1.0",
-    "description": "Password Manager and Security Extension",
+    "description": "Save website URLs and form credentials for demonstration purposes",
+    "manifest_version": 3,
     "permissions": [
         "storage",
-        "notifications",
-        "activeTab"
+        "tabs"
     ],
     "host_permissions": [
         "<all_urls>"
     ],
+    "action": {
+        "default_popup": "popup.html"
+    },
     "background": {
         "service_worker": "background.js"
     },
@@ -20,21 +22,8 @@
                 "<all_urls>"
             ],
             "js": [
-                "content-scripts/formDetector.js"
+                "content.js"
             ]
         }
-    ],
-    "action": {
-        "default_popup": "popup.html",
-        "default_icon": {
-            "16": "icon16.png",
-            "48": "icon48.png",
-            "128": "icon128.png"
-        }
-    },
-    "icons": {
-        "16": "icon16.png",
-        "48": "icon48.png",
-        "128": "icon128.png"
-    }
+    ]
 }
