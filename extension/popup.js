@@ -1,3 +1,5 @@
+const BACKEND_URL = 'http://localhost:8080/api';
+
 // Function to get the current active tab URL
 function getCurrentTabUrl(callback) {
     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
@@ -11,91 +13,75 @@ function getCurrentTabUrl(callback) {
 
 // Load saved data when popup opens
 document.addEventListener('DOMContentLoaded', function () {
-    // Setup tabs
-    setupTabs();
-
-    // Display saved URLs
-    displaySavedUrls();
-
-    // Display saved credentials
-    displaySavedCredentials();
-
-    // Save URL button
-    document.getElementById('save-url').addEventListener('click', function () {
-        getCurrentTabUrl(function (url) {
-            if (url) {
-                saveUrl(url);
-            }
-        });
-    });
-
-    // Clear all URLs button
-    document.getElementById('clear-all-urls').addEventListener('click', function () {
-        chrome.storage.sync.set({ 'savedUrls': [] }, function () {
-            displaySavedUrls();
-        });
-    });
-
-    // Enable credential capture button
-    document.getElementById('enable-capture').addEventListener('click', function () {
-        const button = document.getElementById('enable-capture');
-
-        getCurrentTabUrl(function (url, tabId) {
-            if (tabId) {
-                if (button.textContent === "Enable Credential Capture") {
-                    chrome.storage.sync.set({ 'captureEnabled': true }, function () {
-                        chrome.tabs.sendMessage(tabId, { action: "enableCapture" });
-                        button.textContent = "Disable Credential Capture";
-                        button.style.backgroundColor = "#f44336";
-                    });
-                } else {
-                    chrome.storage.sync.set({ 'captureEnabled': false }, function () {
-                        chrome.tabs.sendMessage(tabId, { action: "disableCapture" });
-                        button.textContent = "Enable Credential Capture";
-                        button.style.backgroundColor = "#4285f4";
-                    });
-                }
-            }
-        });
-    });
-
-    // Clear all credentials button
-    document.getElementById('clear-all-credentials').addEventListener('click', function () {
-        chrome.storage.sync.set({ 'savedCredentials': [] }, function () {
-            displaySavedCredentials();
-        });
-    });
-
-    // Check if capture is enabled
-    chrome.storage.sync.get('captureEnabled', function (data) {
-        if (data.captureEnabled) {
-            const button = document.getElementById('enable-capture');
-            button.textContent = "Disable Credential Capture";
-            button.style.backgroundColor = "#f44336";
+    // Check authentication state
+    chrome.storage.local.get(['access_token', 'userProfile'], function (result) {
+        if (!result.access_token) {
+            // If not authenticated, show login page
+            window.location.href = 'login.html';
+            return;
         }
+
+        // If authenticated, show main content
+        setupTabs();
+        displaySavedUrls();
+        displaySavedCredentials();
+        displayUserProfile(result.userProfile);
+
+        // Setup event listeners
+        setupEventListeners();
     });
-
-    // Login button and sign up link event listeners
-    const loginButton = document.getElementById('login-button');
-    const signupLink = document.getElementById('signup-link');
-
-    if (loginButton) {
-        loginButton.addEventListener('click', function () {
-            console.log('Login button clicked');
-            // TODO: Implement login functionality, possibly by opening a new tab to the login page
-            // Example: chrome.tabs.create({url: 'YOUR_LOGIN_PAGE_URL'});
-        });
-    }
-
-    if (signupLink) {
-        signupLink.addEventListener('click', function (event) {
-            event.preventDefault(); // Prevent default link behavior
-            console.log('Sign up link clicked');
-            // TODO: Implement sign-up functionality, possibly by opening a new tab to the sign-up page
-            // Example: chrome.tabs.create({url: 'YOUR_SIGNUP_PAGE_URL'});
-        });
-    }
 });
+
+function displayUserProfile(profile) {
+    const profileSection = document.getElementById('profile-section');
+    if (profileSection && profile) {
+        profileSection.innerHTML = `
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <img src="${profile.picture || 'default-avatar.png'}" alt="Profile" class="w-10 h-10 rounded-full">
+                    <div>
+                        <p class="font-medium">${profile.firstName} ${profile.lastName}</p>
+                        <p class="text-sm text-gray-400">${profile.email}</p>
+                    </div>
+                </div>
+                <button id="logout-button" class="text-sm text-red-400 hover:text-red-300">
+                    Logout
+                </button>
+            </div>
+        `;
+
+        // Add logout handler
+        document.getElementById('logout-button').addEventListener('click', handleLogout);
+    }
+}
+
+async function handleLogout() {
+    try {
+        const response = await fetch(`${BACKEND_URL}/auth/logout`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${await getToken()}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        // Clear local storage
+        await chrome.storage.local.remove(['access_token', 'id_token', 'userProfile']);
+
+        // Redirect to login page
+        window.location.href = 'login.html';
+    } catch (error) {
+        console.error('Logout failed:', error);
+    }
+}
+
+async function getToken() {
+    return new Promise((resolve) => {
+        chrome.storage.local.get(['access_token'], function (result) {
+            resolve(result.access_token);
+        });
+    });
+}
 
 // Setup tabs functionality
 function setupTabs() {
@@ -106,14 +92,14 @@ function setupTabs() {
         button.addEventListener('click', function () {
             // Remove active class from all buttons and contents
             tabButtons.forEach(btn => btn.classList.remove('active'));
-            tabContents.forEach(content => content.classList.remove('active'));
+            tabContents.forEach(content => content.classList.add('hidden'));
 
             // Add active class to clicked button
             this.classList.add('active');
 
             // Show corresponding content
             const tabId = this.id.replace('-tab', '-content');
-            document.getElementById(tabId).classList.add('active');
+            document.getElementById(tabId).classList.remove('hidden');
         });
     });
 }
@@ -272,4 +258,159 @@ function deleteCredential(index) {
             displaySavedCredentials();
         });
     });
+}
+
+// Save URL button
+document.getElementById('save-url').addEventListener('click', function () {
+    getCurrentTabUrl(function (url) {
+        if (url) {
+            saveUrl(url);
+        }
+    });
+});
+
+// Clear all URLs button
+document.getElementById('clear-all-urls').addEventListener('click', function () {
+    chrome.storage.sync.set({ 'savedUrls': [] }, function () {
+        displaySavedUrls();
+    });
+});
+
+// Enable credential capture button
+document.getElementById('enable-capture').addEventListener('click', function () {
+    const button = document.getElementById('enable-capture');
+
+    getCurrentTabUrl(function (url, tabId) {
+        if (tabId) {
+            if (button.textContent === "Enable Credential Capture") {
+                chrome.storage.sync.set({ 'captureEnabled': true }, function () {
+                    chrome.tabs.sendMessage(tabId, { action: "enableCapture" });
+                    button.textContent = "Disable Credential Capture";
+                    button.style.backgroundColor = "#f44336";
+                });
+            } else {
+                chrome.storage.sync.set({ 'captureEnabled': false }, function () {
+                    chrome.tabs.sendMessage(tabId, { action: "disableCapture" });
+                    button.textContent = "Enable Credential Capture";
+                    button.style.backgroundColor = "#4285f4";
+                });
+            }
+        }
+    });
+});
+
+// Clear all credentials button
+document.getElementById('clear-all-credentials').addEventListener('click', function () {
+    chrome.storage.sync.set({ 'savedCredentials': [] }, function () {
+        displaySavedCredentials();
+    });
+});
+
+// Check if capture is enabled
+chrome.storage.sync.get('captureEnabled', function (data) {
+    if (data.captureEnabled) {
+        const button = document.getElementById('enable-capture');
+        button.textContent = "Disable Credential Capture";
+        button.style.backgroundColor = "#f44336";
+    }
+});
+
+// Login button and sign up link event listeners
+const loginButton = document.getElementById('login-button');
+const signupLink = document.getElementById('signup-link');
+
+if (loginButton) {
+    loginButton.addEventListener('click', function () {
+        console.log('Login button clicked');
+        // TODO: Implement login functionality, possibly by opening a new tab to the login page
+        // Example: chrome.tabs.create({url: 'YOUR_LOGIN_PAGE_URL'});
+    });
+}
+
+if (signupLink) {
+    signupLink.addEventListener('click', function (event) {
+        event.preventDefault(); // Prevent default link behavior
+        console.log('Sign up link clicked');
+        // TODO: Implement sign-up functionality, possibly by opening a new tab to the sign-up page
+        // Example: chrome.tabs.create({url: 'YOUR_SIGNUP_PAGE_URL'});
+    });
+}
+
+// Setup event listeners
+function setupEventListeners() {
+    // Save URL button
+    document.getElementById('save-url').addEventListener('click', function () {
+        getCurrentTabUrl(function (url) {
+            if (url) {
+                saveUrl(url);
+            }
+        });
+    });
+
+    // Clear all URLs button
+    document.getElementById('clear-all-urls').addEventListener('click', function () {
+        chrome.storage.sync.set({ 'savedUrls': [] }, function () {
+            displaySavedUrls();
+        });
+    });
+
+    // Enable credential capture button
+    document.getElementById('enable-capture').addEventListener('click', function () {
+        const button = document.getElementById('enable-capture');
+
+        getCurrentTabUrl(function (url, tabId) {
+            if (tabId) {
+                if (button.textContent === "Enable Credential Capture") {
+                    chrome.storage.sync.set({ 'captureEnabled': true }, function () {
+                        chrome.tabs.sendMessage(tabId, { action: "enableCapture" });
+                        button.textContent = "Disable Credential Capture";
+                        button.style.backgroundColor = "#f44336";
+                    });
+                } else {
+                    chrome.storage.sync.set({ 'captureEnabled': false }, function () {
+                        chrome.tabs.sendMessage(tabId, { action: "disableCapture" });
+                        button.textContent = "Enable Credential Capture";
+                        button.style.backgroundColor = "#4285f4";
+                    });
+                }
+            }
+        });
+    });
+
+    // Clear all credentials button
+    document.getElementById('clear-all-credentials').addEventListener('click', function () {
+        chrome.storage.sync.set({ 'savedCredentials': [] }, function () {
+            displaySavedCredentials();
+        });
+    });
+
+    // Check if capture is enabled
+    chrome.storage.sync.get('captureEnabled', function (data) {
+        if (data.captureEnabled) {
+            const button = document.getElementById('enable-capture');
+            button.textContent = "Disable Credential Capture";
+            button.style.backgroundColor = "#f44336";
+        }
+    });
+
+    // Login button and sign up link event listeners
+    const loginButton = document.getElementById('login-button');
+    const signupLink = document.getElementById('signup-link');
+
+    if (loginButton) {
+        loginButton.addEventListener('click', function () {
+            console.log('Login button clicked');
+            // TODO: Implement login functionality, possibly by opening a new tab to the login page
+            // Example: chrome.tabs.create({url: 'YOUR_LOGIN_PAGE_URL'});
+        });
+    }
+
+    if (signupLink) {
+        signupLink.addEventListener('click', function (event) {
+            event.preventDefault(); // Prevent default link behavior
+            console.log('Sign up link clicked');
+            // TODO: Implement sign-up functionality, possibly by opening a new tab to the sign-up page
+            // Example: chrome.tabs.create({url: 'YOUR_SIGNUP_PAGE_URL'});
+        });
+    }
 }

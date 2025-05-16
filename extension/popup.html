@@ -12,30 +12,68 @@
             margin: 0;
             /* Fixed dimensions for Chrome extension popup */
             width: 320px;
-            height: 400px;
+            height: 500px;
             overflow: hidden;
             /* Using a common sans-serif font stack from Tailwind as default */
             font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
-                Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+                Arial, "Noto Sans", sans-serif;
         }
     </style>
 </head>
 
-<body class="bg-indigo-950 text-white flex flex-col items-center justify-center p-6 h-full w-full">
-    <div class="text-center">
-        <h1 class="text-3xl font-bold mb-6">Fortisafe</h1>
-
-        <button id="login-button"
-            class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-12 rounded-lg text-base mb-4 shadow-md w-full">
-            Login
-        </button>
-        <p class="text-xs text-gray-400">
-            Don't have an account?
-            <a href="#" id="signup-link" class="font-medium text-blue-400 hover:text-blue-300 underline">
-                Sign up
-            </a>
-        </p>
+<body class="bg-indigo-950 text-white flex flex-col h-full w-full">
+    <!-- Profile Section -->
+    <div id="profile-section" class="p-4 border-b border-indigo-800">
+        <!-- Profile content will be inserted here by JavaScript -->
     </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 overflow-y-auto p-4">
+        <!-- Tabs -->
+        <div class="flex space-x-2 mb-4">
+            <button id="urls-tab" class="tab-button active px-4 py-2 rounded-lg bg-indigo-800 text-white">
+                URLs
+            </button>
+            <button id="credentials-tab" class="tab-button px-4 py-2 rounded-lg bg-indigo-800 text-white">
+                Credentials
+            </button>
+        </div>
+
+        <!-- URLs Tab Content -->
+        <div id="urls-content" class="tab-content active">
+            <div class="mb-4">
+                <button id="save-url"
+                    class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-sm mb-2">
+                    Save Current URL
+                </button>
+                <button id="clear-all-urls"
+                    class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg text-sm">
+                    Clear All URLs
+                </button>
+            </div>
+            <div id="url-list" class="space-y-2">
+                <!-- URLs will be listed here -->
+            </div>
+        </div>
+
+        <!-- Credentials Tab Content -->
+        <div id="credentials-content" class="tab-content hidden">
+            <div class="mb-4">
+                <button id="enable-capture"
+                    class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-sm mb-2">
+                    Enable Credential Capture
+                </button>
+                <button id="clear-all-credentials"
+                    class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg text-sm">
+                    Clear All Credentials
+                </button>
+            </div>
+            <div id="credentials-list" class="space-y-2">
+                <!-- Credentials will be listed here -->
+            </div>
+        </div>
+    </div>
+
     <script src="popup.js"></script>
 </body>
 

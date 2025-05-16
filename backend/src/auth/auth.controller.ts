@@ -135,10 +135,10 @@ export class AuthController {
           accessToken: tokenData.access_token,
           idToken: tokenData.id_token
         })}
-                  }, '${this.configService.get('EXTENSION_URL') || 'chrome-extension://cdnncolckadjidjeinhkmamanfinfhcm'}');
+                  }, '${this.configService.get('EXTENSION_URL') || 'chrome-extension://lmkkjkgocfciicgheedmnpidkdbjmmfj'}');
                   window.close();
                 } else {
-                  window.location.href = '${this.configService.get('EXTENSION_URL') || 'chrome-extension://cdnncolckadjidjeinhkmamanfinfhcm'}/auth-success?access_token=${tokenData.access_token}&id_token=${tokenData.id_token}';
+                  window.location.href = '${this.configService.get('EXTENSION_URL') || 'chrome-extension://lmkkjkgocfciicgheedmnpidkdbjmmfj'}/auth-success?access_token=${tokenData.access_token}&id_token=${tokenData.id_token}';
                 }
               </script>
             </body>
