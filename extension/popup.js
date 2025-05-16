@@ -1,4 +1,5 @@
 const BACKEND_URL = 'http://localhost:8080/api';
+const BACKEND_ORIGIN = 'http://localhost:8080';
 
 // Function to get the current active tab URL
 function getCurrentTabUrl(callback) {
@@ -13,28 +14,113 @@ function getCurrentTabUrl(callback) {
 
 // Load saved data when popup opens
 document.addEventListener('DOMContentLoaded', function () {
-    // Check authentication state
-    chrome.storage.local.get(['access_token', 'userProfile'], function (result) {
-        if (!result.access_token) {
-            // If not authenticated, show login page
-            window.location.href = 'login.html';
+    console.log('[DEBUG] DOMContentLoaded');
+    // Listen for messages from the Auth0 callback
+    window.addEventListener('message', function (event) {
+        console.log('[DEBUG] Received message:', event.data, 'from origin:', event.origin);
+        // Verify the origin of the message
+        if (event.origin !== BACKEND_ORIGIN) {
+            console.log('[DEBUG] Invalid origin:', event.origin, 'Expected:', BACKEND_ORIGIN);
             return;
         }
 
-        // If authenticated, show main content
-        setupTabs();
-        displaySavedUrls();
-        displaySavedCredentials();
-        displayUserProfile(result.userProfile);
+        if (event.data.type === 'auth-success') {
+            console.log('[DEBUG] Auth success received:', event.data);
+            const { user } = event.data;
+            const accessToken = user.accessToken;
+            const idToken = user.idToken;
 
-        // Setup event listeners
-        setupEventListeners();
+            // Store tokens in localStorage
+            localStorage.setItem('access_token', accessToken);
+            localStorage.setItem('id_token', idToken);
+            console.log('[DEBUG] Tokens stored in localStorage:', { accessToken, idToken });
+            // Fetch and store user profile
+            (async () => {
+                try {
+                    console.log('[DEBUG] Fetching user profile with token:', accessToken);
+                    const profile = await getUserProfile(accessToken);
+                    console.log('[DEBUG] Fetched user profile:', profile);
+                    localStorage.setItem('userProfile', JSON.stringify(profile));
+                    console.log('[DEBUG] User profile stored in localStorage');
+                    window.location.reload();
+                } catch (error) {
+                    console.error('[DEBUG] Failed to fetch or store user profile:', error);
+                    showError('Failed to fetch user profile after login.');
+                }
+            })();
+        }
+    });
+
+    // Check authentication state
+    const access_token = localStorage.getItem('access_token');
+    const userProfile = JSON.parse(localStorage.getItem('userProfile') || 'null');
+    console.log('[DEBUG] Checking authentication state:', { access_token, userProfile });
+    if (!access_token) {
+        // If not authenticated, show login button
+        document.getElementById('profile-section').innerHTML = '';
+        document.getElementById('go-login-section').classList.remove('hidden');
+        document.getElementById('go-login-button').addEventListener('click', function () {
+            console.log('[DEBUG] Go to Login button clicked');
+            // Open Auth0 login in a popup window
+            const width = 500;
+            const height = 600;
+            const left = (screen.width - width) / 2;
+            const top = (screen.height - height) / 2;
+            const popup = window.open(
+                `${BACKEND_URL}/auth/login?client=extension`,
+                'Auth0 Login',
+                `width=${width},height=${height},left=${left},top=${top}`
+            );
+            // Check if popup was blocked
+            if (!popup) {
+                showError('Please allow popups for this extension');
+            } else {
+                console.log('[DEBUG] Auth0 login popup opened');
+            }
+            // Listen for popup close
+            const checkPopup = setInterval(() => {
+                if (popup.closed) {
+                    clearInterval(checkPopup);
+                    console.log('[DEBUG] Auth0 login popup closed');
+                    // Check if we have tokens after popup closes
+                    const access_token = localStorage.getItem('access_token');
+                    console.log('[DEBUG] After popup close, access_token:', access_token);
+                    if (access_token) {
+                        window.location.reload();
+                    }
+                }
+            }, 500);
+        });
+        return;
+    } else {
+        document.getElementById('go-login-section').classList.add('hidden');
+    }
+
+    // If authenticated, show main content
+    console.log('[DEBUG] User is authenticated, showing main content');
+    setupTabs();
+    displaySavedUrls();
+    displaySavedCredentials();
+    displayUserProfile(userProfile);
+
+    // Setup event listeners
+    setupEventListeners();
+
+    // Persistent logout button
+    document.getElementById('persistent-logout-button').addEventListener('click', function () {
+        console.log('[DEBUG] Persistent logout button clicked');
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('id_token');
+        localStorage.removeItem('userProfile');
+        console.log('[DEBUG] Cleared tokens and user profile from localStorage (persistent logout)');
+        window.location.reload();
     });
 });
 
 function displayUserProfile(profile) {
     const profileSection = document.getElementById('profile-section');
     if (profileSection && profile) {
+        console.log('[DEBUG] Displaying user profile:', profile);
         profileSection.innerHTML = `
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
@@ -44,7 +130,7 @@ function displayUserProfile(profile) {
                         <p class="text-sm text-gray-400">${profile.email}</p>
                     </div>
                 </div>
-                <button id="logout-button" class="text-sm text-red-400 hover:text-red-300">
+                <button id="logout-button" class="text-sm text-red-400 hover:text-red-300 bg-transparent border-none cursor-pointer">
                     Logout
                 </button>
             </div>
@@ -55,24 +141,46 @@ function displayUserProfile(profile) {
     }
 }
 
-async function handleLogout() {
+function handleLogout() {
+    console.log('[DEBUG] Logout button clicked');
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('id_token');
+    localStorage.removeItem('userProfile');
+    console.log('[DEBUG] Cleared tokens and user profile from localStorage');
+    // Reload popup to show login button
+    // Clear local storage
+    chrome.storage.local.remove(['access_token', 'id_token', 'userProfile'], function () {
+        console.log('[DEBUG] Cleared tokens and user profile from chrome.storage.local');
+        // Reload popup to show login button
+        window.location.reload();
+    });
+}
+
+async function getUserProfile(token) {
     try {
-        const response = await fetch(`${BACKEND_URL}/auth/logout`, {
-            method: 'POST',
+        console.log('[DEBUG] Fetching user profile with token:', token);
+        const response = await fetch(`${BACKEND_URL}/auth/profile`, {
             headers: {
-                'Authorization': `Bearer ${await getToken()}`,
+                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
             },
         });
-
-        // Clear local storage
-        await chrome.storage.local.remove(['access_token', 'id_token', 'userProfile']);
-
-        // Redirect to login page
-        window.location.href = 'login.html';
+        if (!response.ok) {
+            console.error('[DEBUG] Profile fetch failed:', response.status, response.statusText);
+            throw new Error('Failed to get user profile');
+        }
+        const profile = await response.json();
+        console.log('[DEBUG] Profile fetch response:', profile);
+        return profile;
     } catch (error) {
-        console.error('Logout failed:', error);
+        console.error('[DEBUG] Error in getUserProfile:', error);
+        throw error;
     }
+}
+
+function showError(message) {
+    console.error('[DEBUG] showError:', message);
+    alert(message);
 }
 
 async function getToken() {

@@ -22,9 +22,25 @@
 </head>
 
 <body class="bg-indigo-950 text-white flex flex-col h-full w-full">
+    <!-- Header with persistent logout button -->
+    <div class="flex justify-end items-center p-2 border-b border-indigo-800">
+        <button id="persistent-logout-button"
+            class="text-sm text-red-400 hover:text-red-300 bg-transparent border-none cursor-pointer font-bold">
+            Logout
+        </button>
+    </div>
+
     <!-- Profile Section -->
     <div id="profile-section" class="p-4 border-b border-indigo-800">
         <!-- Profile content will be inserted here by JavaScript -->
+    </div>
+
+    <!-- Go to Login Button (hidden by default) -->
+    <div id="go-login-section" class="p-4 border-b border-indigo-800 hidden text-center">
+        <button id="go-login-button"
+            class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-base shadow-md">
+            Go to Login
+        </button>
     </div>
 
     <!-- Main Content -->
