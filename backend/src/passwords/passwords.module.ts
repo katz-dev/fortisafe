@@ -7,7 +7,9 @@ import { Password, PasswordSchema } from './entities/password.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Password.name, schema: PasswordSchema }]),
+    MongooseModule.forFeature([
+      { name: Password.name, schema: PasswordSchema },
+    ]),
     ConfigModule,
   ],
   controllers: [PasswordsController],

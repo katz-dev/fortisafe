@@ -1,20 +1,38 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { ScannerService } from './scanner.service';
 import { CreateScannerDto } from './dto/create-scanner.dto';
 import { UpdateScannerDto } from './dto/update-scanner.dto';
 import { ScanResultDto } from './dto/scan-result.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiBody,
+} from '@nestjs/swagger';
 
 @ApiTags('scanner')
 @ApiBearerAuth('JWT-auth')
 @UseGuards(JwtAuthGuard)
 @Controller('scanner')
 export class ScannerController {
-  constructor(private readonly scannerService: ScannerService) { }
+  constructor(private readonly scannerService: ScannerService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Scan URLs, passwords, or emails for security threats' })
+  @ApiOperation({
+    summary: 'Scan URLs, passwords, or emails for security threats',
+  })
   @ApiResponse({
     status: 201,
     description: 'The scan has been successfully performed.',
@@ -26,7 +44,9 @@ export class ScannerController {
   }
 
   @Post('scan-saved-passwords')
-  @ApiOperation({ summary: 'Scan all saved passwords for the authenticated user' })
+  @ApiOperation({
+    summary: 'Scan all saved passwords for the authenticated user',
+  })
   @ApiResponse({
     status: 201,
     description: 'The scan has been successfully performed.',

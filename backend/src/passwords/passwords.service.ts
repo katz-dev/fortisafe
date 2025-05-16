@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as crypto from 'crypto';
@@ -19,7 +23,9 @@ export class PasswordsService {
     // Get encryption key from environment variables
     const key = this.configService.get<string>('PASSWORD_ENCRYPTION_KEY');
     if (!key) {
-      throw new Error('PASSWORD_ENCRYPTION_KEY is not defined in environment variables');
+      throw new Error(
+        'PASSWORD_ENCRYPTION_KEY is not defined in environment variables',
+      );
     }
     // Create a fixed-length key using SHA-256
     this.encryptionKey = crypto.createHash('sha256').update(key).digest();
@@ -27,7 +33,11 @@ export class PasswordsService {
 
   private encrypt(text: string): string {
     const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipheriv(this.algorithm, this.encryptionKey, iv);
+    const cipher = crypto.createCipheriv(
+      this.algorithm,
+      this.encryptionKey,
+      iv,
+    );
     let encrypted = cipher.update(text, 'utf8', 'hex');
     encrypted += cipher.final('hex');
     return `${iv.toString('hex')}:${encrypted}`;
@@ -51,7 +61,11 @@ export class PasswordsService {
   private decryptAES(encryptedText: string): string {
     const [ivHex, encryptedHex] = encryptedText.split(':');
     const iv = Buffer.from(ivHex, 'hex');
-    const decipher = crypto.createDecipheriv(this.algorithm, this.encryptionKey, iv);
+    const decipher = crypto.createDecipheriv(
+      this.algorithm,
+      this.encryptionKey,
+      iv,
+    );
     let decrypted = decipher.update(encryptedHex, 'hex', 'utf8');
     decrypted += decipher.final('utf8');
     return decrypted;
@@ -60,7 +74,7 @@ export class PasswordsService {
   async create(
     userId: string,
     createPasswordDto: CreatePasswordDto,
-    userEmail?: string
+    userEmail?: string,
   ): Promise<PasswordDocument> {
     // Encrypt the password before storing
     const encryptedPassword = this.encrypt(createPasswordDto.password);
@@ -73,7 +87,9 @@ export class PasswordsService {
       lastUpdated: createPasswordDto.lastUpdated || new Date(),
     });
 
-    console.log(`[PasswordsService] Creating password for user ID: ${userId}, Email: ${userEmail}`);
+    console.log(
+      `[PasswordsService] Creating password for user ID: ${userId}, Email: ${userEmail}`,
+    );
     return newPassword.save();
   }
 
@@ -93,13 +109,19 @@ export class PasswordsService {
     const requestUserId = userId.toString();
     console.log(`Comparing: "${passwordUserId}" === "${requestUserId}"`);
     if (passwordUserId !== requestUserId) {
-      throw new UnauthorizedException('You do not have permission to access this password');
+      throw new UnauthorizedException(
+        'You do not have permission to access this password',
+      );
     }
 
     return password;
   }
 
-  async update(userId: string, id: string, updatePasswordDto: UpdatePasswordDto): Promise<PasswordDocument> {
+  async update(
+    userId: string,
+    id: string,
+    updatePasswordDto: UpdatePasswordDto,
+  ): Promise<PasswordDocument> {
     // First check if the password exists and belongs to the user
     await this.findOne(userId, id);
 
@@ -117,7 +139,9 @@ export class PasswordsService {
       .exec();
 
     if (!updatedPassword) {
-      throw new NotFoundException(`Password with ID ${id} not found after update`);
+      throw new NotFoundException(
+        `Password with ID ${id} not found after update`,
+      );
     }
 
     return updatedPassword;
@@ -127,10 +151,14 @@ export class PasswordsService {
     // First check if the password exists and belongs to the user
     await this.findOne(userId, id);
 
-    const deletedPassword = await this.passwordModel.findByIdAndDelete(id).exec();
+    const deletedPassword = await this.passwordModel
+      .findByIdAndDelete(id)
+      .exec();
 
     if (!deletedPassword) {
-      throw new NotFoundException(`Password with ID ${id} not found after deletion`);
+      throw new NotFoundException(
+        `Password with ID ${id} not found after deletion`,
+      );
     }
 
     return deletedPassword;

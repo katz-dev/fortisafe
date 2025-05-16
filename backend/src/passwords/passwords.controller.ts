@@ -8,7 +8,7 @@ import {
   Delete,
   UseGuards,
   Request,
-  HttpStatus
+  HttpStatus,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -16,7 +16,7 @@ import {
   ApiResponse,
   ApiParam,
   ApiBearerAuth,
-  ApiBody
+  ApiBody,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { PasswordsService } from './passwords.service';
@@ -29,16 +29,19 @@ import { Password } from './entities/password.schema';
 @UseGuards(JwtAuthGuard)
 @Controller('passwords')
 export class PasswordsController {
-  constructor(private readonly passwordsService: PasswordsService) { }
+  constructor(private readonly passwordsService: PasswordsService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new password entry' })
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'The password has been successfully created.',
-    type: Password
+    type: Password,
   })
-  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized.' })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized.',
+  })
   @ApiBody({ type: CreatePasswordDto })
   create(@Request() req, @Body() createPasswordDto: CreatePasswordDto) {
     return this.passwordsService.create(req.user.userId, createPasswordDto);
@@ -49,9 +52,12 @@ export class PasswordsController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'List of all passwords for the user.',
-    type: [Password]
+    type: [Password],
   })
-  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized.' })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized.',
+  })
   findAll(@Request() req) {
     return this.passwordsService.findAll(req.user.userId);
   }
@@ -62,10 +68,16 @@ export class PasswordsController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'The password entry.',
-    type: Password
+    type: Password,
   })
-  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Password not found.' })
-  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized.' })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Password not found.',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized.',
+  })
   findOne(@Request() req, @Param('id') id: string) {
     return this.passwordsService.findOne(req.user.userId, id);
   }
@@ -77,14 +89,20 @@ export class PasswordsController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'The password has been successfully updated.',
-    type: Password
+    type: Password,
   })
-  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Password not found.' })
-  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized.' })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Password not found.',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized.',
+  })
   update(
     @Request() req,
     @Param('id') id: string,
-    @Body() updatePasswordDto: UpdatePasswordDto
+    @Body() updatePasswordDto: UpdatePasswordDto,
   ) {
     return this.passwordsService.update(req.user.userId, id, updatePasswordDto);
   }
@@ -95,10 +113,16 @@ export class PasswordsController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'The password has been successfully deleted.',
-    type: Password
+    type: Password,
   })
-  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Password not found.' })
-  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized.' })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Password not found.',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized.',
+  })
   remove(@Request() req, @Param('id') id: string) {
     return this.passwordsService.remove(req.user.userId, id);
   }
@@ -114,15 +138,24 @@ export class PasswordsController {
       properties: {
         password: {
           type: 'string',
-          example: 'MySecurePassword123!'
-        }
-      }
-    }
+          example: 'MySecurePassword123!',
+        },
+      },
+    },
   })
-  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Password not found.' })
-  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized.' })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Password not found.',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized.',
+  })
   async getDecryptedPassword(@Request() req, @Param('id') id: string) {
-    const decryptedPassword = await this.passwordsService.decryptPassword(req.user.userId, id);
+    const decryptedPassword = await this.passwordsService.decryptPassword(
+      req.user.userId,
+      id,
+    );
     return { password: decryptedPassword };
   }
 }

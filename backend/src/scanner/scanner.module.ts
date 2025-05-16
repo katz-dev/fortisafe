@@ -5,12 +5,9 @@ import { ConfigModule } from '@nestjs/config';
 import { PasswordsModule } from '../passwords/passwords.module';
 
 @Module({
-  imports: [
-    ConfigModule,
-    PasswordsModule
-  ],
+  imports: [ConfigModule, PasswordsModule],
   controllers: [ScannerController],
   providers: [ScannerService],
-  exports: [ScannerService]
+  exports: [ScannerService],
 })
-export class ScannerModule { }
+export class ScannerModule {}

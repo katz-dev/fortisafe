@@ -77,19 +77,6 @@ document.addEventListener('DOMContentLoaded', function () {
             } else {
                 console.log('[DEBUG] Auth0 login popup opened');
             }
-            // Listen for popup close
-            const checkPopup = setInterval(() => {
-                if (popup.closed) {
-                    clearInterval(checkPopup);
-                    console.log('[DEBUG] Auth0 login popup closed');
-                    // Check if we have tokens after popup closes
-                    const access_token = localStorage.getItem('access_token');
-                    console.log('[DEBUG] After popup close, access_token:', access_token);
-                    if (access_token) {
-                        window.location.reload();
-                    }
-                }
-            }, 500);
         });
         return;
     } else {
@@ -117,17 +104,57 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
+// Add listener for messages from auth-success.js
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    console.log('[DEBUG] Message received in popup.js:', message);
+    if (message.type === 'auth-success') {
+        console.log('[DEBUG] Auth success message received:', message.data);
+        const { user, accessToken, idToken } = message.data;
+
+        // Store tokens and profile (similar to how it was planned before)
+        localStorage.setItem('access_token', accessToken);
+        localStorage.setItem('id_token', idToken);
+        localStorage.setItem('userProfile', JSON.stringify(user));
+
+        // Also store in chrome.storage.local for persistence across extension contexts if needed
+        chrome.storage.local.set({
+            access_token: accessToken,
+            id_token: idToken,
+            userProfile: user
+        }, () => {
+            console.log('[DEBUG] Tokens and profile stored in chrome.storage.local from popup');
+        });
+
+        // Close the Auth0 popup window
+        // We need the 'popup' variable from the scope where window.open was called.
+        // This event listener is outside that scope. We need to make 'popup' accessible here or handle closing differently.
+        // For now, we assume auth-success.js closes itself. If not, this needs addressing.
+        // The auth-success.js was modified to call window.close()
+
+        console.log('[DEBUG] Reloading popup window after auth success');
+        window.location.reload();
+        
+        // Acknowledge the message
+        sendResponse({ status: "success", message: "Popup received auth details and is reloading." });
+        return true; // Indicates that sendResponse will be called asynchronously (although we call it sync here)
+    }
+});
+
 function displayUserProfile(profile) {
     const profileSection = document.getElementById('profile-section');
     if (profileSection && profile) {
-        console.log('[DEBUG] Displaying user profile:', profile);
+        // Ensure profile.user and profile.auth0Profile exist
+        const userDetails = profile.user || {};
+        const auth0Details = profile.auth0Profile || {};
+
+        console.log('[DEBUG] Displaying user profile with new structure:', profile);
         profileSection.innerHTML = `
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
-                    <img src="${profile.picture || 'default-avatar.png'}" alt="Profile" class="w-10 h-10 rounded-full">
+                    <img src="${auth0Details.picture || 'default-avatar.png'}" alt="Profile" class="w-10 h-10 rounded-full">
                     <div>
-                        <p class="font-medium">${profile.firstName} ${profile.lastName}</p>
-                        <p class="text-sm text-gray-400">${profile.email}</p>
+                        <p class="font-medium">${userDetails.firstName || auth0Details.given_name || 'N/A'} ${userDetails.lastName || auth0Details.family_name || ''}</p>
+                        <p class="text-sm text-gray-400">${userDetails.email || auth0Details.email || 'No email'}</p>
                     </div>
                 </div>
                 <button id="logout-button" class="text-sm text-red-400 hover:text-red-300 bg-transparent border-none cursor-pointer">

@@ -40,21 +40,41 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.log('Profile stored');
 
                 // Try to send message to opener window
-                if (window.opener) {
-                    console.log('Sending message to opener window');
-                    window.opener.postMessage({
-                        type: 'auth-success',
+                // if (window.opener) {
+                //     console.log('Sending message to opener window');
+                //     window.opener.postMessage({
+                //         type: 'auth-success',
+                //         user: profile,
+                //         accessToken,
+                //         idToken
+                //     }, BACKEND_URL); // This targetOrigin was incorrect
+                // }
+                console.log('Sending auth-success message to runtime');
+                chrome.runtime.sendMessage({
+                    type: 'auth-success',
+                    data: {
                         user: profile,
                         accessToken,
                         idToken
-                    }, BACKEND_URL);
-                }
+                    }
+                }, function(response) {
+                    if (chrome.runtime.lastError) {
+                        console.warn("Auth-success message sending failed or no listener:", chrome.runtime.lastError.message);
+                    } else {
+                        console.log("Auth-success message acknowledged by listener:", response);
+                    }
+                    // Close this window after sending the message and getting an ack (or erroring)
+                    // The timeout was just for showing success before closing.
+                    // Now popup.js will handle the UI update and closing the auth window.
+                    console.log('Closing auth-success window.');
+                    window.close(); 
+                });
 
                 // Close this window and open the main popup
-                setTimeout(() => {
-                    window.close();
-                    chrome.action.openPopup();
-                }, 1000);
+                // setTimeout(() => {
+                //     window.close();
+                //     chrome.action.openPopup();
+                // }, 1000);
             } catch (error) {
                 console.error('Failed to get user profile:', error);
                 showError('Failed to get user profile. Please try again.');

@@ -30,4 +30,4 @@ import { ScannerModule } from './scanner/scanner.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

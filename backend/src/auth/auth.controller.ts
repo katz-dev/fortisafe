@@ -23,7 +23,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
     private readonly userService: UsersService,
-  ) { }
+  ) {}
 
   @Get('login')
   @ApiOperation({ summary: 'Redirect to Auth0 login page' })
@@ -57,7 +57,11 @@ export class AuthController {
     status: 302,
     description: 'Redirect with token and user data',
   })
-  async callback(@Query('code') code: string, @Query('state') state: string, @Res() res: Response) {
+  async callback(
+    @Query('code') code: string,
+    @Query('state') state: string,
+    @Res() res: Response,
+  ) {
     try {
       // Exchange authorization code for tokens
       const tokenResponse = await fetch(
@@ -127,14 +131,14 @@ export class AuthController {
                   window.opener.postMessage({
                     type: 'auth-success',
                     user: ${JSON.stringify({
-          id: user._id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          picture: user.picture,
-          accessToken: tokenData.access_token,
-          idToken: tokenData.id_token
-        })}
+                      id: user._id,
+                      email: user.email,
+                      firstName: user.firstName,
+                      lastName: user.lastName,
+                      picture: user.picture,
+                      accessToken: tokenData.access_token,
+                      idToken: tokenData.id_token,
+                    })}
                   }, '${this.configService.get('EXTENSION_URL') || 'chrome-extension://lmkkjkgocfciicgheedmnpidkdbjmmfj'}');
                   window.close();
                 } else {
@@ -172,7 +176,9 @@ export class AuthController {
   @ApiOperation({ summary: 'Logout from Auth0' })
   @ApiResponse({ status: 302, description: 'Redirect to Auth0 logout' })
   logout(@Res() res: Response) {
-    const returnTo = encodeURIComponent(this.configService.get('FRONTEND_URL') || '');
+    const returnTo = encodeURIComponent(
+      this.configService.get('FRONTEND_URL') || '',
+    );
     const logoutUrl = `https://${this.configService.get('AUTH0_DOMAIN')}/v2/logout?client_id=${this.configService.get('AUTH0_CLIENT_ID')}&returnTo=${returnTo}`;
     return res.redirect(logoutUrl);
   }

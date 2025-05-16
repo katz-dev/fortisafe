@@ -1,1 +1,1 @@
-export class Scanner { }
+export class Scanner {}

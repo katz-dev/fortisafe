@@ -1,1 +1,1 @@
-export class Password { }
+export class Password {}
