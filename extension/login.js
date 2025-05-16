@@ -1,4 +1,5 @@
 const BACKEND_URL = 'http://localhost:8080/api';
+const BACKEND_ORIGIN = 'http://localhost:8080';
 
 document.addEventListener('DOMContentLoaded', function () {
     const loginButton = document.getElementById('login-button');
@@ -25,24 +26,37 @@ document.addEventListener('DOMContentLoaded', function () {
     window.addEventListener('message', function (event) {
         console.log('Received message:', event.data);
         // Verify the origin of the message
-        if (event.origin !== BACKEND_URL) {
+        if (event.origin !== BACKEND_ORIGIN) {
             console.log('Invalid origin:', event.origin);
             return;
         }
 
         if (event.data.type === 'auth-success') {
             console.log('Auth success received:', event.data);
-            const { user, accessToken, idToken } = event.data;
+            const { user } = event.data;
+            const accessToken = user.accessToken;
+            const idToken = user.idToken;
 
-            // Store tokens and user data
+            // Store tokens in Chrome storage
             chrome.storage.local.set({
                 access_token: accessToken,
-                id_token: idToken,
-                userProfile: user
-            }, function () {
-                console.log('Stored auth data, redirecting to popup');
-                // Redirect to main popup
-                window.location.href = 'popup.html';
+                id_token: idToken
+            }, async function () {
+                console.log('Tokens stored in chrome.storage.local');
+                try {
+                    console.log('Fetching user profile with token:', accessToken);
+                    // Fetch user profile using accessToken
+                    const profile = await getUserProfile(accessToken);
+                    console.log('Fetched user profile:', profile);
+                    // Store user profile in Chrome storage
+                    await chrome.storage.local.set({ userProfile: profile });
+                    console.log('User profile stored in chrome.storage.local');
+                    // Redirect to main popup
+                    window.location.href = 'popup.html';
+                } catch (error) {
+                    console.error('Failed to fetch or store user profile:', error);
+                    showError('Failed to fetch user profile after login.');
+                }
             });
         }
     });
