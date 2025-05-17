@@ -342,7 +342,10 @@ async function displaySavedCredentials() {
             localSection.className = 'local-section mb-4';
             localSection.innerHTML = '<h3 class="text-orange-400 mb-2">Local Credentials</h3>';
 
-            localCredentials.forEach((credential, index) => {
+            // Get access token for duplicate checking
+            const accessToken = await getToken();
+
+            for (const credential of localCredentials) {
                 const credentialItem = document.createElement('div');
                 credentialItem.className = 'credential-item bg-orange-900/20 mb-2 p-2 rounded';
 
@@ -399,18 +402,10 @@ async function displaySavedCredentials() {
                 const actionButtons = document.createElement('div');
                 actionButtons.className = 'flex gap-2 mt-2';
 
-                // Check duplicate button
-                const checkDuplicateBtn = document.createElement('button');
-                checkDuplicateBtn.className = 'check-duplicate-btn bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm';
-                checkDuplicateBtn.textContent = 'Check Duplicate';
-                checkDuplicateBtn.addEventListener('click', async () => {
+                // Check if credential exists in backend
+                let existsInBackend = false;
+                if (accessToken) {
                     try {
-                        const accessToken = await getToken();
-                        if (!accessToken) {
-                            alert('Please login first');
-                            return;
-                        }
-
                         const website = getMainUrl(credential.url);
                         const response = await fetch(
                             `${BACKEND_URL}/passwords/check-duplicate?website=${encodeURIComponent(website)}&username=${encodeURIComponent(credential.username)}`,
@@ -422,71 +417,35 @@ async function displaySavedCredentials() {
                             }
                         );
 
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-
-                        const { exists } = await response.json();
-                        if (exists) {
-                            alert('These credentials already exist in your vault.');
-                        } else {
-                            alert('No duplicate found. You can save these credentials to your vault.');
+                        if (response.ok) {
+                            const { exists } = await response.json();
+                            existsInBackend = exists;
                         }
                     } catch (error) {
                         console.error('Error checking duplicate:', error);
-                        alert('Failed to check for duplicates. Please try again.');
                     }
-                });
+                }
 
                 // Save to MongoDB button
                 const saveToMongoBtn = document.createElement('button');
                 saveToMongoBtn.className = 'save-to-mongo-btn bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm';
-                saveToMongoBtn.textContent = 'Save to Vault';
-                saveToMongoBtn.addEventListener('click', async () => {
-                    try {
-                        const accessToken = await getToken();
-                        if (!accessToken) {
-                            alert('Please login first');
-                            return;
+                saveToMongoBtn.textContent = existsInBackend ? 'Already in Vault' : 'Save to Vault';
+                saveToMongoBtn.disabled = existsInBackend;
+                if (!existsInBackend) {
+                    saveToMongoBtn.addEventListener('click', async () => {
+                        const success = await saveLocalCredentialToMongo(credential);
+                        if (success) {
+                            displaySavedCredentials();
                         }
+                    });
+                }
 
-                        const website = getMainUrl(credential.url);
-                        const response = await fetch(`${BACKEND_URL}/passwords`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${accessToken}`
-                            },
-                            body: JSON.stringify({
-                                website: website,
-                                username: credential.username,
-                                password: credential.password,
-                                lastUpdated: new Date().toISOString(),
-                                notes: 'Saved from local storage',
-                                tags: ['local']
-                            })
-                        });
-
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-
-                        alert('Credentials saved to vault successfully!');
-                        // Refresh the display
-                        displaySavedCredentials();
-                    } catch (error) {
-                        console.error('Error saving to MongoDB:', error);
-                        alert('Failed to save credentials. Please try again.');
-                    }
-                });
-
-                actionButtons.appendChild(checkDuplicateBtn);
                 actionButtons.appendChild(saveToMongoBtn);
 
                 credentialItem.appendChild(credentialInfo);
                 credentialItem.appendChild(actionButtons);
                 localSection.appendChild(credentialItem);
-            });
+            }
 
             credentialsList.appendChild(localSection);
         }
@@ -873,15 +832,23 @@ function setupEventListeners() {
 
     // Add toggle button for manual save form
     const toggleManualBtn = document.getElementById('toggle-manual-form');
-    if (toggleManualBtn && manualForm) {
-        toggleManualBtn.addEventListener('click', function () {
-            if (manualForm.style.display === 'none' || manualForm.style.display === '') {
-                manualForm.style.display = 'block';
-                toggleManualBtn.textContent = '− Hide Credential Form';
-            } else {
-                manualForm.style.display = 'none';
-                toggleManualBtn.textContent = '+ Add Credential';
-            }
+    const manualSaveForm = document.getElementById('manual-save-form');
+    const manualCancelBtn = document.getElementById('manual-cancel-btn');
+
+    if (toggleManualBtn) {
+        toggleManualBtn.addEventListener('click', () => {
+            manualSaveForm.style.display = manualSaveForm.style.display === 'none' ? 'block' : 'none';
+        });
+    }
+
+    if (manualCancelBtn) {
+        manualCancelBtn.addEventListener('click', () => {
+            // Clear the form fields
+            document.getElementById('manual-website').value = '';
+            document.getElementById('manual-username').value = '';
+            document.getElementById('manual-password').value = '';
+            // Hide the form
+            manualSaveForm.style.display = 'none';
         });
     }
 }
@@ -1068,85 +1035,164 @@ function setupWebsiteSuggestions() {
 }
 
 async function savePendingCredential(idx) {
-    chrome.storage.sync.get('pendingCredentials', async function (data) {
-        let pendingCredentials = data.pendingCredentials || [];
-        const cred = pendingCredentials[idx];
-
-        // 1. Get access token
-        const accessToken = await new Promise((resolve) => {
-            chrome.storage.local.get(['access_token'], (result) => {
-                resolve(result.access_token);
-            });
-        });
-
-        // 2. Fetch all credentials from backend
-        const response = await fetch('http://localhost:8080/api/passwords', {
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-        });
-        const allCreds = await response.json();
-
-        // 3. Check for duplicate (by website and username)
-        const exists = allCreds.some(c =>
-            c.website === cred.url && c.username === cred.username
-        );
-        if (exists) {
-            alert('Credential already exists in backend.');
-            // Optionally remove from pending
-            pendingCredentials.splice(idx, 1);
-            chrome.storage.sync.set({ 'pendingCredentials': pendingCredentials }, renderPendingCredentials);
+    try {
+        // Get access token
+        const accessToken = await getToken();
+        if (!accessToken) {
+            alert('Please login first');
             return;
         }
 
-        // 4. Save to backend
-        const saveResp = await fetch('http://localhost:8080/api/passwords', {
+        // Get pending credentials
+        const pendingCredentials = await new Promise((resolve) => {
+            chrome.storage.sync.get('pendingCredentials', (data) => {
+                resolve(data.pendingCredentials || []);
+            });
+        });
+
+        if (!pendingCredentials[idx]) {
+            console.error('Pending credential not found');
+            return;
+        }
+
+        const cred = pendingCredentials[idx];
+        const website = getMainUrl(cred.url);
+
+        // Check for duplicates first
+        const duplicateCheckResponse = await fetch(
+            `${BACKEND_URL}/passwords/check-duplicate?website=${encodeURIComponent(website)}&username=${encodeURIComponent(cred.username)}`,
+            {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            }
+        );
+
+        if (!duplicateCheckResponse.ok) {
+            throw new Error(`HTTP error! status: ${duplicateCheckResponse.status}`);
+        }
+
+        const { exists } = await duplicateCheckResponse.json();
+        if (exists) {
+            alert('These credentials already exist in your vault.');
+            // Remove from pending since it's already in the vault
+            pendingCredentials.splice(idx, 1);
+            chrome.storage.sync.set({ 'pendingCredentials': pendingCredentials }, () => {
+                displaySavedCredentials();
+            });
+            return;
+        }
+
+        // Save to backend
+        const saveResponse = await fetch(`${BACKEND_URL}/passwords`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${accessToken}`
             },
             body: JSON.stringify({
-                website: cred.url,
+                website: website,
                 username: cred.username,
                 password: cred.password,
-                lastUpdated: new Date().toISOString()
+                lastUpdated: new Date().toISOString(),
+                notes: 'Saved from pending credentials',
+                tags: ['pending']
             })
         });
 
-        if (saveResp.ok) {
-            // Remove from pending
-            pendingCredentials.splice(idx, 1);
-            chrome.storage.sync.set({ 'pendingCredentials': pendingCredentials }, renderPendingCredentials);
-            alert('Credential saved to backend!');
-        } else {
-            alert('Failed to save credential.');
+        if (!saveResponse.ok) {
+            throw new Error(`HTTP error! status: ${saveResponse.status}`);
         }
-    });
-}
 
-function renderPendingCredentials() {
-    chrome.storage.sync.get('pendingCredentials', function (data) {
-        const pending = data.pendingCredentials || [];
-        const container = document.getElementById('pending-credentials-list');
-        container.innerHTML = '';
-        pending.forEach((cred, idx) => {
-            const div = document.createElement('div');
-            div.innerHTML = `
-                <div>
-                    <strong>Website:</strong> ${cred.url}<br>
-                    <strong>Username:</strong> ${cred.username}<br>
-                    <strong>Password:</strong> ••••••<br>
-                    <span style="color: orange;">Pending Save</span>
-                    <button data-idx="${idx}">Save</button>
-                </div>
-            `;
-            container.appendChild(div);
-        });
-        // Add event listeners for save buttons
-        container.querySelectorAll('button').forEach(btn => {
-            btn.addEventListener('click', function () {
-                const idx = this.getAttribute('data-idx');
-                savePendingCredential(idx);
+        // Remove from pending credentials
+        pendingCredentials.splice(idx, 1);
+        chrome.storage.sync.set({ 'pendingCredentials': pendingCredentials }, () => {
+            // Also remove from local saved credentials if it exists there
+            chrome.storage.sync.get('savedCredentials', (data) => {
+                let savedCredentials = data.savedCredentials || [];
+                savedCredentials = savedCredentials.filter(c =>
+                    !(c.url === cred.url && c.username === cred.username)
+                );
+                chrome.storage.sync.set({ 'savedCredentials': savedCredentials }, () => {
+                    displaySavedCredentials();
+                });
             });
         });
-    });
+
+        alert('Credential saved to vault successfully!');
+    } catch (error) {
+        console.error('Error saving pending credential:', error);
+        alert('Failed to save credential. Please try again.');
+    }
+}
+
+// Add function to handle saving local credentials to MongoDB
+async function saveLocalCredentialToMongo(credential) {
+    try {
+        const accessToken = await getToken();
+        if (!accessToken) {
+            alert('Please login first');
+            return false;
+        }
+
+        const website = getMainUrl(credential.url);
+
+        // Check for duplicates first
+        const duplicateCheckResponse = await fetch(
+            `${BACKEND_URL}/passwords/check-duplicate?website=${encodeURIComponent(website)}&username=${encodeURIComponent(credential.username)}`,
+            {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            }
+        );
+
+        if (!duplicateCheckResponse.ok) {
+            throw new Error(`HTTP error! status: ${duplicateCheckResponse.status}`);
+        }
+
+        const { exists } = await duplicateCheckResponse.json();
+        if (exists) {
+            alert('These credentials already exist in your vault.');
+            return false;
+        }
+
+        // Save to backend
+        const saveResponse = await fetch(`${BACKEND_URL}/passwords`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            },
+            body: JSON.stringify({
+                website: website,
+                username: credential.username,
+                password: credential.password,
+                lastUpdated: new Date().toISOString(),
+                notes: 'Saved from local storage',
+                tags: ['local']
+            })
+        });
+
+        if (!saveResponse.ok) {
+            throw new Error(`HTTP error! status: ${saveResponse.status}`);
+        }
+
+        // Remove from local saved credentials
+        chrome.storage.sync.get('savedCredentials', (data) => {
+            let savedCredentials = data.savedCredentials || [];
+            savedCredentials = savedCredentials.filter(c =>
+                !(c.url === credential.url && c.username === credential.username)
+            );
+            chrome.storage.sync.set({ 'savedCredentials': savedCredentials });
+        });
+
+        return true;
+    } catch (error) {
+        console.error('Error saving local credential to MongoDB:', error);
+        alert('Failed to save credential. Please try again.');
+        return false;
+    }
 }

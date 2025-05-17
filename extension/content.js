@@ -187,8 +187,12 @@ function getMainUrl(url) {
 
 // Add this after the initial console.log
 function showConfirmationNotification(username, url, callback) {
-    // Create notification element
+    // Remove any existing notification first
+    const existing = document.getElementById('fortisafe-save-notification');
+    if (existing) existing.remove();
+
     const notification = document.createElement('div');
+    notification.id = 'fortisafe-save-notification';
     notification.style.cssText = `
         position: fixed;
         top: 20px;
@@ -240,6 +244,7 @@ function showConfirmationNotification(username, url, callback) {
 
     document.getElementById('cancel-save').addEventListener('click', () => {
         document.body.removeChild(notification);
+        console.log('Credential save cancelled by user');
         callback(false);
     });
 
@@ -377,48 +382,37 @@ async function saveCredentials(username, password) {
             });
         });
 
-        if (!accessToken) {
-            console.log('No access token found, storing in pending credentials');
-            // Store in pending credentials
-            chrome.storage.sync.get('pendingCredentials', function (data) {
-                let pendingCredentials = data.pendingCredentials || [];
-                pendingCredentials.push({
-                    url: url,
-                    username: username,
-                    password: password,
-                    timestamp: new Date().toISOString()
-                });
-                chrome.storage.sync.set({ 'pendingCredentials': pendingCredentials });
-            });
-            return;
-        }
-
         // Get the main domain for the website field
         const website = getMainUrl(url);
 
         try {
-            // Check for duplicates first
-            const duplicateCheckResponse = await fetch(
-                `http://localhost:8080/api/passwords/check-duplicate?website=${encodeURIComponent(website)}&username=${encodeURIComponent(username)}`,
-                {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`
+            let isDuplicate = false;
+
+            // If we have an access token, check for duplicates in MongoDB
+            if (accessToken) {
+                const duplicateCheckResponse = await fetch(
+                    `http://localhost:8080/api/passwords/check-duplicate?website=${encodeURIComponent(website)}&username=${encodeURIComponent(username)}`,
+                    {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`
+                        }
+                    }
+                );
+
+                if (duplicateCheckResponse.ok) {
+                    const { exists } = await duplicateCheckResponse.json();
+                    if (exists) {
+                        console.log('Duplicate credentials found in MongoDB');
+                        isDuplicate = true;
+                        // Show notification that credentials already exist
+                        showSaveResultNotification(false, url, 'These credentials already exist in your vault.');
+                        return; // Exit early since we don't want to save duplicates
                     }
                 }
-            );
-
-            if (!duplicateCheckResponse.ok) {
-                throw new Error(`HTTP error! status: ${duplicateCheckResponse.status}`);
             }
 
-            const { exists } = await duplicateCheckResponse.json();
-            if (exists) {
-                console.log('Duplicate credentials found, skipping save');
-                return;
-            }
-
-            // Show confirmation notification
+            // If not a duplicate, show confirmation notification
             showConfirmationNotification(username, url, async (confirmed) => {
                 if (!confirmed) {
                     console.log('Credential save cancelled by user');
@@ -432,41 +426,51 @@ async function saveCredentials(username, password) {
                     timestamp: new Date().toISOString()
                 };
 
-                // Try to save to backend
-                const result = await sendCredentialsToBackend(credentials);
+                if (accessToken) {
+                    // Try to save to backend
+                    const result = await sendCredentialsToBackend(credentials);
+                    if (result.success) {
+                        // Add to recently saved set
+                        recentlySavedCredentials.add(credentialKey);
+                        // Remove after debounce time
+                        setTimeout(() => {
+                            recentlySavedCredentials.delete(credentialKey);
+                        }, DEBOUNCE_TIME);
 
-                if (result.success) {
-                    // Add to recently saved set
-                    recentlySavedCredentials.add(credentialKey);
-                    // Remove after debounce time
-                    setTimeout(() => {
-                        recentlySavedCredentials.delete(credentialKey);
-                    }, DEBOUNCE_TIME);
-
-                    // Save to local storage as backup
-                    chrome.storage.sync.get('savedCredentials', function (data) {
-                        let savedCredentials = data.savedCredentials || [];
-                        savedCredentials.push(credentials);
-                        chrome.storage.sync.set({ 'savedCredentials': savedCredentials });
-                    });
+                        // Show success notification
+                        showSaveResultNotification(true, url);
+                    } else {
+                        // Show error notification
+                        showSaveResultNotification(false, url, result.error);
+                        // Store in pending credentials
+                        storeInPendingCredentials(credentials);
+                    }
                 } else {
-                    console.error('Failed to save credentials:', result.error);
+                    // No access token, store in pending credentials
+                    storeInPendingCredentials(credentials);
+                    showSaveResultNotification(false, url, 'Stored in pending credentials. Please login to save to vault.');
                 }
             });
         } catch (error) {
-            console.error('Error checking for duplicates:', error);
+            console.error('Error in saveCredentials:', error);
             // Store in pending credentials on error
-            chrome.storage.sync.get('pendingCredentials', function (data) {
-                let pendingCredentials = data.pendingCredentials || [];
-                pendingCredentials.push({
-                    url: url,
-                    username: username,
-                    password: password,
-                    timestamp: new Date().toISOString()
-                });
-                chrome.storage.sync.set({ 'pendingCredentials': pendingCredentials });
+            storeInPendingCredentials({
+                url: url,
+                username: username,
+                password: password,
+                timestamp: new Date().toISOString()
             });
+            showSaveResultNotification(false, url, 'Error saving credentials. Stored in pending.');
         }
+    });
+}
+
+// Helper function to store credentials in pending storage
+function storeInPendingCredentials(credentials) {
+    chrome.storage.sync.get('pendingCredentials', function (data) {
+        let pendingCredentials = data.pendingCredentials || [];
+        pendingCredentials.push(credentials);
+        chrome.storage.sync.set({ 'pendingCredentials': pendingCredentials });
     });
 }
 
