@@ -13,7 +13,7 @@ function getCurrentTabUrl(callback) {
 }
 
 // Load saved data when popup opens
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
     console.log('[DEBUG] DOMContentLoaded');
     // Listen for messages from the Auth0 callback
     window.addEventListener('message', function (event) {
@@ -51,17 +51,80 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Check authentication state
-    const access_token = localStorage.getItem('access_token');
-    const userProfile = JSON.parse(localStorage.getItem('userProfile') || 'null');
-    console.log('[DEBUG] Checking authentication state:', { access_token, userProfile });
-    if (!access_token) {
-        // If not authenticated, show login button
-        document.getElementById('profile-section').innerHTML = '';
-        document.getElementById('go-login-section').classList.remove('hidden');
-        document.getElementById('go-login-button').addEventListener('click', function () {
-            console.log('[DEBUG] Go to Login button clicked');
-            // Open Auth0 login in a popup window
+    // Elements
+    const loginCard = document.getElementById('login-card');
+    const dashboardCard = document.getElementById('dashboard-card');
+    const loginBtn = document.getElementById('login-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    const signupLinkLogin = document.getElementById('signup-link-login');
+    const dashboardProfilePic = document.getElementById('dashboard-profile-pic');
+    const dashboardProfileName = document.getElementById('dashboard-profile-name');
+    const dashboardProfileEmail = document.getElementById('dashboard-profile-email');
+
+    // Helper: Show/hide cards
+    function showLoginCard() {
+        loginCard.style.display = '';
+        dashboardCard.style.display = 'none';
+    }
+    function showDashboardCard() {
+        loginCard.style.display = 'none';
+        dashboardCard.style.display = '';
+        displaySavedUrls();
+        displaySavedCredentials();
+    }
+
+    // Helper: update dashboard profile fields
+    function updateDashboardProfile(userProfile) {
+        if (!userProfile) return;
+        // Try to get from top-level, then from nested user/auth0Profile
+        const picture = userProfile.picture || (userProfile.auth0Profile && userProfile.auth0Profile.picture) || '';
+        const name = userProfile.name || userProfile.nickname ||
+            (userProfile.user && (userProfile.user.firstName + ' ' + userProfile.user.lastName)) ||
+            (userProfile.auth0Profile && userProfile.auth0Profile.name) || '';
+        const email = userProfile.email ||
+            (userProfile.user && userProfile.user.email) ||
+            (userProfile.auth0Profile && userProfile.auth0Profile.email) || '';
+
+        if (picture) {
+            dashboardProfilePic.src = picture;
+            dashboardProfilePic.style.display = '';
+        } else {
+            dashboardProfilePic.style.display = 'none';
+        }
+        dashboardProfileName.textContent = name;
+        dashboardProfileEmail.textContent = email;
+    }
+
+    // Check login state and fetch profile if needed
+    let access_token = localStorage.getItem('access_token');
+    let userProfile = JSON.parse(localStorage.getItem('userProfile') || 'null');
+    if (access_token && !userProfile) {
+        // Try to fetch profile using the token
+        try {
+            userProfile = await getUserProfile(access_token);
+            localStorage.setItem('userProfile', JSON.stringify(userProfile));
+            updateDashboardProfile(userProfile);
+        } catch (e) {
+            // Token invalid or fetch failed, log out
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('id_token');
+            localStorage.removeItem('userProfile');
+            showLoginCard();
+            return;
+        }
+    }
+    if (access_token && userProfile) {
+        // Show dashboard card
+        showDashboardCard();
+        updateDashboardProfile(userProfile);
+    } else {
+        // Show login card
+        showLoginCard();
+    }
+
+    // Login button
+    if (loginBtn) {
+        loginBtn.onclick = function () {
             const width = 500;
             const height = 600;
             const left = (screen.width - width) / 2;
@@ -71,37 +134,32 @@ document.addEventListener('DOMContentLoaded', function () {
                 'Auth0 Login',
                 `width=${width},height=${height},left=${left},top=${top}`
             );
-            // Check if popup was blocked
             if (!popup) {
-                showError('Please allow popups for this extension');
-            } else {
-                console.log('[DEBUG] Auth0 login popup opened');
+                alert('Please allow popups for this extension');
             }
-        });
-        return;
-    } else {
-        document.getElementById('go-login-section').classList.add('hidden');
+        };
     }
 
-    // If authenticated, show main content
-    console.log('[DEBUG] User is authenticated, showing main content');
-    setupTabs();
-    displaySavedUrls();
-    displaySavedCredentials();
-    displayUserProfile(userProfile);
+    // Logout button
+    if (logoutBtn) {
+        logoutBtn.onclick = function () {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('id_token');
+            localStorage.removeItem('userProfile');
+            showLoginCard();
+        };
+    }
+
+    // Signup link
+    if (signupLinkLogin) {
+        signupLinkLogin.onclick = function (e) {
+            e.preventDefault();
+            window.open(`${BACKEND_URL}/auth/login?client=extension`, '_blank');
+        };
+    }
 
     // Setup event listeners
     setupEventListeners();
-
-    // Persistent logout button
-    document.getElementById('persistent-logout-button').addEventListener('click', function () {
-        console.log('[DEBUG] Persistent logout button clicked');
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('id_token');
-        localStorage.removeItem('userProfile');
-        console.log('[DEBUG] Cleared tokens and user profile from localStorage (persistent logout)');
-        window.location.reload();
-    });
 });
 
 // Add listener for messages from auth-success.js
@@ -133,12 +191,194 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         console.log('[DEBUG] Reloading popup window after auth success');
         window.location.reload();
-        
+
         // Acknowledge the message
         sendResponse({ status: "success", message: "Popup received auth details and is reloading." });
         return true; // Indicates that sendResponse will be called asynchronously (although we call it sync here)
     }
 });
+
+// Display saved URLs in the popup
+function displaySavedUrls() {
+    const urlList = document.getElementById('url-list');
+    urlList.innerHTML = '';
+
+    chrome.storage.sync.get('savedUrls', function (data) {
+        const savedUrls = data.savedUrls || [];
+
+        if (savedUrls.length === 0) {
+            urlList.innerHTML = '<p class="text-center text-gray-400 my-2">No URLs saved yet.</p>';
+            return;
+        }
+
+        savedUrls.forEach(function (url, index) {
+            const urlItem = document.createElement('div');
+            urlItem.className = 'url-item';
+
+            // Create a clickable link
+            const urlLink = document.createElement('a');
+            urlLink.href = '#';
+            urlLink.className = 'url-link';
+            urlLink.textContent = url;
+            urlLink.title = url;
+            urlLink.addEventListener('click', function () {
+                chrome.tabs.create({ url: url });
+            });
+
+            // Create delete button
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.textContent = 'X';
+            deleteBtn.title = 'Delete URL';
+            deleteBtn.addEventListener('click', function () {
+                deleteUrl(index);
+            });
+
+            urlItem.appendChild(urlLink);
+            urlItem.appendChild(deleteBtn);
+            urlList.appendChild(urlItem);
+        });
+    });
+}
+
+// Delete a single URL
+function deleteUrl(index) {
+    chrome.storage.sync.get('savedUrls', function (data) {
+        let savedUrls = data.savedUrls || [];
+        savedUrls.splice(index, 1);
+
+        chrome.storage.sync.set({ 'savedUrls': savedUrls }, function () {
+            displaySavedUrls();
+        });
+    });
+}
+
+// Display saved credentials in the popup
+function displaySavedCredentials() {
+    const credentialsList = document.getElementById('credentials-list');
+    credentialsList.innerHTML = '';
+
+    chrome.storage.sync.get('savedCredentials', function (data) {
+        const savedCredentials = data.savedCredentials || [];
+
+        if (savedCredentials.length === 0) {
+            credentialsList.innerHTML = '<p class="text-center text-gray-400 my-2">No credentials saved yet.</p>';
+            return;
+        }
+
+        savedCredentials.forEach(function (credential, index) {
+            const credentialItem = document.createElement('div');
+            credentialItem.className = 'credential-item';
+
+            // Create credential info
+            const credentialInfo = document.createElement('div');
+            credentialInfo.className = 'w-full';
+
+            // Show the website
+            const website = document.createElement('div');
+            website.className = 'credential-details';
+            website.innerHTML = `<strong>Website:</strong> <span class="text-blue-400">${credential.url}</span>`;
+
+            // Show the username
+            const username = document.createElement('div');
+            username.className = 'credential-details';
+            username.innerHTML = `<strong>Username:</strong> ${credential.username}`;
+
+            // Show the password (masked)
+            const password = document.createElement('div');
+            password.className = 'credential-details flex items-center';
+            password.innerHTML = `<strong>Password:</strong> <span class="password-text">${'•'.repeat(credential.password.length)}</span>`;
+
+            // Show password toggle
+            const showPassword = document.createElement('button');
+            showPassword.textContent = 'Show';
+            showPassword.className = 'text-xs bg-indigo-800 hover:bg-indigo-700 px-2 py-1 rounded ml-2';
+            showPassword.addEventListener('click', function () {
+                const passwordText = password.querySelector('.password-text');
+                if (this.textContent === 'Show') {
+                    passwordText.textContent = credential.password;
+                    this.textContent = 'Hide';
+                } else {
+                    passwordText.textContent = '•'.repeat(credential.password.length);
+                    this.textContent = 'Show';
+                }
+            });
+
+            password.appendChild(showPassword);
+
+            credentialInfo.appendChild(website);
+            credentialInfo.appendChild(username);
+            credentialInfo.appendChild(password);
+
+            // Add timestamp if available
+            if (credential.timestamp) {
+                const timestamp = document.createElement('div');
+                timestamp.className = 'credential-details text-xs text-gray-400';
+                const date = new Date(credential.timestamp);
+                timestamp.textContent = `Saved on: ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+                credentialInfo.appendChild(timestamp);
+            }
+
+            // Create buttons container
+            const buttonsContainer = document.createElement('div');
+            buttonsContainer.className = 'flex justify-end w-full mt-2';
+
+            // Create delete button
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.textContent = 'X';
+            deleteBtn.title = 'Delete credential';
+            deleteBtn.addEventListener('click', function () {
+                deleteCredential(index);
+            });
+
+            buttonsContainer.appendChild(deleteBtn);
+
+            credentialItem.appendChild(credentialInfo);
+            credentialItem.appendChild(buttonsContainer);
+            credentialsList.appendChild(credentialItem);
+        });
+    });
+}
+
+// Setup tabs functionality
+function setupTabs() {
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            // Remove active class from all buttons and contents
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            tabContents.forEach(content => {
+                content.classList.add('hidden');
+                content.style.opacity = 0;
+            });
+
+            // Add active class to clicked button
+            this.classList.add('active');
+
+            // Show corresponding content
+            const tabId = this.id.replace('-tab', '-content');
+            const activeContent = document.getElementById(tabId);
+            activeContent.classList.remove('hidden');
+
+            // Fade in animation
+            setTimeout(() => {
+                activeContent.style.opacity = 1;
+            }, 10);
+        });
+    });
+
+    // Initialize the first tab as visible
+    document.querySelectorAll('.tab-content').forEach(content => {
+        if (!content.classList.contains('hidden')) {
+            content.style.opacity = 1;
+        } else {
+            content.style.opacity = 0;
+        }
+    });
+}
 
 function displayUserProfile(profile) {
     const profileSection = document.getElementById('profile-section');
@@ -151,7 +391,7 @@ function displayUserProfile(profile) {
         profileSection.innerHTML = `
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
-                    <img src="${auth0Details.picture || 'default-avatar.png'}" alt="Profile" class="w-10 h-10 rounded-full">
+                    <img src="${auth0Details.picture || 'default-avatar.png'}" alt="Profile" class="w-10 h-10 rounded-full border-2 border-indigo-500">
                     <div>
                         <p class="font-medium">${userDetails.firstName || auth0Details.given_name || 'N/A'} ${userDetails.lastName || auth0Details.family_name || ''}</p>
                         <p class="text-sm text-gray-400">${userDetails.email || auth0Details.email || 'No email'}</p>
@@ -218,27 +458,6 @@ async function getToken() {
     });
 }
 
-// Setup tabs functionality
-function setupTabs() {
-    const tabButtons = document.querySelectorAll('.tab-button');
-    const tabContents = document.querySelectorAll('.tab-content');
-
-    tabButtons.forEach(button => {
-        button.addEventListener('click', function () {
-            // Remove active class from all buttons and contents
-            tabButtons.forEach(btn => btn.classList.remove('active'));
-            tabContents.forEach(content => content.classList.add('hidden'));
-
-            // Add active class to clicked button
-            this.classList.add('active');
-
-            // Show corresponding content
-            const tabId = this.id.replace('-tab', '-content');
-            document.getElementById(tabId).classList.remove('hidden');
-        });
-    });
-}
-
 // Save a URL to Chrome storage
 function saveUrl(url) {
     chrome.storage.sync.get('savedUrls', function (data) {
@@ -255,154 +474,6 @@ function saveUrl(url) {
         }
     });
 }
-
-// Display saved URLs in the popup
-function displaySavedUrls() {
-    const urlList = document.getElementById('url-list');
-    urlList.innerHTML = '';
-
-    chrome.storage.sync.get('savedUrls', function (data) {
-        const savedUrls = data.savedUrls || [];
-
-        if (savedUrls.length === 0) {
-            urlList.innerHTML = '<p>No URLs saved yet.</p>';
-            return;
-        }
-
-        savedUrls.forEach(function (url, index) {
-            const urlItem = document.createElement('div');
-            urlItem.className = 'url-item';
-
-            // Create a clickable link
-            const urlLink = document.createElement('a');
-            urlLink.href = '#';
-            urlLink.className = 'url-link';
-            urlLink.textContent = url;
-            urlLink.title = url;
-            urlLink.addEventListener('click', function () {
-                chrome.tabs.create({ url: url });
-            });
-
-            // Create delete button
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'delete-btn';
-            deleteBtn.textContent = 'X';
-            deleteBtn.addEventListener('click', function () {
-                deleteUrl(index);
-            });
-
-            urlItem.appendChild(urlLink);
-            urlItem.appendChild(deleteBtn);
-            urlList.appendChild(urlItem);
-        });
-    });
-}
-
-// Delete a single URL
-function deleteUrl(index) {
-    chrome.storage.sync.get('savedUrls', function (data) {
-        let savedUrls = data.savedUrls || [];
-        savedUrls.splice(index, 1);
-
-        chrome.storage.sync.set({ 'savedUrls': savedUrls }, function () {
-            displaySavedUrls();
-        });
-    });
-}
-
-// Display saved credentials in the popup
-function displaySavedCredentials() {
-    const credentialsList = document.getElementById('credentials-list');
-    credentialsList.innerHTML = '';
-
-    chrome.storage.sync.get('savedCredentials', function (data) {
-        const savedCredentials = data.savedCredentials || [];
-
-        if (savedCredentials.length === 0) {
-            credentialsList.innerHTML = '<p>No credentials saved yet.</p>';
-            return;
-        }
-
-        savedCredentials.forEach(function (credential, index) {
-            const credentialItem = document.createElement('div');
-            credentialItem.className = 'credential-item';
-
-            // Create credential info
-            const credentialInfo = document.createElement('div');
-
-            // Show the website
-            const website = document.createElement('div');
-            website.className = 'credential-details';
-            website.innerHTML = `<strong>Website:</strong> ${credential.url}`;
-
-            // Show the username
-            const username = document.createElement('div');
-            username.className = 'credential-details';
-            username.innerHTML = `<strong>Username:</strong> ${credential.username}`;
-
-            // Show the password (masked)
-            const password = document.createElement('div');
-            password.className = 'credential-details';
-            password.innerHTML = `<strong>Password:</strong> ${'•'.repeat(credential.password.length)}`;
-
-            // Show password toggle
-            const showPassword = document.createElement('button');
-            showPassword.textContent = 'Show';
-            showPassword.style.fontSize = '10px';
-            showPassword.style.padding = '2px 5px';
-            showPassword.style.marginLeft = '5px';
-            showPassword.addEventListener('click', function () {
-                if (this.textContent === 'Show') {
-                    password.innerHTML = `<strong>Password:</strong> ${credential.password}`;
-                    this.textContent = 'Hide';
-                } else {
-                    password.innerHTML = `<strong>Password:</strong> ${'•'.repeat(credential.password.length)}`;
-                    this.textContent = 'Show';
-                }
-            });
-
-            password.appendChild(showPassword);
-
-            credentialInfo.appendChild(website);
-            credentialInfo.appendChild(username);
-            credentialInfo.appendChild(password);
-
-            // Create delete button
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'delete-btn';
-            deleteBtn.textContent = 'X';
-            deleteBtn.style.alignSelf = 'flex-start';
-            deleteBtn.addEventListener('click', function () {
-                deleteCredential(index);
-            });
-
-            credentialItem.appendChild(credentialInfo);
-            credentialItem.appendChild(deleteBtn);
-            credentialsList.appendChild(credentialItem);
-        });
-    });
-}
-
-// Delete a single credential
-function deleteCredential(index) {
-    chrome.storage.sync.get('savedCredentials', function (data) {
-        let savedCredentials = data.savedCredentials || [];
-        savedCredentials.splice(index, 1);
-
-        chrome.storage.sync.set({ 'savedCredentials': savedCredentials }, function () {
-            displaySavedCredentials();
-        });
-    });
-}
-
-// Save URL button
-document.getElementById('save-url').addEventListener('click', function () {
-    getCurrentTabUrl(function (url) {
-        if (url) {
-            saveUrl(url);
-        }
-    });
-});
 
 // Clear all URLs button
 document.getElementById('clear-all-urls').addEventListener('click', function () {

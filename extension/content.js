@@ -6,6 +6,10 @@ console.log('Form Data Saver content script loaded on: ' + window.location.href)
 // Flag to track if credential capture is enabled
 let captureEnabled = false;
 
+// Add this at the top of the file after the initial console.log
+let recentlySavedCredentials = new Set();
+const DEBOUNCE_TIME = 2000; // 2 seconds
+
 // Listen for messages from the popup
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
     if (message.action === "enableCapture") {
@@ -170,22 +174,132 @@ function captureFormData(event) {
     }
 }
 
-// Save credentials to storage
+// Add this function after the initial console.log
+function getMainUrl(url) {
+    try {
+        const urlObj = new URL(url);
+        // Remove 'www.' if present and return just the domain
+        const hostname = urlObj.hostname.replace(/^www\./, '');
+        return hostname;
+    } catch (e) {
+        console.error('Error parsing URL:', e);
+        return url; // Return original URL if parsing fails
+    }
+}
+
+// Add this after the initial console.log
+function showConfirmationNotification(username, url, callback) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #2d3748;
+        color: white;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        z-index: 999999;
+        font-family: Arial, sans-serif;
+        max-width: 300px;
+    `;
+
+    notification.innerHTML = `
+        <div style="margin-bottom: 10px;">
+            <strong>Save credentials for ${url}?</strong>
+        </div>
+        <div style="margin-bottom: 10px; color: #a0aec0;">
+            Username: ${username}
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button id="confirm-save" style="
+                background: #4299e1;
+                color: white;
+                border: none;
+                padding: 5px 15px;
+                border-radius: 4px;
+                cursor: pointer;
+            ">Save</button>
+            <button id="cancel-save" style="
+                background: #4a5568;
+                color: white;
+                border: none;
+                padding: 5px 15px;
+                border-radius: 4px;
+                cursor: pointer;
+            ">Cancel</button>
+        </div>
+    `;
+
+    document.body.appendChild(notification);
+
+    // Add event listeners
+    document.getElementById('confirm-save').addEventListener('click', () => {
+        document.body.removeChild(notification);
+        callback(true);
+    });
+
+    document.getElementById('cancel-save').addEventListener('click', () => {
+        document.body.removeChild(notification);
+        callback(false);
+    });
+
+    // Auto-remove after 30 seconds
+    setTimeout(() => {
+        if (document.body.contains(notification)) {
+            document.body.removeChild(notification);
+            callback(false);
+        }
+    }, 30000);
+}
+
+// Modify the saveCredentials function
 function saveCredentials(username, password) {
-    chrome.storage.sync.get('savedCredentials', function (data) {
-        let savedCredentials = data.savedCredentials || [];
+    // Get the URL from local storage
+    chrome.storage.local.get(['currentUrl'], function (data) {
+        const url = data.currentUrl || window.location.href;
 
-        // Add the new credentials
-        savedCredentials.push({
-            url: window.location.href,
-            username: username,
-            password: password,
-            timestamp: new Date().toISOString()
+        // Create a unique key for these credentials
+        const credentialKey = `${url}-${username}-${password}`;
+
+        // Check if we recently saved these exact credentials
+        if (recentlySavedCredentials.has(credentialKey)) {
+            console.log('Skipping duplicate credential save');
+            return;
+        }
+
+        // Show confirmation notification
+        showConfirmationNotification(username, url, (confirmed) => {
+            if (!confirmed) {
+                console.log('Credential save cancelled by user');
+                return;
+            }
+
+            chrome.storage.sync.get('savedCredentials', function (data) {
+                let savedCredentials = data.savedCredentials || [];
+
+                // Add the new credentials with URL from storage
+                savedCredentials.push({
+                    url: url,
+                    username: username,
+                    password: password,
+                    timestamp: new Date().toISOString()
+                });
+
+                // Save to storage
+                chrome.storage.sync.set({ 'savedCredentials': savedCredentials });
+
+                // Add to recently saved set
+                recentlySavedCredentials.add(credentialKey);
+
+                // Remove from recently saved set after debounce time
+                setTimeout(() => {
+                    recentlySavedCredentials.delete(credentialKey);
+                }, DEBOUNCE_TIME);
+
+                console.log('Credentials saved for: ' + url);
+            });
         });
-
-        // Save to storage
-        chrome.storage.sync.set({ 'savedCredentials': savedCredentials });
-
-        console.log('Credentials saved for: ' + window.location.href);
     });
 }

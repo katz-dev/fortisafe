@@ -162,3 +162,187 @@ a {
     text-decoration: inherit;
     cursor: pointer;
 }
+
+/* Additional spacing utilities */
+.p-2 {
+    padding: 0.5rem;
+}
+
+.p-4 {
+    padding: 1rem;
+}
+
+.m-2 {
+    margin: 0.5rem;
+}
+
+.my-2 {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.space-x-2>*+* {
+    margin-left: 0.5rem;
+}
+
+.space-x-3>*+* {
+    margin-left: 0.75rem;
+}
+
+.space-y-2>*+* {
+    margin-top: 0.5rem;
+}
+
+/* Border utilities */
+.border {
+    border-width: 1px;
+    border-style: solid;
+}
+
+.border-b {
+    border-bottom-width: 1px;
+    border-bottom-style: solid;
+}
+
+.border-indigo-800 {
+    border-color: #3730a3;
+}
+
+.border-gray-700 {
+    border-color: #4b5563;
+}
+
+.rounded-full {
+    border-radius: 9999px;
+}
+
+/* Hidden utility */
+.hidden {
+    display: none;
+}
+
+/* Width and height utilities */
+.w-10 {
+    width: 2.5rem;
+}
+
+.h-10 {
+    height: 2.5rem;
+}
+
+/* Background colors */
+.bg-indigo-800 {
+    background-color: #3730a3;
+}
+
+.bg-indigo-900 {
+    background-color: #312e81;
+}
+
+.bg-red-500 {
+    background-color: #ef4444;
+}
+
+.hover\:bg-red-600:hover {
+    background-color: #dc2626;
+}
+
+.bg-gray-800 {
+    background-color: #1f2937;
+}
+
+.bg-gray-700 {
+    background-color: #374151;
+}
+
+/* Text colors */
+.text-red-400 {
+    color: #f87171;
+}
+
+.hover\:text-red-300:hover {
+    color: #fca5a5;
+}
+
+/* Custom component styles */
+.url-item,
+.credential-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background-color: #312e81;
+    border-radius: 0.375rem;
+    margin-bottom: 0.5rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.credential-item {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.credential-details {
+    margin-bottom: 0.25rem;
+    font-size: 0.875rem;
+}
+
+.url-link {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-right: 0.5rem;
+}
+
+.delete-btn {
+    background-color: #ef4444;
+    color: white;
+    border-radius: 9999px;
+    width: 1.5rem;
+    height: 1.5rem;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.delete-btn:hover {
+    background-color: #dc2626;
+}
+
+/* Tab styles */
+.tab-button {
+    border-radius: 0.375rem 0.375rem 0 0;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.tab-button.active {
+    background-color: #4f46e5;
+    border-bottom: 2px solid #818cf8;
+}
+
+/* Overlay and popup styles */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.popup {
+    background-color: #1e1b4b;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    max-width: 90%;
+    max-height: 90%;
+    overflow-y: auto;
+}

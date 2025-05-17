@@ -6,90 +6,233 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fortisafe</title>
     <link rel="stylesheet" href="tailwind.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
     <style>
         html,
         body {
             margin: 0;
-            /* Fixed dimensions for Chrome extension popup */
-            width: 320px;
-            height: 500px;
+            width: 340px;
+            height: 540px;
             overflow: hidden;
-            /* Using a common sans-serif font stack from Tailwind as default */
-            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
-                Arial, "Noto Sans", sans-serif;
+            font-family: 'Orbitron', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+            background: #181728;
+        }
+
+        .card {
+            background: #232136;
+            border-radius: 1.2rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
+            margin: 14px auto;
+            padding: 0 0 10px 0;
+            width: 96%;
+            min-height: 97%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #e0e0ff;
+            text-align: center;
+            margin-top: 1.2rem;
+            margin-bottom: 1.2rem;
+            letter-spacing: 0.04em;
+        }
+
+        .search-bar {
+            background: #2a2840;
+            border-radius: 0.75rem;
+            padding: 0.5rem 1rem;
+            color: #bcbcf5;
+            font-size: 1rem;
+            border: none;
+            width: 90%;
+            margin: 0 auto 1rem auto;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-bar input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #bcbcf5;
+            font-size: 1rem;
+            flex: 1;
+        }
+
+        .search-bar svg {
+            width: 1.2rem;
+            height: 1.2rem;
+            color: #bcbcf5;
+        }
+
+        .menu-list {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.7rem;
+            margin: 0 1.2rem;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            font-size: 1rem;
+            color: #e0e0ff;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 0.5rem 0.7rem;
+            border-radius: 0.75rem;
+            transition: background 0.15s;
+        }
+
+        .menu-item:hover {
+            background: #2a2840;
+        }
+
+        .menu-item .icon {
+            font-size: 1.1rem;
+            width: 1.5rem;
+            text-align: center;
+        }
+
+        .profile-row {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            margin: 0 1rem 0.3rem 0;
+        }
+
+        .profile-pic {
+            width: 1.7rem;
+            height: 1.7rem;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #4f46e5;
+        }
+
+        .settings-icon {
+            color: #bcbcf5;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .logout-btn {
+            width: 90%;
+            margin: 1.2rem auto 0.7rem auto;
+            background: #7c7cf7;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 0.7rem;
+            padding: 0.7rem 0;
+            box-shadow: 0 2px 8px 0 rgba(76, 70, 255, 0.10);
+            transition: background 0.15s;
+        }
+
+        .logout-btn:hover {
+            background: #5a5ad6;
+        }
+
+        .help-link {
+            color: #bcbcf5;
+            font-size: 0.95rem;
+            text-align: left;
+            margin-left: 1.2rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .help-link .icon {
+            font-size: 1rem;
+        }
+
+        .signup-row {
+            text-align: center;
+            color: #bcbcf5;
+            font-size: 0.95rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .signup-row a {
+            color: #bcbcf5;
+            text-decoration: underline;
+            margin-left: 0.3rem;
+            cursor: pointer;
         }
     </style>
 </head>
 
-<body class="bg-indigo-950 text-white flex flex-col h-full w-full">
-    <!-- Header with persistent logout button -->
-    <div class="flex justify-end items-center p-2 border-b border-indigo-800">
-        <button id="persistent-logout-button"
-            class="text-sm text-red-400 hover:text-red-300 bg-transparent border-none cursor-pointer font-bold">
-            Logout
-        </button>
-    </div>
-
-    <!-- Profile Section -->
-    <div id="profile-section" class="p-4 border-b border-indigo-800">
-        <!-- Profile content will be inserted here by JavaScript -->
-    </div>
-
-    <!-- Go to Login Button (hidden by default) -->
-    <div id="go-login-section" class="p-4 border-b border-indigo-800 hidden text-center">
-        <button id="go-login-button"
-            class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-base shadow-md">
-            Go to Login
-        </button>
-    </div>
-
-    <!-- Main Content -->
-    <div class="flex-1 overflow-y-auto p-4">
-        <!-- Tabs -->
-        <div class="flex space-x-2 mb-4">
-            <button id="urls-tab" class="tab-button active px-4 py-2 rounded-lg bg-indigo-800 text-white">
-                URLs
-            </button>
-            <button id="credentials-tab" class="tab-button px-4 py-2 rounded-lg bg-indigo-800 text-white">
-                Credentials
-            </button>
-        </div>
-
-        <!-- URLs Tab Content -->
-        <div id="urls-content" class="tab-content active">
-            <div class="mb-4">
-                <button id="save-url"
-                    class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-sm mb-2">
-                    Save Current URL
-                </button>
-                <button id="clear-all-urls"
-                    class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg text-sm">
-                    Clear All URLs
-                </button>
-            </div>
-            <div id="url-list" class="space-y-2">
-                <!-- URLs will be listed here -->
-            </div>
-        </div>
-
-        <!-- Credentials Tab Content -->
-        <div id="credentials-content" class="tab-content hidden">
-            <div class="mb-4">
-                <button id="enable-capture"
-                    class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-sm mb-2">
-                    Enable Credential Capture
-                </button>
-                <button id="clear-all-credentials"
-                    class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg text-sm">
-                    Clear All Credentials
-                </button>
-            </div>
-            <div id="credentials-list" class="space-y-2">
-                <!-- Credentials will be listed here -->
-            </div>
+<body>
+    <!-- Login Card -->
+    <div class="card" id="login-card" style="display:none;">
+        <div class="logo">Fortisafe</div>
+        <button class="logout-btn" id="login-btn"
+            style="margin-top:2.5rem; margin-bottom:2.5rem; font-size:1.3rem; font-weight:600; background:#6366f1; border-radius:1.2rem;">Login</button>
+        <div class="signup-row" style="font-size:1.1rem;">Don't have an account? <a id="signup-link-login">Sign up</a>
         </div>
     </div>
-
+    <!-- Dashboard Card (main UI after login) -->
+    <div class="card" id="dashboard-card" style="display:none;">
+        <div class="profile-row" style="justify-content: flex-end; margin-bottom: 0.5rem;">
+            <img id="dashboard-profile-pic" class="profile-pic" src="" alt="Profile" style="display:none;">
+            <span class="settings-icon" id="settings-btn">&#9881;</span>
+        </div>
+        <div id="dashboard-profile-name"
+            style="text-align:center; color:#e0e0ff; font-size:1.1rem; font-weight:600; margin-bottom:0.1rem;"></div>
+        <div id="dashboard-profile-email"
+            style="text-align:center; color:#bcbcf5; font-size:0.95rem; margin-bottom:0.7rem;"></div>
+        <div class="logo" style="margin-top:0; margin-bottom:1.2rem;">Fortisafe</div>
+        <div class="search-bar">
+            <input id="search-input" type="text" placeholder="Search" />
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+        </div>
+        <div class="menu-list">
+            <div class="menu-item" id="generate-password"><span class="icon">🔒</span> Generate password</div>
+            <div class="menu-item" id="scan-page"><span class="icon">&#128247;</span> Scan page</div>
+            <div class="menu-item" id="open-website"><span class="icon" style="color:#3be8b0;">Fs</span> Fortisafe
+                website</div>
+        </div>
+        <div class="help-link"><span class="icon">&#10068;</span> Help</div>
+        <!-- Saved URLs Section -->
+        <div id="url-section" style="margin:1.2rem 0 0.7rem 0;">
+            <div style="font-size:1.05rem; color:#bcbcf5; font-weight:600; margin-bottom:0.5rem;">Saved URLs</div>
+            <button id="save-url"
+                style="width:100%; background:#6366f1; color:#fff; font-weight:600; border-radius:0.7rem; padding:0.5rem 0; margin-bottom:0.4rem;">Save
+                Current URL</button>
+            <button id="clear-all-urls"
+                style="width:100%; background:#ef4444; color:#fff; font-weight:600; border-radius:0.7rem; padding:0.5rem 0; margin-bottom:0.7rem;">Clear
+                All URLs</button>
+            <div id="url-list" style="margin-top:0.2rem;"></div>
+        </div>
+        <!-- Saved Credentials Section -->
+        <div id="credentials-section" style="margin:0.7rem 0 0.7rem 0;">
+            <div style="font-size:1.05rem; color:#bcbcf5; font-weight:600; margin-bottom:0.5rem;">Saved Credentials
+            </div>
+            <button id="enable-capture"
+                style="width:100%; background:#6366f1; color:#fff; font-weight:600; border-radius:0.7rem; padding:0.5rem 0; margin-bottom:0.4rem;">Enable
+                Credential Capture</button>
+            <button id="clear-all-credentials"
+                style="width:100%; background:#ef4444; color:#fff; font-weight:600; border-radius:0.7rem; padding:0.5rem 0; margin-bottom:0.7rem;">Clear
+                All Credentials</button>
+            <div id="credentials-list" style="margin-top:0.2rem;"></div>
+        </div>
+        <button class="logout-btn" id="logout-btn"
+            style="margin-top:auto; margin-bottom:1.2rem; font-size:1.1rem; font-weight:600; background:#a89af7; border-radius:1.2rem;">Log
+            out</button>
+    </div>
     <script src="popup.js"></script>
 </body>
 
