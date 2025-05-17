@@ -267,7 +267,8 @@ async function fetchBackendCredentials() {
         }
 
         const response = await fetch('http://localhost:8080/api/passwords', {
-            headers: {
+            headers:
+            {
                 'Authorization': `Bearer ${accessToken}`
             }
         });
@@ -310,8 +311,99 @@ async function decryptPassword(passwordId) {
     }
 }
 
-// Modify the displaySavedCredentials function to show decrypted passwords
-async function displaySavedCredentials() {
+// Add this function to create website dropdown selector
+function createWebsiteSelector(passwords, currentFilter = '') {
+    // Get unique websites
+    const websites = [...new Set(passwords.map(p => p.website))].sort();
+
+    // Create container
+    const selectorContainer = document.createElement('div');
+    selectorContainer.id = 'website-selector-container';
+    selectorContainer.style.cssText = `
+        margin: 10px 0;
+        max-height: 120px;
+        overflow-y: auto;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 6px;
+        background: rgba(30, 27, 75, 0.3);
+        border-radius: 6px;
+    `;
+
+    // Add "All Websites" button
+    const allButton = document.createElement('button');
+    allButton.className = 'website-filter-btn';
+    allButton.textContent = 'All';
+    allButton.style.cssText = `
+        background: ${currentFilter === '' ? 'linear-gradient(to bottom, #6366f1, #4f46e5)' : 'linear-gradient(to bottom, #1e1b4b, #312e81)'};
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 4px 8px;
+        font-size: 12px;
+        cursor: pointer;
+        white-space: nowrap;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    `;
+
+    allButton.onclick = () => {
+        // Update filter input
+        const filterInput = document.getElementById('credentials-filter');
+        if (filterInput) filterInput.value = '';
+
+        // Refresh display
+        displaySavedCredentials('');
+
+        // Update button styles
+        document.querySelectorAll('.website-filter-btn').forEach(btn => {
+            btn.style.background = 'linear-gradient(to bottom, #1e1b4b, #312e81)';
+        });
+        allButton.style.background = 'linear-gradient(to bottom, #6366f1, #4f46e5)';
+    };
+
+    selectorContainer.appendChild(allButton);
+
+    // Add button for each website
+    websites.forEach(website => {
+        const button = document.createElement('button');
+        button.className = 'website-filter-btn';
+        button.textContent = website;
+        button.style.cssText = `
+            background: ${currentFilter === website.toLowerCase() ? 'linear-gradient(to bottom, #6366f1, #4f46e5)' : 'linear-gradient(to bottom, #1e1b4b, #312e81)'};
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            white-space: nowrap;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        `;
+
+        button.onclick = () => {
+            // Update filter input
+            const filterInput = document.getElementById('credentials-filter');
+            if (filterInput) filterInput.value = website;
+
+            // Refresh display with this website
+            displaySavedCredentials(website.toLowerCase());
+
+            // Update button styles
+            document.querySelectorAll('.website-filter-btn').forEach(btn => {
+                btn.style.background = 'linear-gradient(to bottom, #1e1b4b, #312e81)';
+            });
+            button.style.background = 'linear-gradient(to bottom, #6366f1, #4f46e5)';
+        };
+
+        selectorContainer.appendChild(button);
+    });
+
+    return selectorContainer;
+}
+
+// Modify the displaySavedCredentials function to implement collapsible dropdowns
+async function displaySavedCredentials(filterText = '') {
     const credentialsList = document.getElementById('credentials-list');
     credentialsList.innerHTML = '';
 
@@ -320,6 +412,39 @@ async function displaySavedCredentials() {
         if (!token) {
             showError('Please login to view your credentials');
             return;
+        }
+
+        // Create filter input if it doesn't exist
+        let filterInput = document.getElementById('credentials-filter');
+        if (!filterInput) {
+            const filterContainer = document.createElement('div');
+            filterContainer.style.margin = '0 0 12px 0';
+
+            filterInput = document.createElement('input');
+            filterInput.id = 'credentials-filter';
+            filterInput.type = 'text';
+            filterInput.placeholder = 'Filter websites...';
+            filterInput.value = filterText;
+            filterInput.style.cssText = `
+                width: 100%;
+                background: rgba(42, 40, 64, 0.7);
+                color: white;
+                border: 1px solid rgba(99, 102, 241, 0.3);
+                border-radius: 6px;
+                padding: 8px 12px;
+                font-size: 14px;
+                margin-bottom: 8px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            `;
+
+            filterInput.addEventListener('input', (e) => {
+                // Re-display credentials with filter
+                const currentFilter = e.target.value.trim().toLowerCase();
+                displaySavedCredentials(currentFilter);
+            });
+
+            filterContainer.appendChild(filterInput);
+            credentialsList.parentNode.insertBefore(filterContainer, credentialsList);
         }
 
         const response = await fetch(`${BACKEND_URL}/passwords`, {
@@ -335,117 +460,369 @@ async function displaySavedCredentials() {
 
         const passwords = await response.json();
 
-        if (passwords.length === 0) {
-            credentialsList.innerHTML = '<p class="text-center text-gray-400 my-2">No saved credentials yet.</p>';
+        // Remove existing website selector if it exists
+        const existingSelector = document.getElementById('website-selector-container');
+        if (existingSelector) {
+            existingSelector.remove();
+        }
+
+        // Create and add website selector
+        if (passwords.length > 0) {
+            const websiteSelector = createWebsiteSelector(passwords, filterText.toLowerCase());
+            credentialsList.parentNode.insertBefore(websiteSelector, credentialsList);
+        }
+
+        // Filter passwords if we have a filter text
+        const filteredPasswords = filterText ?
+            passwords.filter(p => p.website.toLowerCase().includes(filterText.toLowerCase())) :
+            passwords;
+
+        if (filteredPasswords.length === 0) {
+            if (passwords.length === 0) {
+                credentialsList.innerHTML = '<p class="text-center text-gray-400 my-2">No saved credentials yet.</p>';
+            } else {
+                credentialsList.innerHTML = '<p class="text-center text-gray-400 my-2">No matches found. Try a different filter.</p>';
+            }
             return;
         }
 
-        for (const password of passwords) {
-            const credentialItem = document.createElement('div');
-            credentialItem.className = 'credential-item bg-white rounded-lg shadow p-4 mb-4';
+        // Group passwords by website for more organized display
+        const groupedPasswords = {};
+        filteredPasswords.forEach(password => {
+            if (!groupedPasswords[password.website]) {
+                groupedPasswords[password.website] = [];
+            }
+            groupedPasswords[password.website].push(password);
+        });
 
-            // Create a container for the credential details
-            const detailsContainer = document.createElement('div');
-            detailsContainer.className = 'credential-details';
+        // Iterate through each website group
+        Object.keys(groupedPasswords).sort().forEach(website => {
+            const websitePasswords = groupedPasswords[website];
 
-            // Website
-            const websiteDiv = document.createElement('div');
-            websiteDiv.className = 'mb-2';
-            websiteDiv.innerHTML = `<strong>Website:</strong> ${password.website}`;
-            detailsContainer.appendChild(websiteDiv);
+            // Create collapsible website section
+            const websiteSection = document.createElement('div');
+            websiteSection.className = 'website-section';
+            websiteSection.style.cssText = `
+                margin-bottom: 12px;
+                background: rgba(49, 46, 129, 0.3);
+                border-radius: 8px;
+                overflow: hidden;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+                border: 1px solid rgba(99, 102, 241, 0.2);
+            `;
 
-            // Username
-            const usernameDiv = document.createElement('div');
-            usernameDiv.className = 'mb-2';
-            usernameDiv.innerHTML = `<strong>Username:</strong> ${password.username}`;
-            detailsContainer.appendChild(usernameDiv);
+            // Create website header/toggle
+            const websiteHeader = document.createElement('div');
+            websiteHeader.className = 'website-header';
+            websiteHeader.style.cssText = `
+                padding: 10px 12px;
+                background: linear-gradient(to right, rgba(79, 70, 229, 0.4), rgba(49, 46, 129, 0.4));
+                color: #e0e0ff;
+                font-weight: 600;
+                cursor: pointer;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+                user-select: none;
+            `;
 
-            // Password (initially hidden)
-            const passwordDiv = document.createElement('div');
-            passwordDiv.className = 'mb-2';
-            passwordDiv.innerHTML = `<strong>Password:</strong> <span class="password-text">••••••••</span>`;
-            detailsContainer.appendChild(passwordDiv);
+            // Create website credentials container (collapsible)
+            const credentialsContainer = document.createElement('div');
+            credentialsContainer.className = 'website-credentials';
+            credentialsContainer.style.cssText = `
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.3s ease;
+            `;
 
-            // Add buttons container
-            const buttonsContainer = document.createElement('div');
-            buttonsContainer.className = 'flex gap-2 mt-2';
+            // Website name with icon
+            const websiteName = document.createElement('div');
+            websiteName.style.cssText = `
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            `;
 
-            // Show/Hide Password button
-            const showPasswordBtn = document.createElement('button');
-            showPasswordBtn.className = 'show-password-btn bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600';
-            showPasswordBtn.textContent = 'Show Password';
-            showPasswordBtn.onclick = async () => {
-                try {
-                    const decryptedPassword = await decryptPassword(password._id);
-                    const passwordText = passwordDiv.querySelector('.password-text');
-                    if (passwordText.textContent === '••••••••') {
-                        passwordText.textContent = decryptedPassword;
-                        showPasswordBtn.textContent = 'Hide Password';
-                    } else {
-                        passwordText.textContent = '••••••••';
-                        showPasswordBtn.textContent = 'Show Password';
-                    }
-                } catch (error) {
-                    showError('Failed to decrypt password');
+            // Create website icon
+            const icon = document.createElement('div');
+            icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>`;
+
+            websiteName.appendChild(icon);
+
+            // Add website name with highlight if filtering
+            const nameSpan = document.createElement('span');
+            if (filterText) {
+                const regex = new RegExp(`(${filterText})`, 'gi');
+                nameSpan.innerHTML = website.replace(regex, '<span style="background-color: rgba(99, 102, 241, 0.3); border-radius: 2px; padding: 0 2px;">$1</span>');
+            } else {
+                nameSpan.textContent = website;
+            }
+            websiteName.appendChild(nameSpan);
+
+            // Create dropdown indicator
+            const dropdownIndicator = document.createElement('div');
+            dropdownIndicator.className = 'dropdown-indicator';
+            dropdownIndicator.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>`;
+            dropdownIndicator.style.cssText = `
+                transition: transform 0.3s ease;
+            `;
+
+            // Add badge showing credential count
+            const countBadge = document.createElement('div');
+            countBadge.className = 'count-badge';
+            countBadge.textContent = websitePasswords.length;
+            countBadge.style.cssText = `
+                background: rgba(99, 102, 241, 0.7);
+                color: white;
+                border-radius: 999px;
+                padding: 2px 8px;
+                font-size: 12px;
+                margin-right: 8px;
+            `;
+
+            // Assemble header
+            websiteHeader.appendChild(websiteName);
+
+            const rightSide = document.createElement('div');
+            rightSide.style.cssText = `
+                display: flex;
+                align-items: center;
+            `;
+            rightSide.appendChild(countBadge);
+            rightSide.appendChild(dropdownIndicator);
+            websiteHeader.appendChild(rightSide);
+
+            // Add toggle functionality
+            websiteHeader.addEventListener('click', () => {
+                // Toggle the max-height to show/hide credentials
+                if (credentialsContainer.style.maxHeight === '0px' || !credentialsContainer.style.maxHeight) {
+                    credentialsContainer.style.maxHeight = credentialsContainer.scrollHeight + 'px';
+                    dropdownIndicator.style.transform = 'rotate(180deg)';
+                    websiteHeader.style.borderBottomColor = 'rgba(99, 102, 241, 0.4)';
+                } else {
+                    credentialsContainer.style.maxHeight = '0px';
+                    dropdownIndicator.style.transform = 'rotate(0deg)';
+                    websiteHeader.style.borderBottomColor = 'rgba(99, 102, 241, 0.2)';
                 }
-            };
-            buttonsContainer.appendChild(showPasswordBtn);
+            });
 
-            // Copy Password button
-            const copyPasswordBtn = document.createElement('button');
-            copyPasswordBtn.className = 'copy-password-btn bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600';
-            copyPasswordBtn.textContent = 'Copy Password';
-            copyPasswordBtn.onclick = async () => {
-                try {
-                    const decryptedPassword = await decryptPassword(password._id);
-                    await navigator.clipboard.writeText(decryptedPassword);
-                    copyPasswordBtn.textContent = 'Copied!';
-                    setTimeout(() => {
-                        copyPasswordBtn.textContent = 'Copy Password';
-                    }, 2000);
-                } catch (error) {
-                    showError('Failed to copy password');
-                }
-            };
-            buttonsContainer.appendChild(copyPasswordBtn);
+            // Add inner container with padding for credentials
+            const innerContainer = document.createElement('div');
+            innerContainer.style.cssText = `
+                padding: 12px;
+            `;
+            credentialsContainer.appendChild(innerContainer);
 
-            // Delete button
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'delete-credential-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600';
-            deleteBtn.textContent = 'Delete';
-            deleteBtn.onclick = async () => {
-                if (confirm('Are you sure you want to delete this credential?')) {
+            // Add all credentials for this website
+            websitePasswords.forEach(password => {
+                const credentialItem = document.createElement('div');
+                credentialItem.className = 'credential-container';
+                credentialItem.style.cssText = `
+                    background: rgba(30, 27, 75, 0.5);
+                    border-radius: 6px;
+                    margin-bottom: 8px;
+                    padding: 10px;
+                    border: 1px solid rgba(99, 102, 241, 0.1);
+                `;
+
+                // Credential info container
+                const infoContainer = document.createElement('div');
+                infoContainer.className = 'credential-info';
+
+                // Username field
+                const usernameField = document.createElement('div');
+                usernameField.className = 'credential-field';
+                usernameField.innerHTML = `
+                    <span class="credential-label" style="color: #a5b4fc; font-weight: 500;">Username:</span>
+                    <span class="credential-value" style="color: #e0e0ff;">${password.username}</span>
+                `;
+                infoContainer.appendChild(usernameField);
+
+                // Password field
+                const passwordField = document.createElement('div');
+                passwordField.className = 'credential-field password-field';
+                passwordField.innerHTML = `
+                    <span class="credential-label" style="color: #a5b4fc; font-weight: 500;">Password:</span>
+                    <span class="credential-value password-text" style="color: #e0e0ff;">••••••••</span>
+                `;
+                infoContainer.appendChild(passwordField);
+
+                credentialItem.appendChild(infoContainer);
+
+                // Button container
+                const buttonContainer = document.createElement('div');
+                buttonContainer.className = 'btn-group';
+                buttonContainer.style.display = 'flex';
+                buttonContainer.style.gap = '8px';
+                buttonContainer.style.margin = '10px 0 0 0';
+
+                // Show/Hide Password button - Simple Blue
+                const showPasswordBtn = document.createElement('button');
+                showPasswordBtn.className = 'simple-btn show-btn';
+                showPasswordBtn.innerHTML = 'Show';
+                showPasswordBtn.style.cssText = `
+                    flex: 1;
+                    background: linear-gradient(to bottom, #3b82f6, #2563eb);
+                    color: white;
+                    border: none;
+                    border-radius: 6px;
+                    padding: 6px 12px;
+                    font-weight: 600;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                `;
+
+                // Copy Password button - Simple Green
+                const copyPasswordBtn = document.createElement('button');
+                copyPasswordBtn.className = 'simple-btn copy-btn';
+                copyPasswordBtn.innerHTML = 'Copy';
+                copyPasswordBtn.style.cssText = `
+                    flex: 1;
+                    background: linear-gradient(to bottom, #10b981, #059669);
+                    color: white;
+                    border: none;
+                    border-radius: 6px;
+                    padding: 6px 12px;
+                    font-weight: 600;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                `;
+
+                // Delete button - Simple Red
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'simple-btn delete-btn';
+                deleteBtn.innerHTML = 'Delete';
+                deleteBtn.style.cssText = `
+                    flex: 1;
+                    background: linear-gradient(to bottom, #ef4444, #dc2626);
+                    color: white;
+                    border: none;
+                    border-radius: 6px;
+                    padding: 6px 12px;
+                    font-weight: 600;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                `;
+
+                // Add event handlers for buttons
+                showPasswordBtn.onclick = async (e) => {
+                    e.stopPropagation(); // Prevent the toggle from triggering
                     try {
-                        const response = await fetch(`${BACKEND_URL}/passwords/${password._id}`, {
-                            method: 'DELETE',
-                            headers: {
-                                'Authorization': `Bearer ${token}`
-                            }
-                        });
+                        const passwordText = passwordField.querySelector('.password-text');
 
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-
-                        // Remove the credential item from the UI
-                        credentialItem.remove();
-
-                        // If no credentials left, show the empty message
-                        if (credentialsList.children.length === 0) {
-                            credentialsList.innerHTML = '<p class="text-center text-gray-400 my-2">No saved credentials yet.</p>';
+                        if (passwordText.textContent === '••••••••') {
+                            const decryptedPassword = await decryptPassword(password._id);
+                            passwordText.textContent = decryptedPassword;
+                            showPasswordBtn.innerHTML = 'Hide';
+                            showPasswordBtn.style.background = 'linear-gradient(to bottom, #6366f1, #4f46e5)';
+                        } else {
+                            passwordText.textContent = '••••••••';
+                            showPasswordBtn.innerHTML = 'Show';
+                            showPasswordBtn.style.background = 'linear-gradient(to bottom, #3b82f6, #2563eb)';
                         }
                     } catch (error) {
-                        showError('Failed to delete credential');
+                        showError('Failed to decrypt password');
                     }
-                }
-            };
-            buttonsContainer.appendChild(deleteBtn);
+                };
 
-            // Add all elements to the credential item
-            credentialItem.appendChild(detailsContainer);
-            credentialItem.appendChild(buttonsContainer);
-            credentialsList.appendChild(credentialItem);
-        }
+                copyPasswordBtn.onclick = async (e) => {
+                    e.stopPropagation(); // Prevent the toggle from triggering
+                    try {
+                        const decryptedPassword = await decryptPassword(password._id);
+                        await navigator.clipboard.writeText(decryptedPassword);
+
+                        const originalText = copyPasswordBtn.innerHTML;
+                        copyPasswordBtn.innerHTML = 'Copied!';
+
+                        setTimeout(() => {
+                            copyPasswordBtn.innerHTML = originalText;
+                        }, 2000);
+                    } catch (error) {
+                        showError('Failed to copy password');
+                    }
+                };
+
+                deleteBtn.onclick = async (e) => {
+                    e.stopPropagation(); // Prevent the toggle from triggering
+                    if (confirm('Are you sure you want to delete this credential?')) {
+                        try {
+                            const response = await fetch(`${BACKEND_URL}/passwords/${password._id}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'Authorization': `Bearer ${token}`
+                                }
+                            });
+
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+
+                            // Simple fade out effect
+                            credentialItem.style.opacity = '0';
+                            credentialItem.style.transform = 'translateY(-10px)';
+
+                            setTimeout(() => {
+                                credentialItem.remove();
+
+                                // Update the count badge
+                                const remainingItems = innerContainer.querySelectorAll('.credential-container').length;
+                                countBadge.textContent = remainingItems;
+
+                                // Remove website section if this was the last credential
+                                if (remainingItems === 0) {
+                                    websiteSection.style.opacity = '0';
+                                    websiteSection.style.transform = 'translateY(-10px)';
+
+                                    setTimeout(() => {
+                                        websiteSection.remove();
+
+                                        // If no credentials left, show the empty message and refresh selector
+                                        if (credentialsList.children.length === 0) {
+                                            credentialsList.innerHTML = '<p class="text-center text-gray-400 my-2">No saved credentials yet.</p>';
+                                            displaySavedCredentials('');
+                                        }
+                                    }, 300);
+                                }
+
+                                // Adjust container height
+                                if (credentialsContainer.style.maxHeight !== '0px') {
+                                    credentialsContainer.style.maxHeight = innerContainer.scrollHeight + 'px';
+                                }
+                            }, 300);
+                        } catch (error) {
+                            showError('Failed to delete credential');
+                        }
+                    }
+                };
+
+                buttonContainer.appendChild(showPasswordBtn);
+                buttonContainer.appendChild(copyPasswordBtn);
+                buttonContainer.appendChild(deleteBtn);
+
+                credentialItem.appendChild(buttonContainer);
+                innerContainer.appendChild(credentialItem);
+            });
+
+            // Assemble the website section
+            websiteSection.appendChild(websiteHeader);
+            websiteSection.appendChild(credentialsContainer);
+
+            // Auto-expand if there's a filter or there's only one website
+            if (filterText || Object.keys(groupedPasswords).length === 1) {
+                // Set timeout to allow DOM to render first
+                setTimeout(() => {
+                    credentialsContainer.style.maxHeight = credentialsContainer.scrollHeight + 'px';
+                    dropdownIndicator.style.transform = 'rotate(180deg)';
+                    websiteHeader.style.borderBottomColor = 'rgba(99, 102, 241, 0.4)';
+                }, 100);
+            }
+
+            credentialsList.appendChild(websiteSection);
+        });
     } catch (error) {
         console.error('Error fetching credentials:', error);
         showError('Failed to load credentials');
@@ -1114,3 +1491,23 @@ async function saveLocalCredentialToMongo(credential) {
         return false;
     }
 }
+
+// Update the search input handling
+document.addEventListener('DOMContentLoaded', function () {
+    // Add search input functionality for the main search box
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', function () {
+            const filterText = this.value.trim().toLowerCase();
+
+            // If a credentials filter input exists, update it as well
+            const credentialsFilter = document.getElementById('credentials-filter');
+            if (credentialsFilter) {
+                credentialsFilter.value = filterText;
+            }
+
+            // Update credentials display with filter
+            displaySavedCredentials(filterText);
+        });
+    }
+});

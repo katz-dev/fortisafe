@@ -282,67 +282,584 @@ a {
     align-items: flex-start;
 }
 
-.credential-details {
-    margin-bottom: 0.25rem;
-    font-size: 0.875rem;
-}
-
-.url-link {
-    flex: 1;
+.credential-item {
+    background: linear-gradient(165deg, #2d2a63, #1a1744);
+    border-radius: 0.8rem;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(126, 131, 255, 0.2);
+    margin-bottom: 0.8rem;
+    padding: 1rem;
+    transition: all 0.3s ease;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    padding-right: 0.5rem;
+    position: relative;
+    border: none;
 }
 
-.delete-btn {
-    background-color: #ef4444;
-    color: white;
-    border-radius: 9999px;
-    width: 1.5rem;
-    height: 1.5rem;
-    font-size: 0.75rem;
+.credential-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6, #6366f1);
+    opacity: 0.7;
+}
+
+.credential-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(126, 131, 255, 0.3);
+}
+
+.credential-details {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: #e0e0ff;
+    padding: 0.3rem 0;
+}
+
+.credential-details strong {
+    color: #a5b4fc;
+    font-weight: 600;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+}
+
+/* Password button styles */
+.password-buttons {
     display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.btn-show-password {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+    border-radius: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+    border: none;
+    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3),
+        0 1px 0 rgba(255, 255, 255, 0.1) inset;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    min-width: 130px;
+    text-align: center;
+}
+
+.btn-show-password::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 50%;
+    background: linear-gradient(rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+    pointer-events: none;
+}
+
+.btn-show-password:hover {
+    background: linear-gradient(135deg, #60a5fa, #2563eb);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(59, 130, 246, 0.4),
+        0 1px 0 rgba(255, 255, 255, 0.15) inset;
+}
+
+.btn-show-password:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);
+}
+
+.btn-delete-credential {
+    background: linear-gradient(135deg, #ef4444, #b91c1c);
+    color: white;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+    border-radius: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+    border: none;
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3),
+        0 1px 0 rgba(255, 255, 255, 0.1) inset;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    min-width: 80px;
+    text-align: center;
+}
+
+.btn-delete-credential::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 50%;
+    background: linear-gradient(rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+    pointer-events: none;
+}
+
+.btn-delete-credential:hover {
+    background: linear-gradient(135deg, #f87171, #dc2626);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(239, 68, 68, 0.4),
+        0 1px 0 rgba(255, 255, 255, 0.15) inset;
+}
+
+.btn-delete-credential:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+}
+
+/* Updated credential container styles */
+.credential-container {
+    border-radius: 1rem;
+    padding: 0.2rem;
+    background: linear-gradient(145deg, #2d2a63, #232152);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+    position: relative;
+    overflow: hidden;
+}
+
+.credential-container::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, #6366f1, #4f46e5, #818cf8, #4f46e5);
+    border-radius: inherit;
+    z-index: -1;
+    opacity: 0.6;
+}
+
+.credential-website {
+    padding: 0.5rem 0.8rem;
+    background: rgba(49, 46, 129, 0.8);
+    border-top-left-radius: 0.8rem;
+    border-top-right-radius: 0.8rem;
+    font-weight: 600;
+    color: #e0e0ff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.credential-info {
+    padding: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.credential-field {
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
+    padding: 0.4rem 0.6rem;
+    background: rgba(30, 27, 75, 0.5);
+    border-radius: 0.4rem;
 }
 
-.delete-btn:hover {
-    background-color: #dc2626;
-}
-
-/* Tab styles */
-.tab-button {
-    border-radius: 0.375rem 0.375rem 0 0;
-    padding: 0.5rem 1rem;
+.credential-label {
+    font-size: 0.85rem;
+    color: #a5b4fc;
     font-weight: 500;
-    transition: background-color 0.2s;
 }
 
-.tab-button.active {
-    background-color: #4f46e5;
-    border-bottom: 2px solid #818cf8;
+.credential-value {
+    font-size: 0.9rem;
+    color: #e0e0ff;
 }
 
-/* Overlay and popup styles */
-.overlay {
-    position: fixed;
+.btn-container {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0.8rem;
+    background: rgba(49, 46, 129, 0.5);
+    border-bottom-left-radius: 0.8rem;
+    border-bottom-right-radius: 0.8rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Refined styling for credential list */
+#credentials-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 0.5rem;
+}
+
+/* Animation for showing and hiding passwords */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s forwards;
+}
+
+.fade-out {
+    animation: fadeOut 0.3s forwards;
+}
+
+/* Password field animation */
+.password-field {
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.password-field::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: linear-gradient(90deg, #6366f1, #818cf8);
+    transition: width 0.3s ease;
+}
+
+.password-field:hover::after {
+    width: 100%;
+}
+
+.btn-icon {
+    margin-right: 0.3rem;
+    font-size: 0.9rem;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(42, 40, 64, 0.3);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(45deg, #6366f1, #4f46e5);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(45deg, #7c3aed, #6366f1);
+}
+
+/* Animations */
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.animate-bounce {
+    animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+
+    0%,
+    100% {
+        transform: translateY(-5%);
+        animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+    }
+
+    50% {
+        transform: translateY(0);
+        animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+    }
+}
+
+/* Enhanced Button Styles */
+.btn-modern {
+    background: linear-gradient(45deg, #6366f1, #4f46e5);
+    color: white;
+    border-radius: 0.6rem;
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3),
+        0 1px 0 rgba(255, 255, 255, 0.15) inset;
+    transition: all 0.2s ease;
+    border: none;
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+}
+
+.btn-modern:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(99, 102, 241, 0.4),
+        0 1px 0 rgba(255, 255, 255, 0.2) inset;
+}
+
+.btn-modern:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 5px rgba(99, 102, 241, 0.4);
+}
+
+.btn-modern.btn-show {
+    background: linear-gradient(45deg, #3b82f6, #1d4ed8);
+    min-width: 120px;
+}
+
+.btn-modern.btn-delete {
+    background: linear-gradient(45deg, #ef4444, #b91c1c);
+    min-width: 80px;
+}
+
+.btn-modern.btn-copy {
+    background: linear-gradient(45deg, #10b981, #047857);
+    min-width: 100px;
+}
+
+.btn-3d {
+    background: linear-gradient(to bottom, #6366f1, #4f46e5);
+    color: white;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    border: none;
+    box-shadow: 0 4px 0 #3730a3,
+        0 5px 5px rgba(0, 0, 0, 0.2);
+    transition: all 0.1s ease;
+    position: relative;
+    text-align: center;
+}
+
+.btn-3d:hover {
+    background: linear-gradient(to bottom, #818cf8, #6366f1);
+    box-shadow: 0 4px 0 #4338ca,
+        0 5px 5px rgba(0, 0, 0, 0.2);
+}
+
+.btn-3d:active {
+    top: 4px;
+    box-shadow: 0 0px 0 #3730a3,
+        0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.btn-3d.btn-show {
+    background: linear-gradient(to bottom, #3b82f6, #2563eb);
+    box-shadow: 0 4px 0 #1d4ed8,
+        0 5px 5px rgba(0, 0, 0, 0.2);
+}
+
+.btn-3d.btn-show:hover {
+    background: linear-gradient(to bottom, #60a5fa, #3b82f6);
+    box-shadow: 0 4px 0 #2563eb,
+        0 5px 5px rgba(0, 0, 0, 0.2);
+}
+
+.btn-3d.btn-delete {
+    background: linear-gradient(to bottom, #ef4444, #dc2626);
+    box-shadow: 0 4px 0 #b91c1c,
+        0 5px 5px rgba(0, 0, 0, 0.2);
+}
+
+.btn-3d.btn-delete:hover {
+    background: linear-gradient(to bottom, #f87171, #ef4444);
+    box-shadow: 0 4px 0 #dc2626,
+        0 5px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Glossy button effect */
+.btn-glossy {
+    background: linear-gradient(to bottom,
+            rgba(99, 102, 241, 1) 0%,
+            rgba(79, 70, 229, 1) 50%,
+            rgba(67, 56, 202, 1) 51%,
+            rgba(99, 102, 241, 1) 100%);
+    color: white;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    border: 1px solid rgba(67, 56, 202, 0.5);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2),
+        0 1px 0 rgba(255, 255, 255, 0.3) inset;
+    text-shadow: 0 -1px 1px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.btn-glossy::after {
+    content: "";
+    position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    height: 50%;
+    background: linear-gradient(rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+    pointer-events: none;
 }
 
-.popup {
-    background-color: #1e1b4b;
-    padding: 1.5rem;
-    border-radius: 0.5rem;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    max-width: 90%;
-    max-height: 90%;
-    overflow-y: auto;
+.btn-glossy:hover {
+    background: linear-gradient(to bottom,
+            rgba(129, 140, 248, 1) 0%,
+            rgba(99, 102, 241, 1) 50%,
+            rgba(79, 70, 229, 1) 51%,
+            rgba(129, 140, 248, 1) 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.3),
+        0 1px 0 rgba(255, 255, 255, 0.3) inset;
+}
+
+.btn-glossy:active {
+    background: linear-gradient(to bottom,
+            rgba(67, 56, 202, 1) 0%,
+            rgba(79, 70, 229, 1) 50%,
+            rgba(99, 102, 241, 1) 51%,
+            rgba(79, 70, 229, 1) 100%);
+    transform: translateY(1px);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) inset;
+}
+
+.btn-glossy.btn-show {
+    background: linear-gradient(to bottom,
+            rgba(59, 130, 246, 1) 0%,
+            rgba(37, 99, 235, 1) 50%,
+            rgba(29, 78, 216, 1) 51%,
+            rgba(59, 130, 246, 1) 100%);
+    border-color: rgba(29, 78, 216, 0.5);
+}
+
+.btn-glossy.btn-show:hover {
+    background: linear-gradient(to bottom,
+            rgba(96, 165, 250, 1) 0%,
+            rgba(59, 130, 246, 1) 50%,
+            rgba(37, 99, 235, 1) 51%,
+            rgba(96, 165, 250, 1) 100%);
+}
+
+.btn-glossy.btn-delete {
+    background: linear-gradient(to bottom,
+            rgba(239, 68, 68, 1) 0%,
+            rgba(220, 38, 38, 1) 50%,
+            rgba(185, 28, 28, 1) 51%,
+            rgba(239, 68, 68, 1) 100%);
+    border-color: rgba(185, 28, 28, 0.5);
+}
+
+.btn-glossy.btn-delete:hover {
+    background: linear-gradient(to bottom,
+            rgba(248, 113, 113, 1) 0%,
+            rgba(239, 68, 68, 1) 50%,
+            rgba(220, 38, 38, 1) 51%,
+            rgba(248, 113, 113, 1) 100%);
+}
+
+/* Neumorphic button style */
+.btn-neumorphic {
+    background: #312e81;
+    color: white;
+    border-radius: 0.7rem;
+    padding: 0.6rem 1.2rem;
+    font-weight: 600;
+    border: none;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3),
+        -5px -5px 10px rgba(81, 73, 200, 0.05),
+        inset 1px 1px 0 rgba(255, 255, 255, 0.05);
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.btn-neumorphic:hover {
+    background: #3730a3;
+    box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.35),
+        -6px -6px 12px rgba(81, 73, 200, 0.07),
+        inset 1px 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+.btn-neumorphic:active {
+    background: #4338ca;
+    box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.3),
+        inset -4px -4px 8px rgba(81, 73, 200, 0.05);
+}
+
+.btn-neumorphic.btn-show {
+    background: #1e40af;
+}
+
+.btn-neumorphic.btn-show:hover {
+    background: #1d4ed8;
+}
+
+.btn-neumorphic.btn-show:active {
+    background: #2563eb;
+}
+
+.btn-neumorphic.btn-delete {
+    background: #991b1b;
+}
+
+.btn-neumorphic.btn-delete:hover {
+    background: #b91c1c;
+}
+
+.btn-neumorphic.btn-delete:active {
+    background: #dc2626;
+}
+
+/* Button group styling */
+.btn-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-group>button {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Button animation */
+@keyframes pulse-border {
+    0% {
+        box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7);
+    }
+
+    70% {
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+    }
+}
+
+.btn-pulse {
+    animation: pulse-border 2s infinite;
 }

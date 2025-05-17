@@ -11,25 +11,35 @@
         html,
         body {
             margin: 0;
-            width: 340px;
-            height: 540px;
+            width: 360px;
+            height: 580px;
             overflow: hidden;
             font-family: 'Orbitron', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-            background: #181728;
+            background: radial-gradient(circle at top right, #24213f, #181728);
         }
 
         .card {
-            background: #232136;
+            background: linear-gradient(145deg, #262440, #1e1c38);
             border-radius: 1.2rem;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
-            margin: 14px auto;
-            padding: 0 0 10px 0;
-            width: 96%;
-            min-height: 97%;
-            height: 100%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3),
+                0 1px 1px rgba(255, 255, 255, 0.08) inset,
+                0 -1px 1px rgba(0, 0, 0, 0.3) inset;
+            margin: 10px auto;
+            padding: 0;
+            width: 95%;
+            height: 560px;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
+            border: 1px solid rgba(99, 102, 241, 0.1);
+        }
+
+        .card-content {
+            flex: 1;
             overflow-y: auto;
+            padding: 0 15px 15px 15px;
+            scrollbar-width: thin;
+            scrollbar-color: #4f46e5 #2a2840;
         }
 
         .logo {
@@ -37,29 +47,40 @@
             font-weight: 700;
             color: #e0e0ff;
             text-align: center;
-            margin-top: 1.2rem;
-            margin-bottom: 1.2rem;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
             letter-spacing: 0.04em;
+            background: linear-gradient(to right, #a5b4fc, #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 15px rgba(99, 102, 241, 0.6);
         }
 
         .search-bar {
-            background: #2a2840;
+            background: rgba(42, 40, 64, 0.7);
             border-radius: 0.75rem;
-            padding: 0.5rem 1rem;
+            padding: 0.6rem 1rem;
             color: #bcbcf5;
             font-size: 1rem;
-            border: none;
+            border: 1px solid rgba(255, 255, 255, 0.05);
             width: 90%;
             margin: 0 auto 1rem auto;
             display: flex;
             align-items: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+        }
+
+        .search-bar:focus-within {
+            border-color: rgba(99, 102, 241, 0.4);
+            box-shadow: 0 4px 10px rgba(99, 102, 241, 0.15);
         }
 
         .search-bar input {
             background: transparent;
             border: none;
             outline: none;
-            color: #bcbcf5;
+            color: #e0e0ff;
             font-size: 1rem;
             flex: 1;
         }
@@ -71,11 +92,10 @@
         }
 
         .menu-list {
-            flex: 1;
             display: flex;
             flex-direction: column;
             gap: 0.7rem;
-            margin: 0 1.2rem;
+            margin: 0.7rem 0.5rem 1.2rem 0.5rem;
         }
 
         .menu-item {
@@ -86,17 +106,21 @@
             color: #e0e0ff;
             font-weight: 500;
             cursor: pointer;
-            padding: 0.5rem 0.7rem;
+            padding: 0.7rem 1rem;
             border-radius: 0.75rem;
-            transition: background 0.15s;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+            background: rgba(42, 40, 64, 0.3);
         }
 
         .menu-item:hover {
-            background: #2a2840;
+            background: rgba(79, 70, 229, 0.15);
+            border-color: rgba(99, 102, 241, 0.2);
+            transform: translateX(3px);
         }
 
         .menu-item .icon {
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             width: 1.5rem;
             text-align: center;
         }
@@ -104,70 +128,268 @@
         .profile-row {
             display: flex;
             align-items: center;
-            justify-content: flex-end;
-            gap: 0.5rem;
-            margin: 0 1rem 0.3rem 0;
+            justify-content: space-between;
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(30, 27, 75, 0.7);
+        }
+
+        .profile-info {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
         }
 
         .profile-pic {
-            width: 1.7rem;
-            height: 1.7rem;
+            width: 2.2rem;
+            height: 2.2rem;
             border-radius: 50%;
             object-fit: cover;
-            border: 2px solid #4f46e5;
+            border: 2px solid #6366f1;
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+        }
+
+        .profile-name {
+            color: #e0e0ff;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .profile-email {
+            color: #bcbcf5;
+            font-size: 0.8rem;
         }
 
         .settings-icon {
             color: #bcbcf5;
             font-size: 1.2rem;
             cursor: pointer;
+            transition: all 0.2s ease;
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
         }
 
-        .logout-btn {
+        .settings-icon:hover {
+            color: #e0e0ff;
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(30deg);
+        }
+
+        .action-btn {
             width: 90%;
-            margin: 1.2rem auto 0.7rem auto;
-            background: #7c7cf7;
+            margin: 0.7rem auto;
+            background: linear-gradient(45deg, #6366f1, #4f46e5);
             color: #fff;
             font-size: 1rem;
             font-weight: 600;
             border: none;
             border-radius: 0.7rem;
-            padding: 0.7rem 0;
-            box-shadow: 0 2px 8px 0 rgba(76, 70, 255, 0.10);
-            transition: background 0.15s;
+            padding: 0.75rem 0;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
         }
 
-        .logout-btn:hover {
-            background: #5a5ad6;
+        .action-btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
+            pointer-events: none;
         }
 
-        .help-link {
-            color: #bcbcf5;
-            font-size: 0.95rem;
-            text-align: left;
-            margin-left: 1.2rem;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(99, 102, 241, 0.4);
         }
 
-        .help-link .icon {
-            font-size: 1rem;
+        .action-btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 5px rgba(99, 102, 241, 0.4);
+        }
+
+        .login-btn {
+            margin-top: 3rem;
+            margin-bottom: 3rem;
+            font-size: 1.3rem;
+            font-weight: 600;
+            background: linear-gradient(45deg, #6366f1, #4f46e5);
+            border-radius: 1.2rem;
+            padding: 0.9rem 0;
+            letter-spacing: 0.04em;
         }
 
         .signup-row {
             text-align: center;
             color: #bcbcf5;
-            font-size: 0.95rem;
+            font-size: 1.1rem;
             margin-bottom: 1.2rem;
         }
 
         .signup-row a {
-            color: #bcbcf5;
+            color: #a5b4fc;
             text-decoration: underline;
             margin-left: 0.3rem;
             cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .signup-row a:hover {
+            color: #818cf8;
+            text-decoration: none;
+        }
+
+        .section-title {
+            font-size: 1.05rem;
+            color: #bcbcf5;
+            font-weight: 600;
+            margin: 1rem 0 0.7rem 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(188, 188, 245, 0.1);
+        }
+
+        .credential-form {
+            background: rgba(42, 40, 64, 0.7);
+            border-radius: 0.8rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .credential-form input {
+            width: 100%;
+            background: rgba(35, 33, 54, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 0.7rem;
+            border-radius: 0.5rem;
+            color: #e0e0ff;
+            margin-bottom: 0.7rem;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+        }
+
+        .credential-form input:focus {
+            border-color: rgba(99, 102, 241, 0.4);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+            outline: none;
+            background: rgba(35, 33, 54, 1);
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 0.7rem;
+        }
+
+        .btn-row button {
+            flex: 1;
+            padding: 0.7rem 0;
+            border-radius: 0.6rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .btn-row button:first-child {
+            background: linear-gradient(45deg, #6366f1, #4f46e5);
+            color: white;
+            box-shadow: 0 4px 10px rgba(99, 102, 241, 0.25);
+        }
+
+        .btn-row button:first-child:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(99, 102, 241, 0.35);
+        }
+
+        .btn-row button:last-child {
+            background: linear-gradient(45deg, #ef4444, #dc2626);
+            color: white;
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.25);
+        }
+
+        .btn-row button:last-child:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(239, 68, 68, 0.35);
+        }
+
+        #credentials-list {
+            margin-top: 0.7rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .logout-row {
+            padding: 0 15px 10px 15px;
+            margin-top: auto;
+        }
+
+        .logout-btn {
+            width: 90%;
+            margin: 0.7rem auto;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 0.8rem;
+            padding: 0.75rem 0;
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+            cursor: pointer;
+            background: linear-gradient(45deg, #8b5cf6, #7c3aed);
+            transition: all 0.2s ease;
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(139, 92, 246, 0.4);
+        }
+
+        /* Custom scrollbar for the content */
+        .card-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .card-content::-webkit-scrollbar-track {
+            background: rgba(42, 40, 64, 0.3);
+            border-radius: 3px;
+        }
+
+        .card-content::-webkit-scrollbar-thumb {
+            background: linear-gradient(45deg, #6366f1, #4f46e5);
+            border-radius: 3px;
+        }
+
+        .card-content::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(45deg, #7c3aed, #6366f1);
+        }
+
+        /* Add subtle highlight to credentials list */
+        #credentials-list>div {
+            background: linear-gradient(145deg, #312e81, #28255f);
+            border-radius: 0.7rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        #credentials-list>div:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+            border-color: rgba(99, 102, 241, 0.2);
         }
     </style>
 </head>
@@ -175,79 +397,92 @@
 <body>
     <!-- Login Card -->
     <div class="card" id="login-card" style="display:none;">
-        <div class="logo">Fortisafe</div>
-        <button class="logout-btn" id="login-btn"
-            style="margin-top:2.5rem; margin-bottom:2.5rem; font-size:1.3rem; font-weight:600; background:#6366f1; border-radius:1.2rem;">Login</button>
-        <div class="signup-row" style="font-size:1.1rem;">Don't have an account? <a id="signup-link-login">Sign up</a>
+        <div
+            style="height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 2rem;">
+            <div class="logo" style="font-size: 2.5rem; margin-bottom: 2rem;">Fortisafe</div>
+            <button class="action-btn login-btn" id="login-btn">Login</button>
+            <div class="signup-row">Don't have an account? <a id="signup-link-login">Sign up</a></div>
         </div>
     </div>
+
     <!-- Dashboard Card (main UI after login) -->
     <div class="card" id="dashboard-card" style="display:none;">
-        <div class="profile-row" style="justify-content: flex-end; margin-bottom: 0.5rem;">
-            <img id="dashboard-profile-pic" class="profile-pic" src="" alt="Profile" style="display:none;">
+        <div class="profile-row">
+            <div class="profile-info">
+                <img id="dashboard-profile-pic" class="profile-pic" src="" alt="Profile" style="display:none;">
+                <div>
+                    <div id="dashboard-profile-name" class="profile-name"></div>
+                    <div id="dashboard-profile-email" class="profile-email"></div>
+                </div>
+            </div>
             <span class="settings-icon" id="settings-btn">&#9881;</span>
         </div>
-        <div id="dashboard-profile-name"
-            style="text-align:center; color:#e0e0ff; font-size:1.1rem; font-weight:600; margin-bottom:0.1rem;"></div>
-        <div id="dashboard-profile-email"
-            style="text-align:center; color:#bcbcf5; font-size:0.95rem; margin-bottom:0.7rem;"></div>
-        <div class="logo" style="margin-top:0; margin-bottom:1.2rem;">Fortisafe</div>
-        <div class="search-bar">
-            <input id="search-input" type="text" placeholder="Search" />
-            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-        </div>
-        <div class="menu-list">
-            <div class="menu-item" id="generate-password"><span class="icon">🔒</span> Generate password</div>
-            <div class="menu-item" id="scan-page"><span class="icon">&#128247;</span> Scan page</div>
-            <div class="menu-item" id="open-website"><span class="icon" style="color:#3be8b0;">Fs</span> Fortisafe
-                website</div>
-        </div>
-        <!-- Saved Credentials Section -->
-        <div id="credentials-section" style="margin:0.7rem 0 0.7rem 0;">
-            <div style="font-size:1.05rem; color:#bcbcf5; font-weight:600; margin-bottom:0.5rem;">Saved Credentials
+
+        <div class="logo">Fortisafe</div>
+
+        <div class="card-content">
+            <div class="search-bar">
+                <input id="search-input" type="text" placeholder="Search passwords..." />
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
             </div>
-            <!-- Add manual save password form -->
-            <button id="toggle-manual-form"
-                style="width:100%; background:#232136; color:#bcbcf5; font-weight:600; border-radius:0.7rem; padding:0.5rem 0; margin-bottom:0.5rem;">
-                + Add Credential
-            </button>
-            <div id="manual-save-form"
-                style="display:none; margin-bottom:1rem; padding:0.7rem; background:#2a2840; border-radius:0.7rem;">
-                <div style="margin-bottom:0.5rem;">
+
+            <div class="menu-list">
+                <div class="menu-item" id="generate-password">
+                    <span class="icon">🔒</span> Generate password
+                </div>
+                <div class="menu-item" id="scan-page">
+                    <span class="icon">&#128247;</span> Scan page
+                </div>
+                <div class="menu-item" id="open-website">
+                    <span class="icon" style="color:#3be8b0;">Fs</span> Fortisafe website
+                </div>
+            </div>
+
+            <!-- Saved Credentials Section -->
+            <div id="credentials-section">
+                <div class="section-title">Saved Credentials</div>
+
+                <!-- Add manual save password form -->
+                <button id="toggle-manual-form"
+                    style="width:100%; background:linear-gradient(145deg, #312e81, #28255f); color:#bcbcf5; font-weight:600; border-radius:0.7rem; padding:0.6rem 0; margin-bottom:0.7rem; border:1px solid rgba(255,255,255,0.05);">
+                    + Add Credential
+                </button>
+
+                <div id="manual-save-form" class="credential-form" style="display:none;">
                     <div style="position:relative; margin-bottom:0.5rem;">
-                        <input type="text" id="manual-website" placeholder="Website URL"
-                            style="width:100%; background:#232136; border:none; padding:0.5rem; border-radius:0.5rem; color:#e0e0ff; margin-bottom:0.5rem;">
+                        <input type="text" id="manual-website" placeholder="Website URL">
                         <div id="website-suggestions"
                             style="position:absolute; top:100%; left:0; right:0; background:#232136; border-radius:0.5rem; max-height:200px; overflow-y:auto; display:none; z-index:1000; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
                         </div>
                     </div>
-                    <input type="text" id="manual-username" placeholder="Username"
-                        style="width:100%; background:#232136; border:none; padding:0.5rem; border-radius:0.5rem; color:#e0e0ff; margin-bottom:0.5rem;">
-                    <input type="password" id="manual-password" placeholder="Password"
-                        style="width:100%; background:#232136; border:none; padding:0.5rem; border-radius:0.5rem; color:#e0e0ff; margin-bottom:0.5rem;">
+                    <input type="text" id="manual-username" placeholder="Username">
+                    <input type="password" id="manual-password" placeholder="Password">
+
+                    <div class="btn-row">
+                        <button id="manual-save-btn">Save Password</button>
+                        <button id="manual-cancel-btn">Cancel</button>
+                    </div>
                 </div>
-                <div style="display:flex; gap:0.5rem;">
-                    <button id="manual-save-btn"
-                        style="flex:1; background:#6366f1; color:#fff; font-weight:600; border-radius:0.7rem; padding:0.5rem 0;">Save
-                        Password</button>
-                    <button id="manual-cancel-btn"
-                        style="flex:1; background:#ef4444; color:#fff; font-weight:600; border-radius:0.7rem; padding:0.5rem 0;">Cancel</button>
-                </div>
+
+                <button id="enable-capture" class="action-btn" style="margin:0.5rem auto;">
+                    Enable Credential Capture
+                </button>
+
+                <button id="clear-all-credentials"
+                    style="width:90%; margin:0.5rem auto; background:linear-gradient(45deg, #ef4444, #dc2626); color:#fff; font-weight:600; border-radius:0.7rem; padding:0.75rem 0; box-shadow:0 4px 12px rgba(239,68,68,0.3); border:none; cursor:pointer;">
+                    Clear All Credentials
+                </button>
+
+                <div id="credentials-list"></div>
             </div>
-            <button id="enable-capture"
-                style="width:100%; background:#6366f1; color:#fff; font-weight:600; border-radius:0.7rem; padding:0.5rem 0; margin-bottom:0.4rem;">Enable
-                Credential Capture</button>
-            <button id="clear-all-credentials"
-                style="width:100%; background:#ef4444; color:#fff; font-weight:600; border-radius:0.7rem; padding:0.5rem 0; margin-bottom:0.7rem;">Clear
-                All Credentials</button>
-            <div id="credentials-list" style="margin-top:0.2rem;"></div>
         </div>
-        <button class="logout-btn" id="logout-btn"
-            style="margin-top:auto; margin-bottom:1.2rem; font-size:1.1rem; font-weight:600; background:#a89af7; border-radius:1.2rem;">Log
-            out</button>
+
+        <div class="logout-row">
+            <button class="logout-btn" id="logout-btn">Log out</button>
+        </div>
     </div>
     <script src="popup.js"></script>
 </body>
