@@ -963,19 +963,52 @@ function createPasswordSelector(filterCurrentSite = false) {
     // Add close button
     const closeBtn = document.createElement('button');
     closeBtn.textContent = '×';
+    closeBtn.title = 'Close';
     closeBtn.style.cssText = `
         position: absolute;
-        top: 8px;
-        right: 8px;
-        background: none;
-        border: none;
-        color: #e0e0ff;
-        font-size: 20px;
+        top: 12px;
+        right: 12px;
+        width: 44px;
+        height: 44px;
+        background: #6366f1;
+        border: 2px solid #fff;
+        color: #fff;
+        font-size: 2.2rem;
+        font-weight: bold;
+        border-radius: 50%;
+        box-shadow: 0 4px 18px 2px rgba(99,102,241,0.25), 0 0 0 2px #fff;
         cursor: pointer;
-        padding: 4px 8px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.18s, color 0.18s, box-shadow 0.18s, transform 0.18s;
+        z-index: 10001;
+        outline: none;
     `;
+    closeBtn.onmouseover = () => {
+        closeBtn.style.background = '#4f46e5';
+        closeBtn.style.color = '#fff';
+        closeBtn.style.boxShadow = '0 8px 28px 4px rgba(99,102,241,0.35), 0 0 0 2px #fff';
+        closeBtn.style.transform = 'scale(1.08)';
+    };
+    closeBtn.onmouseout = () => {
+        closeBtn.style.background = '#6366f1';
+        closeBtn.style.color = '#fff';
+        closeBtn.style.boxShadow = '0 4px 18px 2px rgba(99,102,241,0.25), 0 0 0 2px #fff';
+        closeBtn.style.transform = 'scale(1)';
+    };
     closeBtn.onclick = () => selector.remove();
     selector.appendChild(closeBtn);
+
+    // Add Escape key handler to close selector
+    function escKeyHandler(e) {
+        if (e.key === 'Escape') {
+            selector.remove();
+            document.removeEventListener('keydown', escKeyHandler);
+        }
+    }
+    document.addEventListener('keydown', escKeyHandler);
 
     // Add title
     const title = document.createElement('h3');
