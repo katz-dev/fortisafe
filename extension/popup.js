@@ -212,29 +212,49 @@ function displaySavedUrls() {
 
         savedUrls.forEach(function (url, index) {
             const urlItem = document.createElement('div');
-            urlItem.className = 'url-item';
+            urlItem.className = 'credential-item';
 
-            // Create a clickable link
-            const urlLink = document.createElement('a');
-            urlLink.href = '#';
-            urlLink.className = 'url-link';
-            urlLink.textContent = url;
-            urlLink.title = url;
-            urlLink.addEventListener('click', function () {
+            // Create header with website name
+            const header = document.createElement('div');
+            header.className = 'credential-header';
+            header.innerHTML = `<div class="credential-title">${getMainUrl(url)}</div>`;
+
+            // Create URL display
+            const urlDisplay = document.createElement('div');
+            urlDisplay.className = 'credential-email';
+            urlDisplay.innerHTML = `
+                <span class="email-label">URL:</span>
+                <span class="email-value">${url}</span>
+            `;
+
+            // Create action buttons
+            const actions = document.createElement('div');
+            actions.className = 'credential-actions';
+
+            // Create open link button
+            const openBtn = document.createElement('button');
+            openBtn.className = 'copy-button';
+            openBtn.textContent = 'Open';
+            openBtn.addEventListener('click', function () {
                 chrome.tabs.create({ url: url });
             });
 
             // Create delete button
             const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'delete-btn';
-            deleteBtn.textContent = 'X';
-            deleteBtn.title = 'Delete URL';
+            deleteBtn.className = 'btn-delete-credential';
+            deleteBtn.textContent = 'Delete';
             deleteBtn.addEventListener('click', function () {
                 deleteUrl(index);
             });
 
-            urlItem.appendChild(urlLink);
-            urlItem.appendChild(deleteBtn);
+            actions.appendChild(openBtn);
+            actions.appendChild(deleteBtn);
+
+            // Assemble the item
+            urlItem.appendChild(header);
+            urlItem.appendChild(urlDisplay);
+            urlItem.appendChild(actions);
+
             urlList.appendChild(urlItem);
         });
     });
