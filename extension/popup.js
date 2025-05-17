@@ -283,254 +283,172 @@ async function fetchBackendCredentials() {
     }
 }
 
-// Modify displaySavedCredentials function
+// Add this function to decrypt a password
+async function decryptPassword(passwordId) {
+    try {
+        const token = await getToken();
+        if (!token) {
+            throw new Error('No access token found');
+        }
+
+        const response = await fetch(`${BACKEND_URL}/passwords/${passwordId}/decrypt`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data.password;
+    } catch (error) {
+        console.error('Error decrypting password:', error);
+        throw error;
+    }
+}
+
+// Modify the displaySavedCredentials function to show decrypted passwords
 async function displaySavedCredentials() {
     const credentialsList = document.getElementById('credentials-list');
     credentialsList.innerHTML = '';
 
     try {
-        // Get credentials from all sources
-        const [localCredentials, backendCredentials, pendingCredentials] = await Promise.all([
-            new Promise((resolve) => {
-                chrome.storage.sync.get('savedCredentials', function (data) {
-                    resolve(data.savedCredentials || []);
-                });
-            }),
-            fetchBackendCredentials(),
-            new Promise((resolve) => {
-                chrome.storage.sync.get('pendingCredentials', function (data) {
-                    resolve(data.pendingCredentials || []);
-                });
-            })
-        ]);
-
-        // Show pending credentials first if any exist
-        if (pendingCredentials.length > 0) {
-            const pendingSection = document.createElement('div');
-            pendingSection.className = 'pending-section mb-4';
-            pendingSection.innerHTML = '<h3 class="text-yellow-400 mb-2">Pending Credentials</h3>';
-
-            pendingCredentials.forEach((cred, idx) => {
-                const pendingItem = document.createElement('div');
-                pendingItem.className = 'credential-item bg-yellow-900/20 mb-2 p-2 rounded';
-                pendingItem.innerHTML = `
-                    <div class="credential-details">
-                        <strong>Website:</strong> <span class="text-blue-400">${cred.url}</span>
-                    </div>
-                    <div class="credential-details">
-                        <strong>Username:</strong> ${cred.username}
-                    </div>
-                    <div class="credential-details">
-                        <strong>Password:</strong> ••••••
-                    </div>
-                    <div class="text-xs text-yellow-400 mt-1">
-                        Waiting to be saved to your vault
-                    </div>
-                    <button class="save-pending-btn mt-2 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm" data-idx="${idx}">
-                        Save Now
-                    </button>
-                `;
-                pendingSection.appendChild(pendingItem);
-            });
-
-            credentialsList.appendChild(pendingSection);
+        const token = await getToken();
+        if (!token) {
+            showError('Please login to view your credentials');
+            return;
         }
 
-        // Show local credentials section if there are any
-        if (localCredentials.length > 0) {
-            const localSection = document.createElement('div');
-            localSection.className = 'local-section mb-4';
-            localSection.innerHTML = '<h3 class="text-orange-400 mb-2">Local Credentials</h3>';
-
-            // Get access token for duplicate checking
-            const accessToken = await getToken();
-
-            for (const credential of localCredentials) {
-                const credentialItem = document.createElement('div');
-                credentialItem.className = 'credential-item bg-orange-900/20 mb-2 p-2 rounded';
-
-                // Create credential info
-                const credentialInfo = document.createElement('div');
-                credentialInfo.className = 'w-full';
-
-                // Show the website
-                const website = document.createElement('div');
-                website.className = 'credential-details';
-                website.innerHTML = `<strong>Website:</strong> <span class="text-blue-400">${credential.url}</span>`;
-
-                // Show the username
-                const username = document.createElement('div');
-                username.className = 'credential-details';
-                username.innerHTML = `<strong>Username:</strong> ${credential.username}`;
-
-                // Show the password (masked)
-                const password = document.createElement('div');
-                password.className = 'credential-details flex items-center';
-                password.innerHTML = `<strong>Password:</strong> <span class="password-text">${'•'.repeat(credential.password.length)}</span>`;
-
-                // Show password toggle
-                const showPassword = document.createElement('button');
-                showPassword.textContent = 'Show';
-                showPassword.className = 'text-xs bg-indigo-800 hover:bg-indigo-700 px-2 py-1 rounded ml-2';
-                showPassword.addEventListener('click', function () {
-                    const passwordText = password.querySelector('.password-text');
-                    if (this.textContent === 'Show') {
-                        passwordText.textContent = credential.password;
-                        this.textContent = 'Hide';
-                    } else {
-                        passwordText.textContent = '•'.repeat(credential.password.length);
-                        this.textContent = 'Show';
-                    }
-                });
-
-                password.appendChild(showPassword);
-
-                credentialInfo.appendChild(website);
-                credentialInfo.appendChild(username);
-                credentialInfo.appendChild(password);
-
-                // Add timestamp if available
-                if (credential.timestamp) {
-                    const timestamp = document.createElement('div');
-                    timestamp.className = 'credential-details text-xs text-gray-400';
-                    const date = new Date(credential.timestamp);
-                    timestamp.textContent = `Saved on: ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
-                    credentialInfo.appendChild(timestamp);
-                }
-
-                // Add action buttons
-                const actionButtons = document.createElement('div');
-                actionButtons.className = 'flex gap-2 mt-2';
-
-                // Check if credential exists in backend
-                let existsInBackend = false;
-                if (accessToken) {
-                    try {
-                        const website = getMainUrl(credential.url);
-                        const response = await fetch(
-                            `${BACKEND_URL}/passwords/check-duplicate?website=${encodeURIComponent(website)}&username=${encodeURIComponent(credential.username)}`,
-                            {
-                                method: 'GET',
-                                headers: {
-                                    'Authorization': `Bearer ${accessToken}`
-                                }
-                            }
-                        );
-
-                        if (response.ok) {
-                            const { exists } = await response.json();
-                            existsInBackend = exists;
-                        }
-                    } catch (error) {
-                        console.error('Error checking duplicate:', error);
-                    }
-                }
-
-                // Save to MongoDB button
-                const saveToMongoBtn = document.createElement('button');
-                saveToMongoBtn.className = 'save-to-mongo-btn bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm';
-                saveToMongoBtn.textContent = existsInBackend ? 'Already in Vault' : 'Save to Vault';
-                saveToMongoBtn.disabled = existsInBackend;
-                if (!existsInBackend) {
-                    saveToMongoBtn.addEventListener('click', async () => {
-                        const success = await saveLocalCredentialToMongo(credential);
-                        if (success) {
-                            displaySavedCredentials();
-                        }
-                    });
-                }
-
-                actionButtons.appendChild(saveToMongoBtn);
-
-                credentialItem.appendChild(credentialInfo);
-                credentialItem.appendChild(actionButtons);
-                localSection.appendChild(credentialItem);
+        const response = await fetch(`${BACKEND_URL}/passwords`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
             }
-
-            credentialsList.appendChild(localSection);
-        }
-
-        // Show saved credentials section if there are any
-        if (backendCredentials.length > 0) {
-            const savedSection = document.createElement('div');
-            savedSection.className = 'saved-section';
-            savedSection.innerHTML = '<h3 class="text-green-400 mb-2">Saved Credentials</h3>';
-
-            backendCredentials.forEach(function (credential) {
-                const credentialItem = document.createElement('div');
-                credentialItem.className = 'credential-item bg-indigo-900/20 mb-2 p-2 rounded';
-
-                // Create credential info
-                const credentialInfo = document.createElement('div');
-                credentialInfo.className = 'w-full';
-
-                // Show the website
-                const website = document.createElement('div');
-                website.className = 'credential-details';
-                website.innerHTML = `<strong>Website:</strong> <span class="text-blue-400">${credential.website}</span>`;
-
-                // Show the username
-                const username = document.createElement('div');
-                username.className = 'credential-details';
-                username.innerHTML = `<strong>Username:</strong> ${credential.username}`;
-
-                // Show the password (masked)
-                const password = document.createElement('div');
-                password.className = 'credential-details flex items-center';
-                password.innerHTML = `<strong>Password:</strong> <span class="password-text">${'•'.repeat(credential.password.length)}</span>`;
-
-                // Show password toggle
-                const showPassword = document.createElement('button');
-                showPassword.textContent = 'Show';
-                showPassword.className = 'text-xs bg-indigo-800 hover:bg-indigo-700 px-2 py-1 rounded ml-2';
-                showPassword.addEventListener('click', function () {
-                    const passwordText = password.querySelector('.password-text');
-                    if (this.textContent === 'Show') {
-                        passwordText.textContent = credential.password;
-                        this.textContent = 'Hide';
-                    } else {
-                        passwordText.textContent = '•'.repeat(credential.password.length);
-                        this.textContent = 'Show';
-                    }
-                });
-
-                password.appendChild(showPassword);
-
-                credentialInfo.appendChild(website);
-                credentialInfo.appendChild(username);
-                credentialInfo.appendChild(password);
-
-                // Add timestamp if available
-                if (credential.lastUpdated) {
-                    const timestamp = document.createElement('div');
-                    timestamp.className = 'credential-details text-xs text-gray-400';
-                    const date = new Date(credential.lastUpdated);
-                    timestamp.textContent = `Saved on: ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
-                    credentialInfo.appendChild(timestamp);
-                }
-
-                credentialItem.appendChild(credentialInfo);
-                savedSection.appendChild(credentialItem);
-            });
-
-            credentialsList.appendChild(savedSection);
-        }
-
-        if (localCredentials.length === 0 && backendCredentials.length === 0 && pendingCredentials.length === 0) {
-            credentialsList.innerHTML = '<p class="text-center text-gray-400 my-2">No credentials saved yet.</p>';
-        }
-
-        // Add event listeners for pending credential save buttons
-        document.querySelectorAll('.save-pending-btn').forEach(btn => {
-            btn.addEventListener('click', function () {
-                const idx = this.getAttribute('data-idx');
-                savePendingCredential(idx);
-            });
         });
 
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const passwords = await response.json();
+
+        if (passwords.length === 0) {
+            credentialsList.innerHTML = '<p class="text-center text-gray-400 my-2">No saved credentials yet.</p>';
+            return;
+        }
+
+        for (const password of passwords) {
+            const credentialItem = document.createElement('div');
+            credentialItem.className = 'credential-item bg-white rounded-lg shadow p-4 mb-4';
+
+            // Create a container for the credential details
+            const detailsContainer = document.createElement('div');
+            detailsContainer.className = 'credential-details';
+
+            // Website
+            const websiteDiv = document.createElement('div');
+            websiteDiv.className = 'mb-2';
+            websiteDiv.innerHTML = `<strong>Website:</strong> ${password.website}`;
+            detailsContainer.appendChild(websiteDiv);
+
+            // Username
+            const usernameDiv = document.createElement('div');
+            usernameDiv.className = 'mb-2';
+            usernameDiv.innerHTML = `<strong>Username:</strong> ${password.username}`;
+            detailsContainer.appendChild(usernameDiv);
+
+            // Password (initially hidden)
+            const passwordDiv = document.createElement('div');
+            passwordDiv.className = 'mb-2';
+            passwordDiv.innerHTML = `<strong>Password:</strong> <span class="password-text">••••••••</span>`;
+            detailsContainer.appendChild(passwordDiv);
+
+            // Add buttons container
+            const buttonsContainer = document.createElement('div');
+            buttonsContainer.className = 'flex gap-2 mt-2';
+
+            // Show/Hide Password button
+            const showPasswordBtn = document.createElement('button');
+            showPasswordBtn.className = 'show-password-btn bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600';
+            showPasswordBtn.textContent = 'Show Password';
+            showPasswordBtn.onclick = async () => {
+                try {
+                    const decryptedPassword = await decryptPassword(password._id);
+                    const passwordText = passwordDiv.querySelector('.password-text');
+                    if (passwordText.textContent === '••••••••') {
+                        passwordText.textContent = decryptedPassword;
+                        showPasswordBtn.textContent = 'Hide Password';
+                    } else {
+                        passwordText.textContent = '••••••••';
+                        showPasswordBtn.textContent = 'Show Password';
+                    }
+                } catch (error) {
+                    showError('Failed to decrypt password');
+                }
+            };
+            buttonsContainer.appendChild(showPasswordBtn);
+
+            // Copy Password button
+            const copyPasswordBtn = document.createElement('button');
+            copyPasswordBtn.className = 'copy-password-btn bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600';
+            copyPasswordBtn.textContent = 'Copy Password';
+            copyPasswordBtn.onclick = async () => {
+                try {
+                    const decryptedPassword = await decryptPassword(password._id);
+                    await navigator.clipboard.writeText(decryptedPassword);
+                    copyPasswordBtn.textContent = 'Copied!';
+                    setTimeout(() => {
+                        copyPasswordBtn.textContent = 'Copy Password';
+                    }, 2000);
+                } catch (error) {
+                    showError('Failed to copy password');
+                }
+            };
+            buttonsContainer.appendChild(copyPasswordBtn);
+
+            // Delete button
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-credential-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600';
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.onclick = async () => {
+                if (confirm('Are you sure you want to delete this credential?')) {
+                    try {
+                        const response = await fetch(`${BACKEND_URL}/passwords/${password._id}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+
+                        // Remove the credential item from the UI
+                        credentialItem.remove();
+
+                        // If no credentials left, show the empty message
+                        if (credentialsList.children.length === 0) {
+                            credentialsList.innerHTML = '<p class="text-center text-gray-400 my-2">No saved credentials yet.</p>';
+                        }
+                    } catch (error) {
+                        showError('Failed to delete credential');
+                    }
+                }
+            };
+            buttonsContainer.appendChild(deleteBtn);
+
+            // Add all elements to the credential item
+            credentialItem.appendChild(detailsContainer);
+            credentialItem.appendChild(buttonsContainer);
+            credentialsList.appendChild(credentialItem);
+        }
     } catch (error) {
-        console.error('Error displaying credentials:', error);
-        credentialsList.innerHTML = '<p class="text-center text-red-400 my-2">Error loading credentials.</p>';
+        console.error('Error fetching credentials:', error);
+        showError('Failed to load credentials');
     }
 }
 
