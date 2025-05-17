@@ -298,17 +298,23 @@ function showCombinedNotification(website, isDuplicate, hasChanged) {
                 background: #4299e1;
                 color: white;
                 border: none;
-                padding: 5px 15px;
-                border-radius: 4px;
+                padding: 2px 8px;
+                border-radius: 3px;
                 cursor: pointer;
+                font-size: 11px;
+                line-height: 1.5;
+                min-height: 22px;
             ">Update Password</button>
             <button id="dismiss-notification" style="
                 background: #4a5568;
                 color: white;
                 border: none;
-                padding: 5px 15px;
-                border-radius: 4px;
+                padding: 2px 8px;
+                border-radius: 3px;
                 cursor: pointer;
+                font-size: 11px;
+                line-height: 1.5;
+                min-height: 22px;
             ">Dismiss</button>
         </div>
     `;
