@@ -1245,6 +1245,42 @@ function setupEventListeners() {
             manualSaveForm.style.display = 'none';
         });
     }
+
+    // Add event listener for Generate Password button
+    const generatePasswordBtn = document.getElementById('generate-password');
+    if (generatePasswordBtn) {
+        generatePasswordBtn.addEventListener('click', () => {
+            // Generate password
+            const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=/<>';
+            const length = 16;
+            let password = '';
+            for (let i = 0; i < length; i++) {
+                password += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+
+            // Show modal
+            const modal = document.getElementById('password-modal');
+            const passwordDiv = document.getElementById('generated-password');
+            const feedback = document.getElementById('copy-feedback');
+            passwordDiv.textContent = password;
+            feedback.style.display = 'none';
+            modal.style.display = 'flex';
+
+            // Copy button
+            const copyBtn = document.getElementById('copy-password-btn');
+            copyBtn.onclick = () => {
+                navigator.clipboard.writeText(password).then(() => {
+                    feedback.style.display = 'block';
+                    setTimeout(() => { feedback.style.display = 'none'; }, 1500);
+                });
+            };
+
+            // Close modal
+            document.getElementById('close-password-modal').onclick = () => {
+                modal.style.display = 'none';
+            };
+        });
+    }
 }
 
 // Add this function to handle manual password saving
