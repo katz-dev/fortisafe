@@ -280,9 +280,6 @@ a {
 .credential-item {
     flex-direction: column;
     align-items: flex-start;
-}
-
-.credential-item {
     background: linear-gradient(165deg, #2d2a63, #1a1744);
     border-radius: 0.8rem;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3),
@@ -312,26 +309,103 @@ a {
         0 0 0 1px rgba(126, 131, 255, 0.3);
 }
 
-.credential-details {
-    margin-bottom: 0.5rem;
-    font-size: 0.9rem;
-    color: #e0e0ff;
-    padding: 0.3rem 0;
-}
-
-.credential-details strong {
-    color: #a5b4fc;
-    font-weight: 600;
-    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
-}
-
-/* Password button styles */
-.password-buttons {
+.credential-header {
+    width: 100%;
     display: flex;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.credential-title {
+    font-weight: 600;
+    color: #e0e0ff;
+    font-size: 1.05rem;
+}
+
+.credential-email {
+    color: #a5b4fc;
+    background: rgba(30, 27, 75, 0.5);
+    border-radius: 0.4rem;
+    padding: 0.4rem 0.8rem;
+    margin: 0.4rem 0;
+    font-size: 0.9rem;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    word-break: break-all;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) inset;
+}
+
+.email-label {
+    color: #bcbcf5;
+    font-weight: 500;
+    margin-right: 0.5rem;
+    white-space: nowrap;
+}
+
+.email-value {
+    flex-grow: 1;
+}
+
+.credential-password {
+    background: rgba(30, 27, 75, 0.5);
+    border-radius: 0.4rem;
+    padding: 0.4rem 0.8rem;
+    margin: 0.4rem 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) inset;
+}
+
+.password-label {
+    color: #bcbcf5;
+    font-weight: 500;
+    margin-right: 0.5rem;
+    white-space: nowrap;
+}
+
+.password-value {
+    color: #e0e0ff;
+    flex-grow: 1;
+}
+
+.credential-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    width: 100%;
+    margin-top: 0.8rem;
+}
+
+/* Enhanced button styling for credential actions */
+.credential-actions button {
+    flex: 1;
+    font-size: 0.85rem;
+    padding: 0.5rem 0;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.copy-button {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    border: none;
+    transition: all 0.2s ease;
+}
+
+.copy-button:hover {
+    background: linear-gradient(135deg, #34d399, #10b981);
+    transform: translateY(-2px);
+}
+
+/* Button styles */
 .btn-show-password {
     background: linear-gradient(135deg, #3b82f6, #1d4ed8);
     color: white;
@@ -346,7 +420,7 @@ a {
     transition: all 0.2s ease;
     position: relative;
     overflow: hidden;
-    min-width: 130px;
+    min-width: 80px;
     text-align: center;
 }
 
