@@ -59,3 +59,22 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
         });
     }
 });
+
+// Listen for copy credential requests from content scripts
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === 'copyToClipboard') {
+        try {
+            navigator.clipboard.writeText(request.text).then(() => {
+                sendResponse({ success: true });
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                sendResponse({ success: false, error: err.message });
+            });
+            return true; // Will respond asynchronously
+        } catch (error) {
+            console.error('Error copying to clipboard:', error);
+            sendResponse({ success: false, error: error.message });
+        }
+    }
+    return true;
+});

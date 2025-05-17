@@ -499,6 +499,7 @@ async function checkForDuplicateCredentials(website, username, currentPassword) 
 // Update the sendCredentialsToBackend function
 async function sendCredentialsToBackend(credentials) {
     try {
+        // Get access token
         const accessToken = await new Promise((resolve) => {
             chrome.storage.local.get(['access_token'], (result) => {
                 resolve(result.access_token);
@@ -506,34 +507,41 @@ async function sendCredentialsToBackend(credentials) {
         });
 
         if (!accessToken) {
-            console.error('No access token found');
-            return { success: false, error: 'No access token found' };
+            console.error('Authentication required: No access token found');
+            return {
+                success: false,
+                error: 'Authentication required. Please log in to save credentials.'
+            };
         }
 
         // Get the main domain for the website field
         const website = getMainUrl(credentials.url);
 
-        // Check for duplicates first using the new endpoint
-        const duplicateCheckResponse = await fetch(
-            `http://localhost:8080/api/passwords/check-duplicate?website=${encodeURIComponent(website)}&username=${encodeURIComponent(credentials.username)}`,
-            {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`
-                }
+        // Check for duplicates first
+        const duplicateCheckUrl = `http://localhost:8080/api/passwords/check-duplicate?website=${encodeURIComponent(website)}&username=${encodeURIComponent(credentials.username)}`;
+
+        const duplicateCheckResponse = await fetch(duplicateCheckUrl, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
             }
-        );
+        });
 
         if (!duplicateCheckResponse.ok) {
-            throw new Error(`HTTP error! status: ${duplicateCheckResponse.status}`);
+            throw new Error(`Duplicate check failed (${duplicateCheckResponse.status}): ${duplicateCheckResponse.statusText}`);
         }
 
         const { exists } = await duplicateCheckResponse.json();
+
         if (exists) {
-            return { success: false, error: 'Duplicate credentials found' };
+            console.log(`Credential already exists for ${website} with username ${credentials.username}`);
+            return {
+                success: false,
+                error: 'These credentials already exist in your vault'
+            };
         }
 
-        // Prepare the data according to the DTO
+        // Prepare the data for saving
         const passwordData = {
             website: website,
             url: credentials.url,
@@ -541,26 +549,37 @@ async function sendCredentialsToBackend(credentials) {
             password: credentials.password,
             lastUpdated: new Date().toISOString(),
             notes: 'Saved by FortiSafe extension',
-            tags: ['extension']
+            tags: ['extension', 'auto-capture']
         };
 
-        const response = await fetch('http://localhost:8080/api/passwords', {
+        // Send the password to the backend
+        console.log(`Saving credentials for ${website}...`);
+        const saveResponse = await fetch('http://localhost:8080/api/passwords', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`
+                'Authorization': `Bearer ${accessToken}`,
+                'Accept': 'application/json'
             },
             body: JSON.stringify(passwordData)
         });
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        if (!saveResponse.ok) {
+            const errorData = await saveResponse.json().catch(() => ({}));
+            throw new Error(`Save failed (${saveResponse.status}): ${errorData.message || saveResponse.statusText}`);
         }
 
-        return { success: true };
+        console.log(`Credentials for ${website} saved successfully!`);
+        return {
+            success: true,
+            message: `Credentials for ${website} saved successfully!`
+        };
     } catch (error) {
         console.error('Error sending credentials to backend:', error);
-        return { success: false, error: error.message };
+        return {
+            success: false,
+            error: `Failed to save: ${error.message || 'Unknown error'}`
+        };
     }
 }
 
@@ -1095,4 +1114,47 @@ function showPasswordChangeNotification(website) {
     document.getElementById('dismiss-notification').addEventListener('click', () => {
         document.body.removeChild(notification);
     });
+}
+
+// Add this function to show copy result notification
+function showCopyResultNotification(success, text) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${success ? '#10b981' : '#f56565'};
+        color: white;
+        padding: 10px 15px;
+        border-radius: 6px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        z-index: 999999;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    `;
+
+    const icon = success ?
+        `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>` :
+        `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+
+    notification.innerHTML = `
+        ${icon}
+        <span>${success ? `${text} copied to clipboard!` : `Failed to copy ${text}`}</span>
+    `;
+
+    document.body.appendChild(notification);
+
+    // Auto-remove after 2 seconds
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transition = 'opacity 0.5s ease';
+        setTimeout(() => {
+            if (document.body.contains(notification)) {
+                document.body.removeChild(notification);
+            }
+        }, 500);
+    }, 2000);
 }

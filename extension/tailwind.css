@@ -414,6 +414,48 @@ a {
     box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
 }
 
+/* Button styles for copy functionality */
+.btn-copy-credential {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+    border-radius: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+    border: none;
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3),
+        0 1px 0 rgba(255, 255, 255, 0.1) inset;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    min-width: 80px;
+    text-align: center;
+}
+
+.btn-copy-credential::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 50%;
+    background: linear-gradient(rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+    pointer-events: none;
+}
+
+.btn-copy-credential:hover {
+    background: linear-gradient(135deg, #34d399, #10b981);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(16, 185, 129, 0.4),
+        0 1px 0 rgba(255, 255, 255, 0.15) inset;
+}
+
+.btn-copy-credential:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
+}
+
 /* Updated credential container styles */
 .credential-container {
     border-radius: 1rem;
@@ -555,7 +597,7 @@ a {
 }
 
 ::-webkit-scrollbar-track {
-    background: rgba(42, 40, 64, 0.3);
+    background: rgba(30, 27, 75, 0.2);
     border-radius: 3px;
 }
 
@@ -862,4 +904,158 @@ a {
 
 .btn-pulse {
     animation: pulse-border 2s infinite;
+}
+
+/* Updated dropdown indicator styles for smaller size */
+.dropdown-indicator {
+    transition: transform 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+}
+
+.dropdown-indicator svg {
+    width: 12px;
+    height: 12px;
+}
+
+/* Enhanced search bar styles */
+#credentials-filter {
+    width: 100%;
+    background: rgba(42, 40, 64, 0.7);
+    color: #e0e0ff;
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 14px;
+    margin-bottom: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+}
+
+#credentials-filter:focus {
+    border-color: rgba(99, 102, 241, 0.6);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+    outline: none;
+}
+
+#credentials-filter::placeholder {
+    color: rgba(224, 224, 255, 0.5);
+}
+
+/* Update search bar styles to match the design when placed after buttons */
+.search-bar {
+    background: rgba(42, 40, 64, 0.7);
+    border-radius: 0.75rem;
+    padding: 0.6rem 1rem;
+    color: #bcbcf5;
+    font-size: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    width: 90%;
+    margin: 12px auto;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+}
+
+.search-bar input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #e0e0ff;
+    font-size: 1rem;
+    flex: 1;
+    width: 100%;
+}
+
+.search-bar svg {
+    width: 1.2rem;
+    height: 1.2rem;
+    color: #bcbcf5;
+    min-width: 1.2rem;
+}
+
+.search-bar:focus-within {
+    border-color: rgba(99, 102, 241, 0.4);
+    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.15);
+}
+
+/* Enhanced Website Filter Button Styles */
+.website-filter-btn {
+    background: linear-gradient(to bottom, #312e81, #1e1b4b);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.website-filter-btn::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 40%;
+    background: linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
+    pointer-events: none;
+}
+
+.website-filter-btn:hover {
+    background: linear-gradient(to bottom, #4338ca, #3730a3);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.website-filter-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.website-filter-btn.active {
+    background: linear-gradient(to bottom, #6366f1, #4f46e5);
+    box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3);
+}
+
+/* Enhanced website selector container */
+#website-selector-container {
+    width: 90%;
+    margin: 8px auto 12px auto;
+    max-height: 120px;
+    overflow-y: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px;
+    background: rgba(30, 27, 75, 0.3);
+    border-radius: 8px;
+    border: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+#website-selector-container::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+#website-selector-container::-webkit-scrollbar-track {
+    background: rgba(30, 27, 75, 0.2);
+    border-radius: 2px;
+}
+
+#website-selector-container::-webkit-scrollbar-thumb {
+    background: rgba(99, 102, 241, 0.5);
+    border-radius: 2px;
+}
+
+#website-selector-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(99, 102, 241, 0.7);
 }

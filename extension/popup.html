@@ -391,6 +391,98 @@
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
             border-color: rgba(99, 102, 241, 0.2);
         }
+
+        /* Enhanced credential item styles */
+        .credential-field {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0.8rem;
+            background: rgba(30, 27, 75, 0.5);
+            border-radius: 0.4rem;
+            margin-bottom: 8px;
+            position: relative;
+        }
+
+        .credential-field:last-child {
+            margin-bottom: 0;
+        }
+
+        .credential-label {
+            color: #a5b4fc;
+            font-weight: 500;
+            min-width: 80px;
+        }
+
+        .credential-value {
+            color: #e0e0ff;
+            flex-grow: 1;
+            margin-left: 8px;
+            word-break: break-all;
+        }
+
+        .copy-btn {
+            background: transparent;
+            color: #a5b4fc;
+            border: none;
+            padding: 2px 5px;
+            margin-left: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .copy-btn:hover {
+            color: #818cf8;
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        /* Improved button row */
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .btn-group button {
+            flex: 1;
+            font-size: 0.85rem;
+            padding: 8px 0;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-group button:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-group button:active {
+            transform: translateY(1px);
+        }
+
+        /* Tooltips */
+        .has-tooltip {
+            position: relative;
+        }
+
+        .has-tooltip:hover:after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2d3748;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 10;
+        }
     </style>
 </head>
 
@@ -421,14 +513,6 @@
         <div class="logo">Fortisafe</div>
 
         <div class="card-content">
-            <div class="search-bar">
-                <input id="search-input" type="text" placeholder="Search passwords..." />
-                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <circle cx="11" cy="11" r="8" />
-                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
-            </div>
-
             <div class="menu-list">
                 <div class="menu-item" id="generate-password">
                     <span class="icon">🔒</span> Generate password
@@ -469,11 +553,6 @@
 
                 <button id="enable-capture" class="action-btn" style="margin:0.5rem auto;">
                     Enable Credential Capture
-                </button>
-
-                <button id="clear-all-credentials"
-                    style="width:90%; margin:0.5rem auto; background:linear-gradient(45deg, #ef4444, #dc2626); color:#fff; font-weight:600; border-radius:0.7rem; padding:0.75rem 0; box-shadow:0 4px 12px rgba(239,68,68,0.3); border:none; cursor:pointer;">
-                    Clear All Credentials
                 </button>
 
                 <div id="credentials-list"></div>

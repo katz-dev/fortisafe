@@ -311,7 +311,7 @@ async function decryptPassword(passwordId) {
     }
 }
 
-// Add this function to create website dropdown selector
+// Update the website selector function for better-looking filter buttons
 function createWebsiteSelector(passwords, currentFilter = '') {
     // Get unique websites
     const websites = [...new Set(passwords.map(p => p.website))].sort();
@@ -320,15 +320,17 @@ function createWebsiteSelector(passwords, currentFilter = '') {
     const selectorContainer = document.createElement('div');
     selectorContainer.id = 'website-selector-container';
     selectorContainer.style.cssText = `
-        margin: 10px 0;
+        width: 90%;
+        margin: 8px auto 12px auto;
         max-height: 120px;
         overflow-y: auto;
         display: flex;
         flex-wrap: wrap;
         gap: 6px;
-        padding: 6px;
+        padding: 8px;
         background: rgba(30, 27, 75, 0.3);
-        border-radius: 6px;
+        border-radius: 8px;
+        border: 1px solid rgba(99, 102, 241, 0.1);
     `;
 
     // Add "All Websites" button
@@ -336,16 +338,34 @@ function createWebsiteSelector(passwords, currentFilter = '') {
     allButton.className = 'website-filter-btn';
     allButton.textContent = 'All';
     allButton.style.cssText = `
-        background: ${currentFilter === '' ? 'linear-gradient(to bottom, #6366f1, #4f46e5)' : 'linear-gradient(to bottom, #1e1b4b, #312e81)'};
+        ${currentFilter === '' ?
+            'background: linear-gradient(to bottom, #6366f1, #4f46e5); box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3);' :
+            'background: linear-gradient(to bottom, #312e81, #1e1b4b); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);'
+        }
         color: white;
         border: none;
-        border-radius: 4px;
-        padding: 4px 8px;
+        border-radius: 6px;
+        padding: 5px 10px;
         font-size: 12px;
+        font-weight: 500;
         cursor: pointer;
-        white-space: nowrap;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        transition: all 0.2s ease;
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
     `;
+
+    allButton.onmouseover = () => {
+        if (currentFilter !== '') {
+            allButton.style.background = 'linear-gradient(to bottom, #4338ca, #3730a3)';
+            allButton.style.transform = 'translateY(-1px)';
+        }
+    };
+
+    allButton.onmouseout = () => {
+        if (currentFilter !== '') {
+            allButton.style.background = 'linear-gradient(to bottom, #312e81, #1e1b4b)';
+            allButton.style.transform = 'translateY(0)';
+        }
+    };
 
     allButton.onclick = () => {
         // Update filter input
@@ -354,12 +374,6 @@ function createWebsiteSelector(passwords, currentFilter = '') {
 
         // Refresh display
         displaySavedCredentials('');
-
-        // Update button styles
-        document.querySelectorAll('.website-filter-btn').forEach(btn => {
-            btn.style.background = 'linear-gradient(to bottom, #1e1b4b, #312e81)';
-        });
-        allButton.style.background = 'linear-gradient(to bottom, #6366f1, #4f46e5)';
     };
 
     selectorContainer.appendChild(allButton);
@@ -368,18 +382,46 @@ function createWebsiteSelector(passwords, currentFilter = '') {
     websites.forEach(website => {
         const button = document.createElement('button');
         button.className = 'website-filter-btn';
-        button.textContent = website;
+
+        // Use the first domain part as display text
+        const displayName = website.split('.')[0].length > 12 ?
+            website.split('.')[0].substring(0, 10) + '...' :
+            website.split('.')[0];
+
+        button.title = website;
+        button.textContent = displayName;
+
+        const isActive = currentFilter === website.toLowerCase();
         button.style.cssText = `
-            background: ${currentFilter === website.toLowerCase() ? 'linear-gradient(to bottom, #6366f1, #4f46e5)' : 'linear-gradient(to bottom, #1e1b4b, #312e81)'};
+            ${isActive ?
+                'background: linear-gradient(to bottom, #6366f1, #4f46e5); box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3);' :
+                'background: linear-gradient(to bottom, #312e81, #1e1b4b); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);'
+            }
             color: white;
             border: none;
-            border-radius: 4px;
-            padding: 4px 8px;
+            border-radius: 6px;
+            padding: 5px 10px;
             font-size: 12px;
+            font-weight: 500;
             cursor: pointer;
-            white-space: nowrap;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+            text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
         `;
+
+        // Add hover effects
+        button.onmouseover = () => {
+            if (!isActive) {
+                button.style.background = 'linear-gradient(to bottom, #4338ca, #3730a3)';
+                button.style.transform = 'translateY(-1px)';
+            }
+        };
+
+        button.onmouseout = () => {
+            if (!isActive) {
+                button.style.background = 'linear-gradient(to bottom, #312e81, #1e1b4b)';
+                button.style.transform = 'translateY(0)';
+            }
+        };
 
         button.onclick = () => {
             // Update filter input
@@ -388,12 +430,6 @@ function createWebsiteSelector(passwords, currentFilter = '') {
 
             // Refresh display with this website
             displaySavedCredentials(website.toLowerCase());
-
-            // Update button styles
-            document.querySelectorAll('.website-filter-btn').forEach(btn => {
-                btn.style.background = 'linear-gradient(to bottom, #1e1b4b, #312e81)';
-            });
-            button.style.background = 'linear-gradient(to bottom, #6366f1, #4f46e5)';
         };
 
         selectorContainer.appendChild(button);
@@ -402,7 +438,7 @@ function createWebsiteSelector(passwords, currentFilter = '') {
     return selectorContainer;
 }
 
-// Modify the displaySavedCredentials function to implement collapsible dropdowns
+// Modify the displaySavedCredentials function
 async function displaySavedCredentials(filterText = '') {
     const credentialsList = document.getElementById('credentials-list');
     credentialsList.innerHTML = '';
@@ -418,24 +454,21 @@ async function displaySavedCredentials(filterText = '') {
         let filterInput = document.getElementById('credentials-filter');
         if (!filterInput) {
             const filterContainer = document.createElement('div');
-            filterContainer.style.margin = '0 0 12px 0';
+            filterContainer.className = 'search-bar';
+            filterContainer.style.margin = '10px 0';
 
             filterInput = document.createElement('input');
             filterInput.id = 'credentials-filter';
             filterInput.type = 'text';
-            filterInput.placeholder = 'Filter websites...';
+            filterInput.placeholder = 'Search passwords...';
             filterInput.value = filterText;
-            filterInput.style.cssText = `
-                width: 100%;
-                background: rgba(42, 40, 64, 0.7);
-                color: white;
-                border: 1px solid rgba(99, 102, 241, 0.3);
-                border-radius: 6px;
-                padding: 8px 12px;
-                font-size: 14px;
-                margin-bottom: 8px;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            `;
+
+            // Add search icon similar to the original search bar
+            const searchIcon = document.createElement('div');
+            searchIcon.innerHTML = `<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>`;
 
             filterInput.addEventListener('input', (e) => {
                 // Re-display credentials with filter
@@ -444,7 +477,17 @@ async function displaySavedCredentials(filterText = '') {
             });
 
             filterContainer.appendChild(filterInput);
-            credentialsList.parentNode.insertBefore(filterContainer, credentialsList);
+            filterContainer.appendChild(searchIcon);
+
+            // Insert after the Enable Capture button
+            const captureButton = document.getElementById('enable-capture');
+            if (captureButton) {
+                // Insert right after the enable capture button
+                captureButton.insertAdjacentElement('afterend', filterContainer);
+            } else {
+                // Fallback: insert before credentials list
+                credentialsList.parentNode.insertBefore(filterContainer, credentialsList);
+            }
         }
 
         const response = await fetch(`${BACKEND_URL}/passwords`, {
@@ -469,7 +512,14 @@ async function displaySavedCredentials(filterText = '') {
         // Create and add website selector
         if (passwords.length > 0) {
             const websiteSelector = createWebsiteSelector(passwords, filterText.toLowerCase());
-            credentialsList.parentNode.insertBefore(websiteSelector, credentialsList);
+
+            // Insert the website selector after the search bar
+            const searchBar = document.querySelector('.search-bar');
+            if (searchBar) {
+                searchBar.insertAdjacentElement('afterend', websiteSelector);
+            } else {
+                credentialsList.parentNode.insertBefore(websiteSelector, credentialsList);
+            }
         }
 
         // Filter passwords if we have a filter text
@@ -564,10 +614,10 @@ async function displaySavedCredentials(filterText = '') {
             }
             websiteName.appendChild(nameSpan);
 
-            // Create dropdown indicator
+            // Create dropdown indicator with smaller size
             const dropdownIndicator = document.createElement('div');
             dropdownIndicator.className = 'dropdown-indicator';
-            dropdownIndicator.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            dropdownIndicator.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="6 9 12 15 18 9"></polyline>
             </svg>`;
             dropdownIndicator.style.cssText = `
@@ -636,22 +686,87 @@ async function displaySavedCredentials(filterText = '') {
                 const infoContainer = document.createElement('div');
                 infoContainer.className = 'credential-info';
 
-                // Username field
+                // Username field with copy button
                 const usernameField = document.createElement('div');
                 usernameField.className = 'credential-field';
-                usernameField.innerHTML = `
-                    <span class="credential-label" style="color: #a5b4fc; font-weight: 500;">Username:</span>
-                    <span class="credential-value" style="color: #e0e0ff;">${password.username}</span>
+                usernameField.style.cssText = `
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 0.4rem 0.6rem;
+                    background: rgba(30, 27, 75, 0.5);
+                    border-radius: 0.4rem;
+                    margin-bottom: 8px;
                 `;
+
+                const usernameLabel = document.createElement('span');
+                usernameLabel.className = 'credential-label';
+                usernameLabel.style.cssText = 'color: #a5b4fc; font-weight: 500;';
+                usernameLabel.textContent = 'Username:';
+
+                const usernameValue = document.createElement('span');
+                usernameValue.className = 'credential-value';
+                usernameValue.style.cssText = 'color: #e0e0ff; margin-left: 8px; flex-grow: 1; word-break: break-all;';
+                usernameValue.textContent = password.username;
+
+                const usernameCopyBtn = document.createElement('button');
+                usernameCopyBtn.className = 'copy-btn';
+                usernameCopyBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+                usernameCopyBtn.style.cssText = `
+                    background: transparent;
+                    color: #a5b4fc;
+                    border: none;
+                    padding: 2px 5px;
+                    margin-left: 5px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                `;
+                usernameCopyBtn.title = "Copy username";
+
+                usernameCopyBtn.onclick = async (e) => {
+                    e.stopPropagation();
+                    try {
+                        await navigator.clipboard.writeText(password.username);
+                        // Visual feedback
+                        usernameCopyBtn.style.color = '#4ade80';
+                        setTimeout(() => {
+                            usernameCopyBtn.style.color = '#a5b4fc';
+                        }, 1000);
+                    } catch (error) {
+                        showError('Failed to copy username');
+                    }
+                };
+
+                usernameField.appendChild(usernameLabel);
+                usernameField.appendChild(usernameValue);
+                usernameField.appendChild(usernameCopyBtn);
                 infoContainer.appendChild(usernameField);
 
                 // Password field
                 const passwordField = document.createElement('div');
                 passwordField.className = 'credential-field password-field';
-                passwordField.innerHTML = `
-                    <span class="credential-label" style="color: #a5b4fc; font-weight: 500;">Password:</span>
-                    <span class="credential-value password-text" style="color: #e0e0ff;">••••••••</span>
+                passwordField.style.cssText = `
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 0.4rem 0.6rem;
+                    background: rgba(30, 27, 75, 0.5);
+                    border-radius: 0.4rem;
                 `;
+
+                const passwordLabel = document.createElement('span');
+                passwordLabel.className = 'credential-label';
+                passwordLabel.style.cssText = 'color: #a5b4fc; font-weight: 500;';
+                passwordLabel.textContent = 'Password:';
+
+                const passwordValue = document.createElement('span');
+                passwordValue.className = 'credential-value password-text';
+                passwordValue.style.cssText = 'color: #e0e0ff; margin-left: 8px; flex-grow: 1;';
+                passwordValue.textContent = '••••••••';
+
+                passwordField.appendChild(passwordLabel);
+                passwordField.appendChild(passwordValue);
                 infoContainer.appendChild(passwordField);
 
                 credentialItem.appendChild(infoContainer);
@@ -659,52 +774,50 @@ async function displaySavedCredentials(filterText = '') {
                 // Button container
                 const buttonContainer = document.createElement('div');
                 buttonContainer.className = 'btn-group';
-                buttonContainer.style.display = 'flex';
-                buttonContainer.style.gap = '8px';
-                buttonContainer.style.margin = '10px 0 0 0';
+                buttonContainer.style.cssText = 'display: flex; gap: 8px; margin: 10px 0 0 0;';
 
-                // Show/Hide Password button - Simple Blue
+                // Show/Hide Password button
                 const showPasswordBtn = document.createElement('button');
-                showPasswordBtn.className = 'simple-btn show-btn';
+                showPasswordBtn.className = 'btn-show-password';
                 showPasswordBtn.innerHTML = 'Show';
                 showPasswordBtn.style.cssText = `
                     flex: 1;
                     background: linear-gradient(to bottom, #3b82f6, #2563eb);
                     color: white;
-                    border: none;
                     border-radius: 6px;
                     padding: 6px 12px;
                     font-weight: 600;
+                    border: none;
                     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
                 `;
 
-                // Copy Password button - Simple Green
+                // Copy Password button
                 const copyPasswordBtn = document.createElement('button');
-                copyPasswordBtn.className = 'simple-btn copy-btn';
+                copyPasswordBtn.className = 'btn-copy-credential';
                 copyPasswordBtn.innerHTML = 'Copy';
                 copyPasswordBtn.style.cssText = `
                     flex: 1;
                     background: linear-gradient(to bottom, #10b981, #059669);
                     color: white;
-                    border: none;
                     border-radius: 6px;
                     padding: 6px 12px;
                     font-weight: 600;
+                    border: none;
                     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
                 `;
 
-                // Delete button - Simple Red
+                // Delete button
                 const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'simple-btn delete-btn';
+                deleteBtn.className = 'btn-delete-credential';
                 deleteBtn.innerHTML = 'Delete';
                 deleteBtn.style.cssText = `
                     flex: 1;
                     background: linear-gradient(to bottom, #ef4444, #dc2626);
                     color: white;
-                    border: none;
                     border-radius: 6px;
                     padding: 6px 12px;
                     font-weight: 600;
+                    border: none;
                     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
                 `;
 
@@ -1004,13 +1117,6 @@ document.getElementById('enable-capture').addEventListener('click', function () 
     });
 });
 
-// Clear all credentials button
-document.getElementById('clear-all-credentials').addEventListener('click', function () {
-    chrome.storage.sync.set({ 'savedCredentials': [] }, function () {
-        displaySavedCredentials();
-    });
-});
-
 // Check if capture is enabled
 chrome.storage.sync.get('captureEnabled', function (data) {
     if (data.captureEnabled) {
@@ -1085,13 +1191,6 @@ function setupEventListeners() {
                     });
                 }
             }
-        });
-    });
-
-    // Clear all credentials button
-    document.getElementById('clear-all-credentials').addEventListener('click', function () {
-        chrome.storage.sync.set({ 'savedCredentials': [] }, function () {
-            displaySavedCredentials();
         });
     });
 
