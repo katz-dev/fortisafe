@@ -534,3 +534,298 @@ function renderPendingCredentials() {
         });
     });
 }
+
+// Update the loadPasswords function to handle password import
+async function loadPasswords(container, searchInput, filterCurrentSite = false) {
+    container.innerHTML = '';
+
+    try {
+        // Get access token
+        const accessToken = await new Promise((resolve) => {
+            chrome.storage.local.get(['access_token'], (result) => {
+                resolve(result.access_token);
+            });
+        });
+
+        if (!accessToken) {
+            container.innerHTML = '<p style="color: #e0e0ff; text-align: center;">Please login to FortiSafe first</p>';
+            return;
+        }
+
+        // Fetch passwords from backend
+        const response = await fetch('http://localhost:8080/api/passwords', {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch passwords');
+        }
+
+        const passwords = await response.json();
+        const searchTerm = searchInput.value.toLowerCase();
+        const currentHostname = window.location.hostname;
+
+        // Filter passwords based on search and current site if needed
+        let filteredPasswords = passwords;
+
+        if (filterCurrentSite) {
+            filteredPasswords = passwords.filter(p =>
+                p.website.toLowerCase().includes(currentHostname.toLowerCase())
+            );
+        }
+
+        if (searchTerm) {
+            filteredPasswords = filteredPasswords.filter(p =>
+                p.website.toLowerCase().includes(searchTerm) ||
+                p.username.toLowerCase().includes(searchTerm)
+            );
+        }
+
+        if (filteredPasswords.length === 0) {
+            container.innerHTML = '<p style="color: #e0e0ff; text-align: center;">No passwords found</p>';
+            return;
+        }
+
+        // Create password items
+        filteredPasswords.forEach(password => {
+            const item = document.createElement('div');
+            item.style.cssText = `
+                background: rgba(49, 46, 129, 0.3);
+                border: 1px solid rgba(99, 102, 241, 0.2);
+                border-radius: 6px;
+                padding: 12px;
+                cursor: pointer;
+                transition: background-color 0.2s;
+            `;
+
+            item.innerHTML = `
+                <div style="color: #e0e0ff; font-weight: 500;">${password.website}</div>
+                <div style="color: #a5b4fc; font-size: 14px;">${password.username}</div>
+            `;
+
+            item.onmouseover = () => {
+                item.style.backgroundColor = 'rgba(99, 102, 241, 0.2)';
+            };
+
+            item.onmouseout = () => {
+                item.style.backgroundColor = 'rgba(49, 46, 129, 0.3)';
+            };
+
+            item.onclick = async () => {
+                try {
+                    // Decrypt password
+                    const decryptResponse = await fetch(`http://localhost:8080/api/passwords/${password._id}/decrypt`, {
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`
+                        }
+                    });
+
+                    if (!decryptResponse.ok) {
+                        throw new Error('Failed to decrypt password');
+                    }
+
+                    const { password: decryptedPassword } = await decryptResponse.json();
+
+                    // Find the active password input field
+                    const activeElement = document.activeElement;
+                    let targetElement = null;
+
+                    if (activeElement && activeElement.tagName === 'INPUT' && activeElement.type === 'password') {
+                        targetElement = activeElement;
+                    } else {
+                        // If no active element or not a password field, find the nearest password field
+                        const passwordFields = document.querySelectorAll('input[type="password"]');
+                        if (passwordFields.length > 0) {
+                            targetElement = passwordFields[0];
+                        }
+                    }
+
+                    if (targetElement) {
+                        // Fill the password field
+                        targetElement.value = decryptedPassword;
+
+                        // Trigger necessary events
+                        targetElement.dispatchEvent(new Event('input', { bubbles: true }));
+                        targetElement.dispatchEvent(new Event('change', { bubbles: true }));
+
+                        // Try to find and fill username field if it exists
+                        const form = targetElement.closest('form');
+                        if (form) {
+                            const usernameField = form.querySelector('input[type="text"], input[type="email"]');
+                            if (usernameField) {
+                                usernameField.value = password.username;
+                                usernameField.dispatchEvent(new Event('input', { bubbles: true }));
+                                usernameField.dispatchEvent(new Event('change', { bubbles: true }));
+                            }
+                        }
+
+                        // Show success notification
+                        showImportSuccessNotification();
+                    } else {
+                        throw new Error('No password field found');
+                    }
+
+                    // Remove the selector
+                    document.getElementById('fortisafe-password-selector').remove();
+                } catch (error) {
+                    console.error('Error importing password:', error);
+                    showImportErrorNotification(error.message);
+                }
+            };
+
+            container.appendChild(item);
+        });
+    } catch (error) {
+        console.error('Error loading passwords:', error);
+        container.innerHTML = '<p style="color: #e0e0ff; text-align: center;">Error loading passwords</p>';
+    }
+}
+
+// Add notification functions
+function showImportSuccessNotification() {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #48bb78;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 6px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        z-index: 999999;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+    `;
+    notification.textContent = 'Password imported successfully!';
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transition = 'opacity 0.5s ease';
+        setTimeout(() => notification.remove(), 500);
+    }, 2000);
+}
+
+function showImportErrorNotification(message) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #f56565;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 6px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        z-index: 999999;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+    `;
+    notification.textContent = `Error: ${message}`;
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transition = 'opacity 0.5s ease';
+        setTimeout(() => notification.remove(), 500);
+    }, 3000);
+}
+
+// Update the createPasswordSelector function to handle filtering
+function createPasswordSelector(filterCurrentSite = false) {
+    const selector = document.createElement('div');
+    selector.id = 'fortisafe-password-selector';
+    selector.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #1a1a2e;
+        border: 1px solid #4f46e5;
+        border-radius: 8px;
+        padding: 16px;
+        z-index: 999999;
+        min-width: 300px;
+        max-width: 400px;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    `;
+
+    // Add close button
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '×';
+    closeBtn.style.cssText = `
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: none;
+        border: none;
+        color: #e0e0ff;
+        font-size: 20px;
+        cursor: pointer;
+        padding: 4px 8px;
+    `;
+    closeBtn.onclick = () => selector.remove();
+    selector.appendChild(closeBtn);
+
+    // Add title
+    const title = document.createElement('h3');
+    title.textContent = filterCurrentSite ? 'Select Password for Current Site' : 'Select Password';
+    title.style.cssText = `
+        color: #e0e0ff;
+        margin: 0 0 16px 0;
+        font-size: 18px;
+        font-weight: 600;
+    `;
+    selector.appendChild(title);
+
+    // Add search input
+    const searchInput = document.createElement('input');
+    searchInput.type = 'text';
+    searchInput.placeholder = 'Search websites...';
+    searchInput.style.cssText = `
+        width: 100%;
+        padding: 8px 12px;
+        margin-bottom: 12px;
+        background: rgba(42, 40, 64, 0.7);
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        border-radius: 6px;
+        color: #e0e0ff;
+        font-size: 14px;
+    `;
+    selector.appendChild(searchInput);
+
+    // Add password list container
+    const passwordList = document.createElement('div');
+    passwordList.id = 'fortisafe-password-list';
+    passwordList.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    `;
+    selector.appendChild(passwordList);
+
+    // Add to page
+    document.body.appendChild(selector);
+
+    // Load passwords with initial filter
+    loadPasswords(passwordList, searchInput, filterCurrentSite);
+
+    // Add search functionality
+    searchInput.addEventListener('input', (e) => {
+        loadPasswords(passwordList, searchInput, filterCurrentSite);
+    });
+
+    return selector;
+}
+
+// Update the message listener
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === 'showPasswordSelector') {
+        createPasswordSelector(message.filterCurrentSite);
+    }
+});
