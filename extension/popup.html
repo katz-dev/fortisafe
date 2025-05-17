@@ -205,21 +205,33 @@
             <div class="menu-item" id="open-website"><span class="icon" style="color:#3be8b0;">Fs</span> Fortisafe
                 website</div>
         </div>
-        <div class="help-link"><span class="icon">&#10068;</span> Help</div>
-        <!-- Saved URLs Section -->
-        <div id="url-section" style="margin:1.2rem 0 0.7rem 0;">
-            <div style="font-size:1.05rem; color:#bcbcf5; font-weight:600; margin-bottom:0.5rem;">Saved URLs</div>
-            <button id="save-url"
-                style="width:100%; background:#6366f1; color:#fff; font-weight:600; border-radius:0.7rem; padding:0.5rem 0; margin-bottom:0.4rem;">Save
-                Current URL</button>
-            <button id="clear-all-urls"
-                style="width:100%; background:#ef4444; color:#fff; font-weight:600; border-radius:0.7rem; padding:0.5rem 0; margin-bottom:0.7rem;">Clear
-                All URLs</button>
-            <div id="url-list" style="margin-top:0.2rem;"></div>
-        </div>
         <!-- Saved Credentials Section -->
         <div id="credentials-section" style="margin:0.7rem 0 0.7rem 0;">
             <div style="font-size:1.05rem; color:#bcbcf5; font-weight:600; margin-bottom:0.5rem;">Saved Credentials
+            </div>
+            <!-- Add manual save password form -->
+            <button id="toggle-manual-form"
+                style="width:100%; background:#232136; color:#bcbcf5; font-weight:600; border-radius:0.7rem; padding:0.5rem 0; margin-bottom:0.5rem;">
+                + Add Credential
+            </button>
+            <div id="manual-save-form"
+                style="display:none; margin-bottom:1rem; padding:0.7rem; background:#2a2840; border-radius:0.7rem;">
+                <div style="margin-bottom:0.5rem;">
+                    <div style="position:relative; margin-bottom:0.5rem;">
+                        <input type="text" id="manual-website" placeholder="Website URL"
+                            style="width:100%; background:#232136; border:none; padding:0.5rem; border-radius:0.5rem; color:#e0e0ff; margin-bottom:0.5rem;">
+                        <div id="website-suggestions"
+                            style="position:absolute; top:100%; left:0; right:0; background:#232136; border-radius:0.5rem; max-height:200px; overflow-y:auto; display:none; z-index:1000; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+                        </div>
+                    </div>
+                    <input type="text" id="manual-username" placeholder="Username"
+                        style="width:100%; background:#232136; border:none; padding:0.5rem; border-radius:0.5rem; color:#e0e0ff; margin-bottom:0.5rem;">
+                    <input type="password" id="manual-password" placeholder="Password"
+                        style="width:100%; background:#232136; border:none; padding:0.5rem; border-radius:0.5rem; color:#e0e0ff; margin-bottom:0.5rem;">
+                </div>
+                <button id="manual-save-btn"
+                    style="width:100%; background:#6366f1; color:#fff; font-weight:600; border-radius:0.7rem; padding:0.5rem 0;">Save
+                    Password</button>
             </div>
             <button id="enable-capture"
                 style="width:100%; background:#6366f1; color:#fff; font-weight:600; border-radius:0.7rem; padding:0.5rem 0; margin-bottom:0.4rem;">Enable

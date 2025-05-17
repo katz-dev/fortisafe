@@ -9,6 +9,7 @@ import {
   UseGuards,
   Request,
   HttpStatus,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -29,7 +30,7 @@ import { Password } from './entities/password.schema';
 @UseGuards(JwtAuthGuard)
 @Controller('passwords')
 export class PasswordsController {
-  constructor(private readonly passwordsService: PasswordsService) {}
+  constructor(private readonly passwordsService: PasswordsService) { }
 
   @Post()
   @ApiOperation({ summary: 'Create a new password entry' })
@@ -60,6 +61,38 @@ export class PasswordsController {
   })
   findAll(@Request() req) {
     return this.passwordsService.findAll(req.user.userId);
+  }
+
+  @Get('check-duplicate')
+  @ApiOperation({ summary: 'Check if a password entry already exists' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Whether a duplicate exists.',
+    schema: {
+      type: 'object',
+      properties: {
+        exists: {
+          type: 'boolean',
+          example: true,
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized.',
+  })
+  async checkDuplicate(
+    @Request() req,
+    @Query('website') website: string,
+    @Query('username') username: string,
+  ) {
+    const exists = await this.passwordsService.checkDuplicate(
+      req.user.userId,
+      website,
+      username,
+    );
+    return { exists };
   }
 
   @Get(':id')

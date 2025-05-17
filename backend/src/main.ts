@@ -9,7 +9,7 @@ async function bootstrap() {
   const whitelist = [
     'http://localhost:3000', // Your standard frontend origin
     'chrome-extension://aapkimbnlkneefecpehpnanaahpemchd',
-    'chrome-extension://apclocdencjjilfhinacbmacadmkogbb',
+    'chrome-extension://lmkkjkgocfciicgheedmnpidkdbjmmfj',
     //  // The Chrome extension origin causing the error
     // Add any other origins you need to support
   ];

@@ -168,4 +168,18 @@ export class PasswordsService {
     const password = await this.findOne(userId, id);
     return this.decrypt(password.password);
   }
+
+  async checkDuplicate(
+    userId: string,
+    website: string,
+    username: string,
+  ): Promise<boolean> {
+    const existingPassword = await this.passwordModel.findOne({
+      userId,
+      website,
+      username,
+    }).exec();
+
+    return !!existingPassword;
+  }
 }
