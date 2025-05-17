@@ -10,6 +10,9 @@ let captureEnabled = false;
 let recentlySavedCredentials = new Set();
 const DEBOUNCE_TIME = 2000; // 2 seconds
 
+// Add this after the initial console.log
+let lastPasswordCheck = {};
+
 // Listen for messages from the popup
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
     if (message.action === "enableCapture") {
@@ -77,8 +80,11 @@ function setupInputFieldListeners() {
 
         if (usernameField) {
             // Add blur event listeners (when user clicks away from the field)
-            const captureFunction = function () {
+            const captureFunction = async function () {
                 if (captureEnabled && passwordField.value && usernameField.value) {
+                    const website = getMainUrl(window.location.href);
+                    // Check for password changes before saving
+                    await checkPasswordChange(website, usernameField.value);
                     saveCredentials(usernameField.value, passwordField.value);
                 }
             };
@@ -258,7 +264,186 @@ function showConfirmationNotification(username, url, callback) {
 }
 
 // Add this function to check for duplicates
-async function checkForDuplicateCredentials(website, username) {
+function showCombinedNotification(website, isDuplicate, hasChanged) {
+    const notification = document.createElement('div');
+    notification.id = 'fortisafe-credential-notification';
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${hasChanged ? '#f56565' : '#2d3748'};
+        color: white;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        z-index: 999999;
+        font-family: Arial, sans-serif;
+        max-width: 300px;
+    `;
+
+    let message = '';
+    if (isDuplicate && hasChanged) {
+        message = `These credentials already exist in your vault and the password has been updated since your last login.`;
+    } else if (isDuplicate) {
+        message = `These credentials already exist in your vault.`;
+    } else if (hasChanged) {
+        message = `The password for ${website} has been updated since your last login.`;
+    }
+
+    notification.innerHTML = `
+        <div style="margin-bottom: 10px;">
+            <strong>${hasChanged ? 'Password Change Detected!' : 'Duplicate Credentials'}</strong>
+        </div>
+        <div style="margin-bottom: 10px;">
+            ${message}
+        </div>
+        <div style="display: flex; gap: 10px;">
+            ${hasChanged ? `
+                <button id="update-password" style="
+                    background: #4299e1;
+                    color: white;
+                    border: none;
+                    padding: 5px 15px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                ">Update Password</button>
+            ` : ''}
+            <button id="dismiss-notification" style="
+                background: #4a5568;
+                color: white;
+                border: none;
+                padding: 5px 15px;
+                border-radius: 4px;
+                cursor: pointer;
+            ">Dismiss</button>
+        </div>
+    `;
+
+    document.body.appendChild(notification);
+
+    // Add event listener for update password button
+    if (hasChanged) {
+        document.getElementById('update-password').addEventListener('click', async () => {
+            const button = document.getElementById('update-password');
+            button.disabled = true;
+            button.innerHTML = '<span class="spinner"></span> Updating...';
+            button.style.opacity = '0.7';
+            button.style.cursor = 'not-allowed';
+
+            try {
+                const accessToken = await new Promise((resolve) => {
+                    chrome.storage.local.get(['access_token'], (result) => {
+                        resolve(result.access_token);
+                    });
+                });
+
+                if (!accessToken) {
+                    throw new Error('No access token found');
+                }
+
+                // Get the current password from the active password field
+                const passwordField = document.querySelector('input[type="password"]');
+                if (!passwordField) {
+                    throw new Error('No password field found');
+                }
+
+                const response = await fetch(`http://localhost:8080/api/passwords/update-password`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify({
+                        website,
+                        username: document.querySelector('input[type="text"], input[type="email"]')?.value,
+                        password: passwordField.value
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to update password');
+                }
+
+                // Show success message
+                notification.innerHTML = `
+                    <div style="margin-bottom: 10px;">
+                        <strong style="color: #48bb78;">Password Updated Successfully!</strong>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        Your password has been updated in the vault.
+                    </div>
+                `;
+
+                // Auto-remove after 5 seconds
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 5000);
+
+            } catch (error) {
+                console.error('Error updating password:', error);
+                button.innerHTML = 'Update Failed';
+                button.style.background = '#f56565';
+
+                // Show error message
+                notification.innerHTML = `
+                    <div style="margin-bottom: 10px;">
+                        <strong style="color: #f56565;">Update Failed</strong>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        ${error.message}
+                    </div>
+                    <button id="dismiss-notification" style="
+                        background: #4a5568;
+                        color: white;
+                        border: none;
+                        padding: 5px 15px;
+                        border-radius: 4px;
+                        cursor: pointer;
+                    ">Dismiss</button>
+                `;
+
+                document.getElementById('dismiss-notification').addEventListener('click', () => {
+                    document.body.removeChild(notification);
+                });
+            }
+        });
+    }
+
+    document.getElementById('dismiss-notification').addEventListener('click', () => {
+        document.body.removeChild(notification);
+    });
+
+    // Add spinner style
+    const style = document.createElement('style');
+    style.textContent = `
+        .spinner {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Auto-remove after 30 seconds if not dismissed
+    setTimeout(() => {
+        if (document.body.contains(notification)) {
+            document.body.removeChild(notification);
+        }
+    }, 30000);
+}
+
+// Update checkForDuplicateCredentials to use the new notification
+async function checkForDuplicateCredentials(website, username, currentPassword) {
     try {
         const accessToken = await new Promise((resolve) => {
             chrome.storage.local.get(['access_token'], (result) => {
@@ -268,27 +453,52 @@ async function checkForDuplicateCredentials(website, username) {
 
         if (!accessToken) {
             console.error('No access token found');
-            return false;
+            return { isDuplicate: false, hasChanged: false };
         }
 
-        const response = await fetch('http://localhost:8080/api/passwords', {
+        // Check for duplicates
+        const duplicateResponse = await fetch(`http://localhost:8080/api/passwords/check-duplicate?website=${encodeURIComponent(website)}&username=${encodeURIComponent(username)}`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${accessToken}`
             }
         });
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        if (!duplicateResponse.ok) {
+            throw new Error(`HTTP error! status: ${duplicateResponse.status}`);
         }
 
-        const passwords = await response.json();
-        return passwords.some(pwd =>
-            pwd.website === website && pwd.username === username
-        );
+        const { exists } = await duplicateResponse.json();
+
+        // If credentials exist, check for password changes
+        if (exists) {
+            const changeResponse = await fetch(`http://localhost:8080/api/passwords/check-password-change?website=${encodeURIComponent(website)}&username=${encodeURIComponent(username)}&currentPassword=${encodeURIComponent(currentPassword)}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            });
+
+            if (!changeResponse.ok) {
+                throw new Error(`HTTP error! status: ${changeResponse.status}`);
+            }
+
+            const changeData = await changeResponse.json();
+
+            // Show combined notification
+            showCombinedNotification(website, true, changeData.hasChanged);
+
+            return {
+                isDuplicate: true,
+                hasChanged: changeData.hasChanged,
+                lastUpdated: changeData.lastUpdated
+            };
+        }
+
+        return { isDuplicate: false, hasChanged: false };
     } catch (error) {
-        console.error('Error checking for duplicates:', error);
-        return false;
+        console.error('Error checking credentials:', error);
+        return { isDuplicate: false, hasChanged: false };
     }
 }
 
@@ -386,30 +596,14 @@ async function saveCredentials(username, password) {
         const website = getMainUrl(url);
 
         try {
-            let isDuplicate = false;
+            // Check for duplicates and password changes
+            const { isDuplicate, hasChanged } = await checkForDuplicateCredentials(website, username, password);
 
-            // If we have an access token, check for duplicates in MongoDB
-            if (accessToken) {
-                const duplicateCheckResponse = await fetch(
-                    `http://localhost:8080/api/passwords/check-duplicate?website=${encodeURIComponent(website)}&username=${encodeURIComponent(username)}`,
-                    {
-                        method: 'GET',
-                        headers: {
-                            'Authorization': `Bearer ${accessToken}`
-                        }
-                    }
-                );
-
-                if (duplicateCheckResponse.ok) {
-                    const { exists } = await duplicateCheckResponse.json();
-                    if (exists) {
-                        console.log('Duplicate credentials found in MongoDB');
-                        isDuplicate = true;
-                        // Show notification that credentials already exist
-                        showSaveResultNotification(false, url, 'These credentials already exist in your vault.');
-                        return; // Exit early since we don't want to save duplicates
-                    }
-                }
+            if (isDuplicate) {
+                console.log('Duplicate credentials found in MongoDB');
+                // Show notification that credentials already exist
+                showSaveResultNotification(false, url, 'These credentials already exist in your vault.');
+                return; // Exit early since we don't want to save duplicates
             }
 
             // If not a duplicate, show confirmation notification
@@ -829,3 +1023,84 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         createPasswordSelector(message.filterCurrentSite);
     }
 });
+
+// Add this function to check for password changes
+async function checkPasswordChange(website, username) {
+    try {
+        const lastChecked = lastPasswordCheck[`${website}-${username}`] || new Date(0).toISOString();
+
+        const response = await fetch(`${process.env.API_URL}/passwords/check-password-change`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({
+                website,
+                username,
+                lastChecked
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to check password change');
+        }
+
+        const data = await response.json();
+
+        if (data.hasChanged) {
+            showPasswordChangeNotification(website);
+        }
+
+        // Update last check time
+        lastPasswordCheck[`${website}-${username}`] = new Date().toISOString();
+
+        return data.hasChanged;
+    } catch (error) {
+        console.error('Error checking password change:', error);
+        return false;
+    }
+}
+
+function showPasswordChangeNotification(website) {
+    const notification = document.createElement('div');
+    notification.id = 'fortisafe-password-change-notification';
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #f56565;
+        color: white;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        z-index: 999999;
+        font-family: Arial, sans-serif;
+        max-width: 300px;
+    `;
+
+    notification.innerHTML = `
+        <div style="margin-bottom: 10px;">
+            <strong>Password Change Detected!</strong>
+        </div>
+        <div style="margin-bottom: 10px;">
+            The password for ${website} has been updated since your last login.
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button id="dismiss-notification" style="
+                background: #4a5568;
+                color: white;
+                border: none;
+                padding: 5px 15px;
+                border-radius: 4px;
+                cursor: pointer;
+            ">Dismiss</button>
+        </div>
+    `;
+
+    document.body.appendChild(notification);
+
+    document.getElementById('dismiss-notification').addEventListener('click', () => {
+        document.body.removeChild(notification);
+    });
+}

@@ -95,6 +95,44 @@ export class PasswordsController {
     return { exists };
   }
 
+  @Get('check-password-change')
+  @ApiOperation({ summary: 'Check if a password has changed for a website' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Whether the password has changed.',
+    schema: {
+      type: 'object',
+      properties: {
+        hasChanged: {
+          type: 'boolean',
+          example: true,
+        },
+        lastUpdated: {
+          type: 'string',
+          format: 'date-time',
+          example: '2024-03-20T12:00:00Z',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized.',
+  })
+  async checkPasswordChange(
+    @Request() req,
+    @Query('website') website: string,
+    @Query('username') username: string,
+    @Query('currentPassword') currentPassword?: string,
+  ) {
+    return this.passwordsService.checkPasswordChange(
+      req.user.userId,
+      website,
+      username,
+      currentPassword,
+    );
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get a specific password by ID' })
   @ApiParam({ name: 'id', description: 'Password ID' })
@@ -190,5 +228,51 @@ export class PasswordsController {
       id,
     );
     return { password: decryptedPassword };
+  }
+
+  @Post('update-password')
+  @ApiOperation({ summary: 'Update password for a website and username' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'The password has been successfully updated.',
+    type: Password,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Password not found.',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        website: {
+          type: 'string',
+          example: 'example.com',
+        },
+        username: {
+          type: 'string',
+          example: 'user@example.com',
+        },
+        password: {
+          type: 'string',
+          example: 'newPassword123!',
+        },
+      },
+    },
+  })
+  async updatePassword(
+    @Request() req,
+    @Body() updateData: { website: string; username: string; password: string },
+  ) {
+    return this.passwordsService.updatePasswordByWebsiteAndUsername(
+      req.user.userId,
+      updateData.website,
+      updateData.username,
+      updateData.password,
+    );
   }
 }

@@ -182,4 +182,81 @@ export class PasswordsService {
 
     return !!existingPassword;
   }
+
+  async checkPasswordChange(
+    userId: string,
+    website: string,
+    username: string,
+    currentPassword?: string,
+  ): Promise<{ hasChanged: boolean; lastUpdated: Date | null }> {
+    const existingPassword = await this.passwordModel.findOne({
+      userId,
+      website,
+      username,
+    }).exec();
+
+    if (!existingPassword) {
+      return { hasChanged: false, lastUpdated: null };
+    }
+
+    // If current password is provided, compare with stored password
+    if (currentPassword) {
+      const storedDecryptedPassword = this.decrypt(existingPassword.password);
+      const hasChanged = storedDecryptedPassword !== currentPassword;
+
+      return {
+        hasChanged,
+        lastUpdated: existingPassword.lastUpdated,
+      };
+    }
+
+    return {
+      hasChanged: false,
+      lastUpdated: existingPassword.lastUpdated,
+    };
+  }
+
+  async updatePasswordByWebsiteAndUsername(
+    userId: string,
+    website: string,
+    username: string,
+    newPassword: string,
+  ): Promise<PasswordDocument> {
+    const existingPassword = await this.passwordModel.findOne({
+      userId,
+      website,
+      username,
+    }).exec();
+
+    if (!existingPassword) {
+      throw new NotFoundException(
+        `Password not found for website ${website} and username ${username}`,
+      );
+    }
+
+    // Encrypt the new password
+    const encryptedPassword = this.encrypt(newPassword);
+
+    // Update the password and lastUpdated timestamp
+    const updatedPassword = await this.passwordModel
+      .findByIdAndUpdate(
+        existingPassword._id,
+        {
+          $set: {
+            password: encryptedPassword,
+            lastUpdated: new Date(),
+          },
+        },
+        { new: true },
+      )
+      .exec();
+
+    if (!updatedPassword) {
+      throw new NotFoundException(
+        `Password not found after update for website ${website} and username ${username}`,
+      );
+    }
+
+    return updatedPassword;
+  }
 }
