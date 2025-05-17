@@ -1281,6 +1281,76 @@ function setupEventListeners() {
             };
         });
     }
+
+    // Add event listener for Scan Page button
+    const scanPageBtn = document.getElementById('scan-page');
+    if (scanPageBtn) {
+        scanPageBtn.addEventListener('click', async () => {
+            const scanModal = document.getElementById('scan-modal');
+            const scanResultContent = document.getElementById('scan-result-content');
+            const scanFeedback = document.getElementById('scan-feedback');
+            scanResultContent.textContent = '';
+            scanFeedback.style.display = 'none';
+
+            // Show loading
+            scanResultContent.innerHTML = '<span style="color:#a5b4fc;">Scanning current page...</span>';
+            scanModal.style.display = 'flex';
+
+            // Get current tab URL
+            getCurrentTabUrl(async (url) => {
+                if (!url) {
+                    scanResultContent.innerHTML = '<span style="color:#ef4444;">Could not get current tab URL.</span>';
+                    return;
+                }
+                try {
+                    const token = await getToken();
+                    if (!token) {
+                        scanResultContent.innerHTML = '<span style="color:#ef4444;">Please login to scan pages.</span>';
+                        return;
+                    }
+                    const response = await fetch(`${BACKEND_URL}/scanner`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ urls: [url] })
+                    });
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    if (data.urlResults && data.urlResults.length > 0) {
+                        const result = data.urlResults[0];
+                        if (result.isSafe) {
+                            scanResultContent.innerHTML = `<span style='color:#3be8b0;'>This page is safe!</span><br><span style='font-size:0.95em;color:#bcbcf5;'>${result.url}</span>`;
+                        } else {
+                            scanResultContent.innerHTML = `<span style='color:#ef4444;'>Warning: Unsafe page!</span><br><span style='font-size:0.95em;color:#bcbcf5;'>${result.url}</span><br><span style='color:#fbbf24;'>Threats: ${(result.threatTypes || []).join(', ')}</span>`;
+                        }
+                    } else {
+                        scanResultContent.innerHTML = '<span style="color:#3be8b0;">No threats detected.</span>';
+                    }
+                } catch (error) {
+                    scanResultContent.innerHTML = `<span style='color:#ef4444;'>Failed to scan page.</span>`;
+                }
+            });
+        });
+    }
+    // Close scan modal
+    const closeScanModalBtn = document.getElementById('close-scan-modal');
+    if (closeScanModalBtn) {
+        closeScanModalBtn.onclick = () => {
+            document.getElementById('scan-modal').style.display = 'none';
+        };
+    }
+
+    // Add event listener for Fortisafe website button
+    const openWebsiteBtn = document.getElementById('open-website');
+    if (openWebsiteBtn) {
+        openWebsiteBtn.addEventListener('click', () => {
+            chrome.tabs.create({ url: 'http://localhost:3000' });
+        });
+    }
 }
 
 // Add this function to handle manual password saving
