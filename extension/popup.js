@@ -97,6 +97,37 @@ document.addEventListener('DOMContentLoaded', async function () {
     // Check login state and fetch profile if needed
     let access_token = localStorage.getItem('access_token');
     let userProfile = JSON.parse(localStorage.getItem('userProfile') || 'null');
+
+    // Sync localStorage token to chrome.storage.local if it exists
+    if (access_token) {
+        chrome.storage.local.set({
+            access_token: access_token,
+            id_token: localStorage.getItem('id_token')
+        }, () => {
+            console.log('[DEBUG] Synchronized tokens from localStorage to chrome.storage.local on startup');
+        });
+    } else {
+        // Check if token exists in chrome.storage.local but not in localStorage
+        const chromeStorageToken = await new Promise((resolve) => {
+            chrome.storage.local.get(['access_token', 'id_token', 'userProfile'], (result) => {
+                resolve(result);
+            });
+        });
+
+        if (chromeStorageToken.access_token) {
+            console.log('[DEBUG] Found token in chrome.storage.local, syncing to localStorage');
+            localStorage.setItem('access_token', chromeStorageToken.access_token);
+            localStorage.setItem('id_token', chromeStorageToken.id_token || '');
+
+            if (chromeStorageToken.userProfile && !userProfile) {
+                localStorage.setItem('userProfile', JSON.stringify(chromeStorageToken.userProfile));
+                userProfile = chromeStorageToken.userProfile;
+            }
+
+            access_token = chromeStorageToken.access_token;
+        }
+    }
+
     if (access_token && !userProfile) {
         // Try to fetch profile using the token
         try {
@@ -168,12 +199,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         console.log('[DEBUG] Auth success message received:', message.data);
         const { user, accessToken, idToken } = message.data;
 
-        // Store tokens and profile (similar to how it was planned before)
+        // Store tokens in both localStorage and chrome.storage.local
         localStorage.setItem('access_token', accessToken);
         localStorage.setItem('id_token', idToken);
         localStorage.setItem('userProfile', JSON.stringify(user));
+        console.log('[DEBUG] Tokens and profile stored in localStorage');
 
-        // Also store in chrome.storage.local for persistence across extension contexts if needed
+        // Also store in chrome.storage.local for persistence across extension contexts
         chrome.storage.local.set({
             access_token: accessToken,
             id_token: idToken,
@@ -212,49 +244,29 @@ function displaySavedUrls() {
 
         savedUrls.forEach(function (url, index) {
             const urlItem = document.createElement('div');
-            urlItem.className = 'credential-item';
+            urlItem.className = 'url-item';
 
-            // Create header with website name
-            const header = document.createElement('div');
-            header.className = 'credential-header';
-            header.innerHTML = `<div class="credential-title">${getMainUrl(url)}</div>`;
-
-            // Create URL display
-            const urlDisplay = document.createElement('div');
-            urlDisplay.className = 'credential-email';
-            urlDisplay.innerHTML = `
-                <span class="email-label">URL:</span>
-                <span class="email-value">${url}</span>
-            `;
-
-            // Create action buttons
-            const actions = document.createElement('div');
-            actions.className = 'credential-actions';
-
-            // Create open link button
-            const openBtn = document.createElement('button');
-            openBtn.className = 'copy-button';
-            openBtn.textContent = 'Open';
-            openBtn.addEventListener('click', function () {
+            // Create a clickable link
+            const urlLink = document.createElement('a');
+            urlLink.href = '#';
+            urlLink.className = 'url-link';
+            urlLink.textContent = url;
+            urlLink.title = url;
+            urlLink.addEventListener('click', function () {
                 chrome.tabs.create({ url: url });
             });
 
             // Create delete button
             const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'btn-delete-credential';
-            deleteBtn.textContent = 'Delete';
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.textContent = 'X';
+            deleteBtn.title = 'Delete URL';
             deleteBtn.addEventListener('click', function () {
                 deleteUrl(index);
             });
 
-            actions.appendChild(openBtn);
-            actions.appendChild(deleteBtn);
-
-            // Assemble the item
-            urlItem.appendChild(header);
-            urlItem.appendChild(urlDisplay);
-            urlItem.appendChild(actions);
-
+            urlItem.appendChild(urlLink);
+            urlItem.appendChild(deleteBtn);
             urlList.appendChild(urlItem);
         });
     });
@@ -275,20 +287,16 @@ function deleteUrl(index) {
 // Add function to fetch credentials from backend
 async function fetchBackendCredentials() {
     try {
-        const accessToken = await new Promise((resolve) => {
-            chrome.storage.local.get(['access_token'], (result) => {
-                resolve(result.access_token);
-            });
-        });
+        const accessToken = await getToken();
 
         if (!accessToken) {
-            console.error('No access token found');
+            console.error('[DEBUG] No access token found in fetchBackendCredentials');
             return [];
         }
 
-        const response = await fetch('http://localhost:8080/api/passwords', {
-            headers:
-            {
+        console.log('[DEBUG] Making API request with token:', accessToken);
+        const response = await fetch(`${BACKEND_URL}/passwords`, {
+            headers: {
                 'Authorization': `Bearer ${accessToken}`
             }
         });
@@ -299,7 +307,7 @@ async function fetchBackendCredentials() {
 
         return await response.json();
     } catch (error) {
-        console.error('Error fetching credentials from backend:', error);
+        console.error('[DEBUG] Error fetching credentials from backend:', error);
         return [];
     }
 }
@@ -466,50 +474,12 @@ async function displaySavedCredentials(filterText = '') {
     try {
         const token = await getToken();
         if (!token) {
+            console.error('[DEBUG] No auth token available for credentials display');
             showError('Please login to view your credentials');
             return;
         }
 
-        // Create filter input if it doesn't exist
-        let filterInput = document.getElementById('credentials-filter');
-        if (!filterInput) {
-            const filterContainer = document.createElement('div');
-            filterContainer.className = 'search-bar';
-            filterContainer.style.margin = '10px 0';
-
-            filterInput = document.createElement('input');
-            filterInput.id = 'credentials-filter';
-            filterInput.type = 'text';
-            filterInput.placeholder = 'Search passwords...';
-            filterInput.value = filterText;
-
-            // Add search icon similar to the original search bar
-            const searchIcon = document.createElement('div');
-            searchIcon.innerHTML = `<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>`;
-
-            filterInput.addEventListener('input', (e) => {
-                // Re-display credentials with filter
-                const currentFilter = e.target.value.trim().toLowerCase();
-                displaySavedCredentials(currentFilter);
-            });
-
-            filterContainer.appendChild(filterInput);
-            filterContainer.appendChild(searchIcon);
-
-            // Insert after the Enable Capture button
-            const captureButton = document.getElementById('enable-capture');
-            if (captureButton) {
-                // Insert right after the enable capture button
-                captureButton.insertAdjacentElement('afterend', filterContainer);
-            } else {
-                // Fallback: insert before credentials list
-                credentialsList.parentNode.insertBefore(filterContainer, credentialsList);
-            }
-        }
-
+        console.log('[DEBUG] Making API request to fetch passwords with token');
         const response = await fetch(`${BACKEND_URL}/passwords`, {
             method: 'GET',
             headers: {
@@ -518,16 +488,28 @@ async function displaySavedCredentials(filterText = '') {
         });
 
         if (!response.ok) {
+            console.error(`[DEBUG] API error: ${response.status} ${response.statusText}`);
+            if (response.status === 401) {
+                // Token invalid, log out user
+                console.log('[DEBUG] Unauthorized - clearing auth data');
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('id_token');
+                localStorage.removeItem('userProfile');
+                chrome.storage.local.remove(['access_token', 'id_token', 'userProfile']);
+                showLoginCard();
+                showError('Session expired. Please login again.');
+                return;
+            }
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-
-        const passwords = await response.json();
 
         // Remove existing website selector if it exists
         const existingSelector = document.getElementById('website-selector-container');
         if (existingSelector) {
             existingSelector.remove();
         }
+
+        const passwords = await response.json();
 
         // Create and add website selector
         if (passwords.length > 0) {
@@ -1083,11 +1065,36 @@ function showError(message) {
 }
 
 async function getToken() {
-    return new Promise((resolve) => {
-        chrome.storage.local.get(['access_token'], function (result) {
-            resolve(result.access_token);
+    try {
+        // First try chrome.storage.local
+        const chromeStorageToken = await new Promise((resolve) => {
+            chrome.storage.local.get(['access_token'], function (result) {
+                resolve(result.access_token);
+            });
         });
-    });
+
+        if (chromeStorageToken) {
+            console.log('[DEBUG] Token found in chrome.storage.local');
+            return chromeStorageToken;
+        }
+
+        // Fallback to localStorage if chrome.storage.local doesn't have the token
+        const localStorageToken = localStorage.getItem('access_token');
+        if (localStorageToken) {
+            console.log('[DEBUG] Token found in localStorage, syncing to chrome.storage.local');
+            // Sync to chrome.storage.local for future use
+            chrome.storage.local.set({ access_token: localStorageToken }, () => {
+                console.log('[DEBUG] Synchronized token from localStorage to chrome.storage.local');
+            });
+            return localStorageToken;
+        }
+
+        console.log('[DEBUG] No token found in either storage location');
+        return null;
+    } catch (error) {
+        console.error('[DEBUG] Error in getToken:', error);
+        return null;
+    }
 }
 
 // Save a URL to Chrome storage
@@ -1106,13 +1113,6 @@ function saveUrl(url) {
         }
     });
 }
-
-// Clear all URLs button
-document.getElementById('clear-all-urls').addEventListener('click', function () {
-    chrome.storage.sync.set({ 'savedUrls': [] }, function () {
-        displaySavedUrls();
-    });
-});
 
 // Enable credential capture button
 document.getElementById('enable-capture').addEventListener('click', function () {
