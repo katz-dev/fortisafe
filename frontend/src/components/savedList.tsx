@@ -2,13 +2,16 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import React, { useState } from "react";
+import { Loader2, Key } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface LoginItem {
   id: string;
   site: string;
   username: string;
   password: string;
-  strength: 'weak' | 'okay' | 'strong';
+  strength: "weak" | "okay" | "strong";
   website?: string;
   notes?: string;
 }
@@ -16,29 +19,111 @@ interface LoginItem {
 interface SavedLoginsProps {
   logins: LoginItem[];
   onSelectLogin: (login: LoginItem) => void;
+  isLoading?: boolean;
 }
 
-export default function SavedLogins({ logins, onSelectLogin }: SavedLoginsProps) {
+export default function SavedLogins({
+  logins,
+  onSelectLogin,
+  isLoading = false,
+}: SavedLoginsProps) {
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const handleSelect = (login: LoginItem) => {
+    setSelectedId(login.id);
+    onSelectLogin(login);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full p-8">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-indigo-500 mx-auto mb-4" />
+          <p className="text-gray-400">Loading your passwords...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (logins.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-full p-8">
+        <div className="text-center">
+          <div className="rounded-full bg-slate-800/80 p-4 mx-auto mb-4 w-16 h-16 flex items-center justify-center backdrop-blur-sm">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-gray-400"
+            >
+              <rect
+                width="18"
+                height="11"
+                x="3"
+                y="11"
+                rx="2"
+                ry="2"
+              ></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+          </div>
+          <h3 className="text-xl font-semibold text-white mb-2">
+            No passwords found
+          </h3>
+          <p className="text-gray-400 max-w-md">
+            Start adding your passwords to keep them secure and easily accessible
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Card className="w-full bg-slate-900 text-white border-none shadow-md">
       <CardContent className="p-0">
-        <ScrollArea className="h-72">
-          <div className="space-y-px">
-            {logins.map((login) => (
-              <div
-                key={login.id}
-                className="flex items-center p-3 hover:bg-slate-800 cursor-pointer transition-colors"
-                onClick={() => onSelectLogin(login)}
-              >
-                <div className="h-8 w-8 rounded-md bg-white mr-3 flex items-center justify-center">
-                  <GoogleIcon />
-                </div>
-                <div>
-                  <p className="text-white font-medium">{login.site}</p>
-                  <p className="text-gray-400 text-sm">{login.username}</p>
-                </div>
-              </div>
-            ))}
+        <div className="p-3 border-b border-slate-800 bg-slate-900/90 backdrop-blur-sm sticky top-0 z-10">
+          <h3 className="font-semibold text-white flex items-center">
+            <Key className="h-4 w-4 mr-2 text-indigo-400" />
+            Your Passwords
+            <span className="ml-2 text-xs py-0.5 px-2 bg-slate-800 rounded-full text-gray-400">
+              {logins.length}
+            </span>
+          </h3>
+        </div>
+        <ScrollArea className="h-[calc(100vh-340px)] md:h-[480px]">
+          <div>
+            <AnimatePresence>
+              {logins.map((login) => (
+                <motion.div
+                  key={login.id}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className={`flex items-center p-3 hover:bg-slate-800/60 cursor-pointer transition-all duration-200 ${selectedId === login.id ? 'bg-slate-800/80 border-l-2 border-indigo-500' : ''}`}
+                  onClick={() => handleSelect(login)}
+                >
+                  <div className="h-10 w-10 rounded-md mr-3 flex items-center justify-center overflow-hidden shadow-md">
+                    <WebsiteIcon siteName={login.site} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-medium truncate">{login.site}</p>
+                    <p className="text-gray-400 text-sm truncate">{login.username}</p>
+                  </div>
+                  {login.strength === 'weak' && (
+                    <div className="ml-2 p-1 rounded-full bg-red-900/30 border border-red-700/50">
+                      <div className="h-1.5 w-1.5 rounded-full bg-red-500"></div>
+                    </div>
+                  )}
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         </ScrollArea>
       </CardContent>
@@ -46,14 +131,56 @@ export default function SavedLogins({ logins, onSelectLogin }: SavedLoginsProps)
   );
 }
 
-// Using an inline SVG for the Google icon to match your design
-function GoogleIcon() {
+// WebsiteIcon component that displays the first letter of the website
+function WebsiteIcon({ siteName }: { siteName: string }) {
+  // Get the first letter and convert to uppercase
+  const firstLetter = siteName.charAt(0).toUpperCase();
+
+  // Generate a consistent color based on the site name
+  const getColor = (name: string) => {
+    // Simple hash function to generate a consistent number from a string
+    const hash = name.split('').reduce((acc, char) => {
+      return acc + char.charCodeAt(0);
+    }, 0);
+
+    // List of attractive background colors
+    const colors = [
+      { bg: "#4285F4", text: "#FFFFFF" }, // Google Blue
+      { bg: "#EA4335", text: "#FFFFFF" }, // Google Red
+      { bg: "#FBBC05", text: "#000000" }, // Google Yellow
+      { bg: "#34A853", text: "#FFFFFF" }, // Google Green
+      { bg: "#7B1FA2", text: "#FFFFFF" }, // Purple
+      { bg: "#1976D2", text: "#FFFFFF" }, // Blue
+      { bg: "#C2185B", text: "#FFFFFF" }, // Pink
+      { bg: "#388E3C", text: "#FFFFFF" }, // Green
+      { bg: "#F57C00", text: "#FFFFFF" }, // Orange
+      { bg: "#0097A7", text: "#FFFFFF" }, // Teal
+    ];
+
+    // Use the hash to select a color
+    const colorIndex = hash % colors.length;
+    return colors[colorIndex];
+  };
+
+  const color = getColor(siteName);
+
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18">
-      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-    </svg>
+    <div
+      style={{
+        backgroundColor: color.bg,
+        color: color.text,
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontWeight: 'bold',
+        fontSize: '16px',
+        borderRadius: '8px',
+        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)'
+      }}
+    >
+      {firstLetter}
+    </div>
   );
 }
