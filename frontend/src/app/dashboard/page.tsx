@@ -59,7 +59,7 @@ export default function Dashboard() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 {/* Security Score Card */}
-                <Card className="bg-[#1a1f2e] border-gray-800 shadow-lg">
+                <Card className="bg-[#0a0f1a] border-slate-800/60 shadow-lg hover:border-slate-700/60 transition-all duration-300">
                     <CardContent className="p-6">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="font-semibold text-white">Security Score</h3>
@@ -78,7 +78,7 @@ export default function Dashboard() {
                 </Card>
 
                 {/* Weak Passwords Card */}
-                <Card className="bg-[#1a1f2e] border-gray-800 shadow-lg">
+                <Card className="bg-[#0a0f1a] border-slate-800/60 shadow-lg hover:border-slate-700/60 transition-all duration-300">
                     <CardContent className="p-6">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="font-semibold text-white">Weak Passwords</h3>
@@ -92,7 +92,7 @@ export default function Dashboard() {
                 </Card>
 
                 {/* Protected Logins */}
-                <Card className="bg-[#1a1f2e] border-gray-800 shadow-lg">
+                <Card className="bg-[#0a0f1a] border-slate-800/60 shadow-lg hover:border-slate-700/60 transition-all duration-300">
                     <CardContent className="p-6">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="font-semibold text-white">Protected Logins</h3>
@@ -107,7 +107,7 @@ export default function Dashboard() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <Card className="bg-[#1a1f2e] border-gray-800 shadow-lg lg:col-span-2">
+                <Card className="bg-[#0a0f1a] border-slate-800/60 shadow-lg hover:border-slate-700/60 transition-all duration-300 lg:col-span-2">
                     <CardContent className="p-6">
                         <h3 className="font-semibold text-white text-lg mb-4">Recent Activity</h3>
                         <div className="space-y-4">
@@ -119,7 +119,7 @@ export default function Dashboard() {
                                 </div>
                             ) : (
                                 <>
-                                    <div className="flex items-center p-3 bg-[#252b3b] rounded-lg">
+                                    <div className="flex items-center p-3 bg-[#1a1f2e] rounded-lg">
                                         <div className="flex-shrink-0 bg-green-500/20 text-green-400 p-2 rounded-full mr-4">
                                             <Check className="h-4 w-4" />
                                         </div>
@@ -128,7 +128,7 @@ export default function Dashboard() {
                                             <p className="text-gray-400 text-xs">Today at 10:30 AM</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center p-3 bg-[#252b3b] rounded-lg">
+                                    <div className="flex items-center p-3 bg-[#1a1f2e] rounded-lg">
                                         <div className="flex-shrink-0 bg-blue-500/20 text-blue-400 p-2 rounded-full mr-4">
                                             <Shield className="h-4 w-4" />
                                         </div>
@@ -137,7 +137,7 @@ export default function Dashboard() {
                                             <p className="text-gray-400 text-xs">Yesterday at 5:15 PM</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center p-3 bg-[#252b3b] rounded-lg">
+                                    <div className="flex items-center p-3 bg-[#1a1f2e] rounded-lg">
                                         <div className="flex-shrink-0 bg-amber-500/20 text-amber-400 p-2 rounded-full mr-4">
                                             <AlertTriangle className="h-4 w-4" />
                                         </div>
@@ -152,7 +152,7 @@ export default function Dashboard() {
                     </CardContent>
                 </Card>
 
-                <Card className="bg-[#1a1f2e] border-gray-800 shadow-lg">
+                <Card className="bg-[#0a0f1a] border-slate-800/60 shadow-lg hover:border-slate-700/60 transition-all duration-300">
                     <CardContent className="p-6">
                         <h3 className="font-semibold text-white text-lg mb-4">Browser Protection</h3>
 
