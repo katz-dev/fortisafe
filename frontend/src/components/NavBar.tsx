@@ -39,7 +39,7 @@ export default function NavBar() {
     const profilePicture = user?.auth0Profile?.picture || user?.picture;
 
     return (
-        <nav className="bg-[#0c1222] border-b border-gray-800">
+        <nav className="bg-[#0a0f1a]/90 backdrop-blur-md border-b border-gray-800/60">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex h-16 items-center justify-between">
                     {/* Logo and Brand */}

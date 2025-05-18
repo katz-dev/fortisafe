@@ -58,10 +58,9 @@ export default function FilterTabs({ activeTab, setActiveTab }: FilterTabsProps)
                     whileTap={{ scale: 0.98 }}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.2, delay: index * 0.05 }}
-                    className={`flex items-center rounded-lg px-4 py-2.5 transition-all duration-200 ${activeTab === tab.id
-                            ? "bg-gradient-to-r from-indigo-600 to-indigo-800 text-white shadow-lg border border-indigo-500 font-medium"
-                            : "text-gray-400 hover:text-white bg-slate-900/50 backdrop-blur-sm border border-slate-800 hover:border-slate-700 hover:shadow-md"
+                    transition={{ duration: 0.2, delay: index * 0.05 }} className={`flex items-center rounded-lg px-4 py-2.5 transition-all duration-200 ${activeTab === tab.id
+                        ? "bg-gradient-to-r from-indigo-600 to-indigo-800 text-white shadow-lg border border-indigo-500/70 font-medium"
+                        : "text-gray-400 hover:text-white bg-[#0a0f1a]/90 backdrop-blur-md border border-slate-800/60 hover:border-slate-700/70 hover:shadow-md"
                         }`}
                     onClick={() => setActiveTab(tab.id)}
                 >

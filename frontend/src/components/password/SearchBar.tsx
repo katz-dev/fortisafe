@@ -11,8 +11,7 @@ interface SearchBarProps {
 export default function SearchBar({ searchTerm, setSearchTerm }: SearchBarProps) {
     return (
         <div className="relative mb-5 group">
-            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-blue-500 rounded-lg blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
-            <div className="relative bg-slate-900/90 backdrop-blur-sm rounded-lg shadow-xl border border-slate-800/80">
+            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-blue-500 rounded-lg blur opacity-20 group-hover:opacity-40 transition duration-500"></div>            <div className="relative bg-[#0a0f1a]/90 backdrop-blur-md rounded-lg shadow-xl border border-slate-800/80">
                 <Input
                     placeholder="Search passwords, sites, or usernames..."
                     className="bg-transparent border-none rounded-lg text-white w-full pl-12 pr-10 py-6 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 h-14"

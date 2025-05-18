@@ -91,109 +91,105 @@ export default function PasswordGenerator() {
       default: return 'text-gray-500';
     }
   };
-
   return (
-    <Card className="w-full bg-slate-900/80 backdrop-blur-sm text-white border border-slate-800 shadow-xl rounded-xl overflow-hidden hover:bg-slate-900 transition-all duration-300">
-      <CardContent className="p-5">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 shadow-md">
-              <KeyRound className="h-5 w-5 text-white" />
+    <Card className="w-full h-[180px] bg-[#0a0f1a] text-white border border-slate-800/60 shadow-lg rounded-xl overflow-hidden hover:border-slate-700/60 transition-all duration-300 backdrop-blur-md">
+      <CardContent className="p-6 h-full flex flex-col justify-between">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center justify-center h-12 w-12 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 shadow-md">
+              <KeyRound className="h-6 w-6 text-white" />
             </div>
-            <span className="text-gray-100 font-medium">Password Generator</span>
+            <span className="text-gray-100 text-lg font-medium">Password Generator</span>
           </div>
           <div className="flex items-center">
-            <Shield className="h-4 w-4 mr-1.5" />
-            <span className={`text-sm font-medium ${getStrengthColor()}`}>
+            <Shield className="h-5 w-5 mr-2" />
+            <span className={`text-base font-medium ${getStrengthColor()}`}>
               {strength.charAt(0).toUpperCase() + strength.slice(1)}
             </span>
           </div>
         </div>
 
-        <motion.div
-          className="relative flex items-center justify-between rounded-lg bg-slate-800/70 backdrop-blur-sm px-4 py-3 border border-slate-700 shadow-inner mb-3"
-          whileHover={{ scale: 1.01 }}
-          transition={{ duration: 0.2 }}
-        >
-          <AnimatePresence mode="wait">
-            {isGenerating ? (
-              <motion.div
-                key="generating"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="font-mono text-md text-gray-300 flex items-center space-x-1"
-              >
-                <span>Generating</span>
-                <span className="inline-flex">
-                  <motion.span
-                    animate={{
-                      opacity: [0, 1, 0],
-                      transition: { repeat: Infinity, duration: 1.5 }
-                    }}
-                  >.</motion.span>
-                  <motion.span
-                    animate={{
-                      opacity: [0, 1, 0],
-                      transition: { repeat: Infinity, duration: 1.5, delay: 0.2 }
-                    }}
-                  >.</motion.span>
-                  <motion.span
-                    animate={{
-                      opacity: [0, 1, 0],
-                      transition: { repeat: Infinity, duration: 1.5, delay: 0.4 }
-                    }}
-                  >.</motion.span>
-                </span>
-              </motion.div>
-            ) : (
-              <motion.p
-                key="password"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="font-mono text-md text-white select-all"
-              >
-                {password}
-              </motion.p>
-            )}
-          </AnimatePresence>
+        <div className="flex-1 mt-2">
+          <div className="flex items-center justify-between rounded-lg bg-slate-800/50 px-4 py-3 border border-slate-700/50 shadow-inner">
+            <AnimatePresence mode="wait">
+              {isGenerating ? (
+                <motion.div
+                  key="generating"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="font-mono text-base text-gray-300 flex items-center space-x-1"
+                >
+                  <span>Generating</span>
+                  <span className="inline-flex">
+                    <motion.span
+                      animate={{
+                        opacity: [0, 1, 0],
+                        transition: { repeat: Infinity, duration: 1 }
+                      }}
+                    >.</motion.span>
+                    <motion.span
+                      animate={{
+                        opacity: [0, 1, 0],
+                        transition: { repeat: Infinity, duration: 1, delay: 0.2 }
+                      }}
+                    >.</motion.span>
+                    <motion.span
+                      animate={{
+                        opacity: [0, 1, 0],
+                        transition: { repeat: Infinity, duration: 1, delay: 0.4 }
+                      }}
+                    >.</motion.span>
+                  </span>
+                </motion.div>
+              ) : (
+                <motion.p
+                  key="password"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="font-mono text-base text-white select-all truncate max-w-[180px]"
+                >
+                  {password}
+                </motion.p>)}
+            </AnimatePresence>
 
-          <div className="flex gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-gray-400 hover:bg-slate-700 hover:text-white transition-colors"
-              onClick={copyToClipboard}
-              disabled={isGenerating}
-            >
-              {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-gray-400 hover:bg-slate-700 hover:text-white transition-colors"
-              onClick={generatePassword}
-              disabled={isGenerating}
-            >
-              <RefreshCw className={`h-4 w-4 ${isGenerating ? 'animate-spin' : ''}`} />
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-gray-400 hover:bg-slate-700 hover:text-white transition-colors"
+                onClick={copyToClipboard}
+                disabled={isGenerating}
+              >
+                {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-gray-400 hover:bg-slate-700 hover:text-white transition-colors"
+                onClick={generatePassword}
+                disabled={isGenerating}
+              >
+                <RefreshCw className={`h-4 w-4 ${isGenerating ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
           </div>
-        </motion.div>
 
-        {/* Strength indicator */}
-        <div className="w-full bg-slate-800/50 rounded-full h-1.5 mb-1">
-          <motion.div
-            className={`h-1.5 rounded-full transition-all duration-500 ${strength === 'weak' ? 'bg-red-500 w-1/3' :
+          {/* Strength indicator */}
+          <div className="w-full bg-slate-800/50 rounded-full h-2 mt-4 mb-2">
+            <motion.div
+              className={`h-2 rounded-full transition-all duration-500 ${strength === 'weak' ? 'bg-red-500 w-1/3' :
                 strength === 'okay' ? 'bg-orange-500 w-2/3' :
                   'bg-green-500 w-full'
-              }`}
-            initial={{ width: 0 }}
-            animate={{ width: strength === 'weak' ? '33%' : strength === 'okay' ? '66%' : '100%' }}
-            transition={{ duration: 0.5 }}
-          ></motion.div>
+                }`}
+              initial={{ width: 0 }}
+              animate={{ width: strength === 'weak' ? '33%' : strength === 'okay' ? '66%' : '100%' }}
+              transition={{ duration: 0.5 }}
+            ></motion.div>
+          </div>
+          <p className="text-sm text-gray-400 text-right">Click refresh to generate a new password</p>
         </div>
-        <p className="text-xs text-gray-400 text-right">Click refresh to generate a new secure password</p>
       </CardContent>
     </Card>
   );

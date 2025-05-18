@@ -82,21 +82,19 @@ export default function SavedLogins({
         </div>
       </div>
     );
-  }
-
-  return (
-    <Card className="w-full bg-slate-900 text-white border-none shadow-md">
-      <CardContent className="p-0">
-        <div className="p-3 border-b border-slate-800 bg-slate-900/90 backdrop-blur-sm sticky top-0 z-10">
+  } return (
+    <Card className="w-full h-full bg-[#0a0f1a] text-white border-none shadow-md">
+      <CardContent className="p-0 h-full flex flex-col">
+        <div className="p-3 border-b border-slate-800/60 bg-[#0a0f1a]/90 backdrop-blur-sm sticky top-0 z-10">
           <h3 className="font-semibold text-white flex items-center">
             <Key className="h-4 w-4 mr-2 text-indigo-400" />
             Your Passwords
-            <span className="ml-2 text-xs py-0.5 px-2 bg-slate-800 rounded-full text-gray-400">
+            <span className="ml-2 text-xs py-0.5 px-2 bg-slate-800/70 rounded-full text-gray-400">
               {logins.length}
             </span>
           </h3>
         </div>
-        <ScrollArea className="h-[calc(100vh-340px)] md:h-[480px]">
+        <ScrollArea className="flex-1 h-[calc(100vh-340px)] md:h-[480px]]">
           <div>
             <AnimatePresence>
               {logins.map((login) => (
@@ -106,7 +104,7 @@ export default function SavedLogins({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.2 }}
-                  className={`flex items-center p-3 hover:bg-slate-800/60 cursor-pointer transition-all duration-200 ${selectedId === login.id ? 'bg-slate-800/80 border-l-2 border-indigo-500' : ''}`}
+                  className={`flex items-center p-3 hover:bg-slate-800/50 cursor-pointer transition-all duration-200 ${selectedId === login.id ? 'bg-slate-800/70 border-l-2 border-indigo-500' : ''}`}
                   onClick={() => handleSelect(login)}
                 >
                   <div className="h-10 w-10 rounded-md mr-3 flex items-center justify-center overflow-hidden shadow-md">
