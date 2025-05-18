@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (accessToken && idToken) {
         console.log('Processing tokens...');
-        // Store tokens in Chrome storage
+        // Store tokens in Chrome storage first
         chrome.storage.local.set({
             access_token: accessToken,
             id_token: idToken
@@ -37,18 +37,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 // Store user profile
                 await chrome.storage.local.set({ userProfile: profile });
-                console.log('Profile stored');
+                console.log('Profile stored in chrome.storage.local');
 
-                // Try to send message to opener window
-                // if (window.opener) {
-                //     console.log('Sending message to opener window');
-                //     window.opener.postMessage({
-                //         type: 'auth-success',
-                //         user: profile,
-                //         accessToken,
-                //         idToken
-                //     }, BACKEND_URL); // This targetOrigin was incorrect
-                // }
+                // Send message to runtime with more detailed data
                 console.log('Sending auth-success message to runtime');
                 chrome.runtime.sendMessage({
                     type: 'auth-success',
@@ -57,24 +48,24 @@ document.addEventListener('DOMContentLoaded', function () {
                         accessToken,
                         idToken
                     }
-                }, function(response) {
+                }, function (response) {
                     if (chrome.runtime.lastError) {
                         console.warn("Auth-success message sending failed or no listener:", chrome.runtime.lastError.message);
+
+                        // If we can't send the message, at least try to open the popup
+                        try {
+                            chrome.action.openPopup();
+                        } catch (e) {
+                            console.error("Failed to open popup:", e);
+                        }
                     } else {
                         console.log("Auth-success message acknowledged by listener:", response);
                     }
-                    // Close this window after sending the message and getting an ack (or erroring)
-                    // The timeout was just for showing success before closing.
-                    // Now popup.js will handle the UI update and closing the auth window.
-                    console.log('Closing auth-success window.');
-                    window.close(); 
-                });
 
-                // Close this window and open the main popup
-                // setTimeout(() => {
-                //     window.close();
-                //     chrome.action.openPopup();
-                // }, 1000);
+                    // Close this window
+                    console.log('Closing auth-success window.');
+                    window.close();
+                });
             } catch (error) {
                 console.error('Failed to get user profile:', error);
                 showError('Failed to get user profile. Please try again.');
@@ -118,4 +109,4 @@ function showError(message) {
         element.style.color = '#ef4444'; // red-500
     });
     document.querySelector('.spinner').style.display = 'none';
-} 
+}
