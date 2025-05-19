@@ -18,12 +18,12 @@ export default function PasswordGenerator() {
     // This is a simple strength calculation for demonstration
     if (pwd.length < 8) return 'weak';
 
-    let hasLower = /[a-z]/.test(pwd);
-    let hasUpper = /[A-Z]/.test(pwd);
-    let hasNumber = /[0-9]/.test(pwd);
-    let hasSpecial = /[^A-Za-z0-9]/.test(pwd);
+    const hasLower = /[a-z]/.test(pwd);
+    const hasUpper = /[A-Z]/.test(pwd);
+    const hasNumber = /[0-9]/.test(pwd);
+    const hasSpecial = /[^A-Za-z0-9]/.test(pwd);
 
-    let score = [hasLower, hasUpper, hasNumber, hasSpecial].filter(Boolean).length;
+    const score = [hasLower, hasUpper, hasNumber, hasSpecial].filter(Boolean).length;
 
     if (score < 3) return 'weak';
     if (score === 3) return 'okay';

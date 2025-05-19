@@ -8,7 +8,6 @@ import { UsersModule } from './users/users.module';
 import { CommonModule } from './common/common.module';
 import { PasswordsModule } from './passwords/passwords.module';
 import { ScannerModule } from './scanner/scanner.module';
-import { LogsModule } from './logs/logs.module';
 
 @Module({
   imports: [
@@ -27,7 +26,6 @@ import { LogsModule } from './logs/logs.module';
     CommonModule,
     PasswordsModule,
     ScannerModule,
-    LogsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
