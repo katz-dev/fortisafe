@@ -52,7 +52,7 @@ export default function SearchBar({ searchTerm, setSearchTerm }: SearchBarProps)
                     animate={{ opacity: 1, y: 0 }}
                     className="absolute right-3 -bottom-6 text-xs text-indigo-300"
                 >
-                    Searching for "{searchTerm}"
+                    Searching for &quot;{searchTerm}&quot;
                 </motion.div>
             )}
         </div>

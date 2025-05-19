@@ -92,6 +92,7 @@ export default function PasswordDetailView({ login, onDelete, onUpdate }: Passwo
     const [showPassword, setShowPassword] = useState(false);
     const [copied, setCopied] = useState(false);
     const [copiedUsername, setCopiedUsername] = useState(false);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [isDeleting, setIsDeleting] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
