@@ -102,13 +102,13 @@ export default function PasswordVaultPage() {
       setCompromisedPasswordCount(compromisedCount);
     } catch (error) {
       console.error("Error fetching passwords:", error);
-      toast.error("Failed to load passwords");
+      toast.error("Failed to fetch passwords");
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // Load saved logins from backend API
+  // Effect to fetch passwords on component mount
   useEffect(() => {
     fetchPasswords();
   }, [fetchPasswords]);
@@ -327,6 +327,7 @@ export default function PasswordVaultPage() {
             reusedCount={reusedPasswordCount}
             securityRiskCount={securityRiskCount}
             compromisedCount={compromisedPasswordCount}
+            isLoading={isLoading}
           />
           <AddPasswordButton onClick={handleAddPassword} />
         </div>
@@ -343,13 +344,15 @@ export default function PasswordVaultPage() {
                       <ReusedPasswordsView
                         passwords={savedLogins.filter(login => reusedPasswordIds.has(login.id))}
                         onSelectLogin={setSelectedLogin}
+                        isLoading={isLoading}
                       />
                     );
                   case "all":
                     return (
                       <WebsitePasswordsView
-                        passwords={filteredPasswords}
+                        passwords={isLoading ? savedLogins : filteredPasswords}
                         onSelectLogin={setSelectedLogin}
+                        isLoading={isLoading}
                       />
                     );
                   default:

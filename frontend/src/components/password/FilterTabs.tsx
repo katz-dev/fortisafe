@@ -7,9 +7,10 @@ export interface FilterTabsProps {
     reusedCount: number;
     securityRiskCount: number;
     compromisedCount: number;
+    isLoading?: boolean;
 }
 
-export default function FilterTabs({ activeTab, onTabChange, weakCount, reusedCount, securityRiskCount, compromisedCount }: FilterTabsProps) {
+export default function FilterTabs({ activeTab, onTabChange, weakCount, reusedCount, securityRiskCount, compromisedCount, isLoading = false }: FilterTabsProps) {
     const tabs = [
         {
             id: "all",
@@ -71,18 +72,22 @@ export default function FilterTabs({ activeTab, onTabChange, weakCount, reusedCo
                     <span className={`flex items-center justify-center w-5 h-5 mr-2 rounded-md ${tab.bgColor} text-white shadow-sm`}>
                         {tab.icon}
                     </span>
-                    <span>{tab.label}</span>
-                    {tab.id === 'weak' && weakCount > 0 && (
+                    <span>{isLoading ? (
+                        <span className="inline-flex items-center">
+                            <span className="animate-pulse">Loading...</span>
+                        </span>
+                    ) : tab.label}</span>
+                    {!isLoading && tab.id === 'weak' && weakCount > 0 && (
                         <span className="ml-2 text-xs bg-red-500/20 text-red-300 px-1.5 py-0.5 rounded-full">
                             {weakCount}
                         </span>
                     )}
-                    {tab.id === 'reused' && reusedCount > 0 && (
+                    {!isLoading && tab.id === 'reused' && reusedCount > 0 && (
                         <span className="ml-2 text-xs bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded-full">
                             {reusedCount}
                         </span>
                     )}
-                    {(tab.id === 'security') && (securityRiskCount > 0 || compromisedCount > 0) && (
+                    {!isLoading && (tab.id === 'security') && (securityRiskCount > 0 || compromisedCount > 0) && (
                         <span className="bg-red-500/20 text-red-300 text-xs px-2 py-0.5 rounded-full">
                             {securityRiskCount + compromisedCount}
                         </span>

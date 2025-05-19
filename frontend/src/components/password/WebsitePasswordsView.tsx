@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ChevronDown, ChevronUp, Globe } from "lucide-react";
 import { LoginItem } from "@/lib/passwordService";
@@ -6,6 +6,7 @@ import { LoginItem } from "@/lib/passwordService";
 interface WebsitePasswordsViewProps {
   passwords: LoginItem[];
   onSelectLogin: (login: LoginItem) => void;
+  isLoading?: boolean;
 }
 
 interface WebsiteGroup {
@@ -14,8 +15,10 @@ interface WebsiteGroup {
   isExpanded: boolean;
 }
 
-export default function WebsitePasswordsView({ passwords, onSelectLogin }: WebsitePasswordsViewProps) {
-  const [websiteGroups, setWebsiteGroups] = useState<WebsiteGroup[]>(() => {
+export default function WebsitePasswordsView({ passwords, onSelectLogin, isLoading = false }: WebsitePasswordsViewProps) {
+  const [websiteGroups, setWebsiteGroups] = useState<WebsiteGroup[]>([]);
+
+  useEffect(() => {
     // Group passwords by website domain
     const groupMap = new Map<string, LoginItem[]>();
     
@@ -28,14 +31,16 @@ export default function WebsitePasswordsView({ passwords, onSelectLogin }: Websi
     });
     
     // Convert map to array and sort by domain name
-    return Array.from(groupMap.entries())
+    const groups = Array.from(groupMap.entries())
       .map(([domain, accounts]) => ({
         domain,
         accounts,
         isExpanded: false
       }))
       .sort((a, b) => a.domain.localeCompare(b.domain));
-  });
+    
+    setWebsiteGroups(groups);
+  }, [passwords]);
 
   const toggleExpand = (index: number) => {
     setWebsiteGroups(prev =>
@@ -44,6 +49,17 @@ export default function WebsitePasswordsView({ passwords, onSelectLogin }: Websi
       )
     );
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500 mx-auto mb-4" />
+          <p className="text-gray-400">Loading your passwords...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (passwords.length === 0) {
     return (
@@ -56,6 +72,8 @@ export default function WebsitePasswordsView({ passwords, onSelectLogin }: Websi
       </div>
     );
   }
+
+
 
   return (
     <div className="p-4">

@@ -7,6 +7,7 @@ import { LoginItem, getDecryptedPassword } from "@/lib/passwordService";
 interface ReusedPasswordsViewProps {
   passwords: LoginItem[];
   onSelectLogin: (login: LoginItem) => void;
+  isLoading?: boolean;
 }
 
 interface PasswordGroup {
@@ -17,14 +18,15 @@ interface PasswordGroup {
   showPassword: boolean;
 }
 
-export default function ReusedPasswordsView({ passwords, onSelectLogin }: ReusedPasswordsViewProps) {
+export default function ReusedPasswordsView({ passwords, onSelectLogin, isLoading: parentLoading = false }: ReusedPasswordsViewProps) {
   const [passwordGroups, setPasswordGroups] = useState<PasswordGroup[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [internalLoading, setInternalLoading] = useState(true);
+  const isLoading = parentLoading || internalLoading;
 
   // Group passwords by their actual password value
   useEffect(() => {
     const groupPasswords = async () => {
-      setIsLoading(true);
+      setInternalLoading(true);
       
       // Create a map to group passwords
       const passwordMap = new Map<string, LoginItem[]>();
@@ -67,7 +69,7 @@ export default function ReusedPasswordsView({ passwords, onSelectLogin }: Reused
       });
       
       setPasswordGroups(groups);
-      setIsLoading(false);
+      setInternalLoading(false);
     };
     
     groupPasswords();
