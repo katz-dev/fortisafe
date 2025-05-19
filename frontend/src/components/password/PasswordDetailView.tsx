@@ -7,6 +7,7 @@ import PasswordStrengthIndicator from "./PasswordStrengthIndicator";
 import { deletePassword } from "@/lib/passwordService";
 import { toast } from "sonner";
 import { Dialog } from "@/components/ui/dialog";
+import EditPasswordForm from "./EditPasswordForm";
 
 // WebsiteIcon component that displays the first letter of the website
 function WebsiteIcon({ siteName }: { siteName: string }) {
@@ -69,20 +70,31 @@ interface LoginItem {
     password: string;
     strength: 'weak' | 'okay' | 'strong';
     website?: string;
+    url?: string;
     notes?: string;
+    securityRisk?: {
+        isSafe: boolean;
+        threatTypes?: string[];
+    };
+    compromiseInfo?: {
+        isCompromised: boolean;
+        breachCount: number;
+    };
 }
 
 interface PasswordDetailViewProps {
     login: LoginItem;
     onDelete?: (id: string) => void;
+    onUpdate?: (updatedPassword: LoginItem) => void;
 }
 
-export default function PasswordDetailView({ login, onDelete }: PasswordDetailViewProps) {
+export default function PasswordDetailView({ login, onDelete, onUpdate }: PasswordDetailViewProps) {
     const [showPassword, setShowPassword] = useState(false);
     const [copied, setCopied] = useState(false);
     const [copiedUsername, setCopiedUsername] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
     const handleCopyPassword = () => {
         navigator.clipboard.writeText(login.password);
@@ -140,6 +152,16 @@ export default function PasswordDetailView({ login, onDelete }: PasswordDetailVi
     const openDeleteDialog = () => {
         setIsDeleteDialogOpen(true);
     };
+    
+    const openEditDialog = () => {
+        setIsEditDialogOpen(true);
+    };
+    
+    const handlePasswordUpdated = (updatedPassword: LoginItem) => {
+        if (onUpdate) {
+            onUpdate(updatedPassword);
+        }
+    };
 
     return (
         <>
@@ -185,31 +207,21 @@ export default function PasswordDetailView({ login, onDelete }: PasswordDetailVi
                                 </motion.div>
                                 <div className="flex space-x-2">
                                     <motion.div
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
                                         initial={{ y: -10, opacity: 0 }}
                                         animate={{ y: 0, opacity: 1 }}
                                         transition={{ delay: 0.3, duration: 0.3 }}
+                                        className="flex space-x-2"
                                     >
-                                        <Button 
-                                            className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg"
-                                            onClick={openWebsite}
+                                        <Button
+                                            className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg flex items-center"
+                                            onClick={openEditDialog}
                                         >
-                                            <ExternalLink className="h-4 w-4 mr-2" />
-                                            Visit
+                                            <Edit className="h-4 w-4 mr-2" />
+                                            Edit
                                         </Button>
-                                    </motion.div>
-                                    <motion.div
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        initial={{ y: -10, opacity: 0 }}
-                                        animate={{ y: 0, opacity: 1 }}
-                                        transition={{ delay: 0.4, duration: 0.3 }}
-                                    >
-                                        <Button 
-                                            className="bg-red-600 hover:bg-red-700 text-white shadow-lg"
+                                        <Button
+                                            className="bg-red-600 hover:bg-red-700 text-white shadow-lg flex items-center"
                                             onClick={openDeleteDialog}
-                                            disabled={isDeleting}
                                         >
                                             <Trash2 className="h-4 w-4 mr-2" />
                                             Delete
@@ -321,24 +333,92 @@ export default function PasswordDetailView({ login, onDelete }: PasswordDetailVi
                                     <Info className="h-4 w-4" />
                                 </span>
                                 Security Analysis
-                            </label>                        <div className={`bg-slate-800/50 rounded-lg p-4 border backdrop-blur-sm ${login.strength === 'strong' ? 'border-green-700/50 bg-green-950/20' :
-                                login.strength === 'okay' ? 'border-orange-700/50 bg-orange-950/20' :
-                                    'border-red-700/50 bg-red-950/20'
-                                }`}>
-                                <div className="flex items-start">
-                                    {login.strength === 'strong' ? (
-                                        <div className="mr-3 bg-green-900/80 text-green-300 p-1.5 rounded-full">
-                                            <Check className="h-4 w-4" />
-                                        </div>
-                                    ) : (
-                                        <div className="mr-3 bg-red-900/80 text-red-300 p-1.5 rounded-full">
-                                            <AlertTriangle className="h-4 w-4" />
-                                        </div>
-                                    )}
-                                    <p className="text-sm text-gray-300">
-                                        {getIssueText(login.strength)}
-                                    </p>
+                            </label>
+                            <div className="space-y-3">
+                                {/* Password Strength Analysis */}
+                                <div className={`bg-slate-800/50 rounded-lg p-4 border backdrop-blur-sm ${login.strength === 'strong' ? 'border-green-700/50 bg-green-950/20' :
+                                    login.strength === 'okay' ? 'border-orange-700/50 bg-orange-950/20' :
+                                        'border-red-700/50 bg-red-950/20'
+                                    }`}>
+                                    <div className="flex items-start">
+                                        {login.strength === 'strong' ? (
+                                            <div className="mr-3 bg-green-900/80 text-green-300 p-1.5 rounded-full">
+                                                <Check className="h-4 w-4" />
+                                            </div>
+                                        ) : (
+                                            <div className="mr-3 bg-red-900/80 text-red-300 p-1.5 rounded-full">
+                                                <AlertTriangle className="h-4 w-4" />
+                                            </div>
+                                        )}
+                                        <p className="text-sm text-gray-300">
+                                            {getIssueText(login.strength)}
+                                        </p>
+                                    </div>
                                 </div>
+
+                                {/* URL Security Analysis */}
+                                {login.url && login.securityRisk && (
+                                    <div className={`bg-slate-800/50 rounded-lg p-4 border backdrop-blur-sm ${login.securityRisk.isSafe ? 'border-green-700/50 bg-green-950/20' : 'border-red-700/50 bg-red-950/20'}`}>
+                                        <div className="flex items-start">
+                                            {login.securityRisk.isSafe ? (
+                                                <div className="mr-3 bg-green-900/80 text-green-300 p-1.5 rounded-full">
+                                                    <Check className="h-4 w-4" />
+                                                </div>
+                                            ) : (
+                                                <div className="mr-3 bg-red-900/80 text-red-300 p-1.5 rounded-full">
+                                                    <AlertTriangle className="h-4 w-4" />
+                                                </div>
+                                            )}
+                                            <div>
+                                                <p className="text-sm text-gray-300">
+                                                    {login.securityRisk.isSafe ? 
+                                                        'This website appears to be safe.' :
+                                                        'This website may be unsafe. Exercise caution when visiting.'}
+                                                </p>
+                                                {!login.securityRisk.isSafe && login.securityRisk.threatTypes && login.securityRisk.threatTypes.length > 0 && (
+                                                    <div className="mt-2 flex flex-wrap gap-2">
+                                                        {login.securityRisk.threatTypes.map((threat, index) => (
+                                                            <span key={index} className="text-xs bg-red-500/20 text-red-300 px-2 py-1 rounded-full">
+                                                                {threat.split('_').join(' ').toLowerCase()}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Password Compromise Analysis */}
+                                {login.compromiseInfo && (
+                                    <div className={`bg-slate-800/50 rounded-lg p-4 border backdrop-blur-sm ${!login.compromiseInfo.isCompromised ? 'border-green-700/50 bg-green-950/20' : 'border-red-700/50 bg-red-950/20'}`}>
+                                        <div className="flex items-start">
+                                            {!login.compromiseInfo.isCompromised ? (
+                                                <div className="mr-3 bg-green-900/80 text-green-300 p-1.5 rounded-full">
+                                                    <Check className="h-4 w-4" />
+                                                </div>
+                                            ) : (
+                                                <div className="mr-3 bg-red-900/80 text-red-300 p-1.5 rounded-full">
+                                                    <AlertTriangle className="h-4 w-4" />
+                                                </div>
+                                            )}
+                                            <div>
+                                                <p className="text-sm text-gray-300">
+                                                    {!login.compromiseInfo.isCompromised ? 
+                                                        'This password has not been found in any known data breaches.' :
+                                                        `This password has been found in ${login.compromiseInfo.breachCount.toLocaleString()} data breaches. You should change it immediately.`}
+                                                </p>
+                                                {login.compromiseInfo.isCompromised && (
+                                                    <div className="mt-2">
+                                                        <span className="text-xs bg-red-500/20 text-red-300 px-2 py-1 rounded-full">
+                                                            Compromised in {login.compromiseInfo.breachCount.toLocaleString()} breaches
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </motion.div>
                     </div>
@@ -357,6 +437,14 @@ export default function PasswordDetailView({ login, onDelete }: PasswordDetailVi
                 onConfirm={handleDeleteConfirm}
                 variant="danger"
                 icon={<AlertCircle className="h-5 w-5" />}
+            />
+            
+            {/* Edit Password Dialog */}
+            <EditPasswordForm
+                isOpen={isEditDialogOpen}
+                onClose={() => setIsEditDialogOpen(false)}
+                onPasswordUpdated={handlePasswordUpdated}
+                password={login}
             />
         </>
     );

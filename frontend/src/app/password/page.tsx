@@ -13,7 +13,7 @@ import AddPasswordButton from "@/components/password/AddPasswordButton";
 import AddPasswordForm from "@/components/password/AddPasswordForm";
 import ReusedPasswordsView from "@/components/password/ReusedPasswordsView";
 import { Plus } from "lucide-react";
-import { getAllPasswords, getDecryptedPassword, LoginItem, calculatePasswordStrength, checkReusedPassword } from "@/lib/passwordService";
+import { getAllPasswords, getDecryptedPassword, LoginItem, calculatePasswordStrength, checkReusedPassword, checkSecurityRisks } from "@/lib/passwordService";
 import { toast } from "sonner";
 
 export default function PasswordVaultPage() {
@@ -25,6 +25,8 @@ export default function PasswordVaultPage() {
   const [weakPasswordCount, setWeakPasswordCount] = useState(0);
   const [reusedPasswordCount, setReusedPasswordCount] = useState(0);
   const [reusedPasswordIds, setReusedPasswordIds] = useState<Set<string>>(new Set());
+  const [securityRiskCount, setSecurityRiskCount] = useState(0);
+  const [compromisedPasswordCount, setCompromisedPasswordCount] = useState(0);
   const [isAddPasswordModalOpen, setIsAddPasswordModalOpen] = useState(false);
 
   // Fetch password function that can be reused
@@ -36,6 +38,8 @@ export default function PasswordVaultPage() {
 
       // Count weak passwords and check for reused passwords
       let weakCount = 0;
+      let securityRiskCount = 0;
+      let compromisedCount = 0;
       const reusedIds = new Set<string>();
       const reusedMap = new Map<string, string[]>(); // Map of password -> [id1, id2, ...]
       
@@ -55,8 +59,30 @@ export default function PasswordVaultPage() {
           } else {
             reusedMap.get(decryptedPassword)?.push(password.id);
           }
+
+          // Check URL security and password compromise
+          const securityResult = await checkSecurityRisks(
+            password.url,
+            decryptedPassword
+          );
+          
+          // Handle URL security
+          if (password.url && securityResult.urlResults.length > 0) {
+            password.securityRisk = securityResult.urlResults[0];
+            if (!password.securityRisk.isSafe) {
+              securityRiskCount++;
+            }
+          }
+
+          // Handle password compromise
+          if (securityResult.passwordResult) {
+            password.compromiseInfo = securityResult.passwordResult;
+            if (securityResult.passwordResult.isCompromised) {
+              compromisedCount++;
+            }
+          }
         } catch (error) {
-          console.error(`Error decrypting password ${password.id}:`, error);
+          console.error(`Error processing password ${password.id}:`, error);
         }
       }
       
@@ -71,6 +97,8 @@ export default function PasswordVaultPage() {
       setWeakPasswordCount(weakCount);
       setReusedPasswordCount(reusedIds.size);
       setReusedPasswordIds(reusedIds);
+      setSecurityRiskCount(securityRiskCount);
+      setCompromisedPasswordCount(compromisedCount);
     } catch (error) {
       console.error("Error fetching passwords:", error);
       toast.error("Failed to load passwords");
@@ -101,6 +129,8 @@ export default function PasswordVaultPage() {
         return login.strength === "strong";
       case "reused":
         return reusedPasswordIds.has(login.id);
+      case "security":
+        return (login.securityRisk && !login.securityRisk.isSafe) || (login.compromiseInfo && login.compromiseInfo.isCompromised);
       default:
         return true;
     }
@@ -165,6 +195,64 @@ export default function PasswordVaultPage() {
     // Update weak password count
     const weakCount = updatedLogins.filter(p => p.strength === 'weak').length;
     setWeakPasswordCount(weakCount);
+    
+    // Update reused password IDs
+    const newReusedIds = new Set(reusedPasswordIds);
+    newReusedIds.delete(id);
+    setReusedPasswordIds(newReusedIds);
+    setReusedPasswordCount(newReusedIds.size);
+  };
+  
+  const handleUpdatePassword = (updatedPassword: LoginItem) => {
+    // Update the password in the state
+    const updatedLogins = savedLogins.map(login => 
+      login.id === updatedPassword.id ? updatedPassword : login
+    );
+    setSavedLogins(updatedLogins);
+    
+    // Update the selected login if it was the one that was updated
+    if (selectedLogin && selectedLogin.id === updatedPassword.id) {
+      setSelectedLogin(updatedPassword);
+    }
+    
+    // Update weak password count
+    const weakCount = updatedLogins.filter(p => p.strength === 'weak').length;
+    setWeakPasswordCount(weakCount);
+    
+    // Check for password reuse
+    checkForPasswordReuse(updatedPassword);
+  };
+  
+  const checkForPasswordReuse = async (password: LoginItem) => {
+    try {
+      const reusedResult = await checkReusedPassword(password.password, password.id);
+      
+      // Update reused password IDs
+      const newReusedIds = new Set(reusedPasswordIds);
+      
+      if (reusedResult.isReused) {
+        // This password is reused, add it to the set
+        newReusedIds.add(password.id);
+        
+        // Also add the IDs of the passwords this one is reused with
+        for (const site of reusedResult.usedIn) {
+          const matchingPassword = savedLogins.find(
+            p => p.website === site.website && p.username === site.username
+          );
+          if (matchingPassword) {
+            newReusedIds.add(matchingPassword.id);
+          }
+        }
+      } else {
+        // This password is not reused, remove it from the set
+        newReusedIds.delete(password.id);
+      }
+      
+      setReusedPasswordIds(newReusedIds);
+      setReusedPasswordCount(newReusedIds.size);
+    } catch (error) {
+      console.error('Error checking for password reuse:', error);
+    }
   };
 
   return (
@@ -236,6 +324,8 @@ export default function PasswordVaultPage() {
             onTabChange={setActiveTab}
             weakCount={weakPasswordCount}
             reusedCount={reusedPasswordCount}
+            securityRiskCount={securityRiskCount}
+            compromisedCount={compromisedPasswordCount}
           />
           <AddPasswordButton onClick={handleAddPassword} />
         </div>
@@ -264,6 +354,7 @@ export default function PasswordVaultPage() {
             <PasswordDetailView 
               login={selectedLogin} 
               onDelete={handleDeletePassword}
+              onUpdate={handleUpdatePassword}
             />
           ) : (
             <div className="flex items-center justify-center h-full bg-[#0a0f1a] border border-slate-800/60 rounded-xl p-6 shadow-lg backdrop-blur-md">

@@ -11,6 +11,14 @@ export interface LoginItem {
     notes?: string;
     lastUpdated?: Date;
     tags?: string[];
+    securityRisk?: {
+        isSafe: boolean;
+        threatTypes?: string[];
+    };
+    compromiseInfo?: {
+        isCompromised: boolean;
+        breachCount: number;
+    };
 }
 
 interface PasswordResponse {
@@ -269,6 +277,58 @@ export async function checkDuplicate(website: string, username: string): Promise
 export interface ReusedPasswordResult {
   isReused: boolean;
   usedIn: { website: string; username: string }[];
+}
+
+export interface SecurityScanResult {
+  urlResults: {
+    url: string;
+    isSafe: boolean;
+    threatTypes?: string[];
+  }[];
+  passwordResult?: {
+    isCompromised: boolean;
+    breachCount: number;
+  };
+}
+
+// Check security risks for a URL and password
+export async function checkSecurityRisks(url?: string, password?: string): Promise<SecurityScanResult> {
+  try {
+    const token = getAccessToken();
+    if (!token) {
+      throw new Error('No access token available');
+    }
+
+    const response = await fetch(`${backendUrl}/scanner`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        urls: url ? [url] : [],
+        password: password
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to check security risks');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error checking security risks:', error);
+    return { 
+      urlResults: url ? [{
+        url,
+        isSafe: true // Default to safe if check fails
+      }] : [],
+      passwordResult: {
+        isCompromised: false,
+        breachCount: 0
+      }
+    };
+  }
 }
 
 // Check if a password is reused across multiple accounts

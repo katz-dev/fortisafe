@@ -1,13 +1,15 @@
 import { motion } from "framer-motion";
 
-interface FilterTabsProps {
+export interface FilterTabsProps {
     activeTab: string;
     onTabChange: (tab: string) => void;
-    weakCount?: number;
-    reusedCount?: number;
+    weakCount: number;
+    reusedCount: number;
+    securityRiskCount: number;
+    compromisedCount: number;
 }
 
-export default function FilterTabs({ activeTab, onTabChange, weakCount = 0, reusedCount = 0 }: FilterTabsProps) {
+export default function FilterTabs({ activeTab, onTabChange, weakCount, reusedCount, securityRiskCount, compromisedCount }: FilterTabsProps) {
     const tabs = [
         {
             id: "all",
@@ -78,6 +80,11 @@ export default function FilterTabs({ activeTab, onTabChange, weakCount = 0, reus
                     {tab.id === 'reused' && reusedCount > 0 && (
                         <span className="ml-2 text-xs bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded-full">
                             {reusedCount}
+                        </span>
+                    )}
+                    {(tab.id === 'security') && (securityRiskCount > 0 || compromisedCount > 0) && (
+                        <span className="bg-red-500/20 text-red-300 text-xs px-2 py-0.5 rounded-full">
+                            {securityRiskCount + compromisedCount}
                         </span>
                     )}
                     {activeTab === tab.id && (
