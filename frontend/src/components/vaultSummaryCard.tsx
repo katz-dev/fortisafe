@@ -40,16 +40,7 @@ export default function VaultSummaryCard({
           </motion.div>
         </div>
         <div className="mt-3">
-          <p className="text-base text-gray-300 font-medium tracking-wide">Saved logins</p>
-
-          <div className="mt-5 w-full bg-slate-800/50 h-2 rounded-full overflow-hidden">
-            <motion.div
-              className="h-full bg-gradient-to-r from-indigo-500 to-purple-500"
-              initial={{ width: 0 }}
-              animate={{ width: `${Math.min(100, count * 10)}%` }}
-              transition={{ duration: 1, delay: 0.3 }}
-            />
-          </div>
+          <p className="text-base text-gray-300 font-medium tracking-wide">Total saved passwords</p>
         </div>
       </CardContent>
     </Card>
