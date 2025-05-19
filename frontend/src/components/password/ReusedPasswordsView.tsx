@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { AlertCircle, ChevronDown, ChevronUp, Copy, Eye, EyeOff, Shield, RefreshCw } from "lucide-react";
+import { AlertCircle, ChevronDown, Copy, Eye, EyeOff, Shield, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { LoginItem, getDecryptedPassword } from "@/lib/passwordService";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface ReusedPasswordsViewProps {
   passwords: LoginItem[];
@@ -239,13 +240,15 @@ export default function ReusedPasswordsView({ passwords, onSelectLogin, isLoadin
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-white">Reused Passwords</h2>
         {onRefresh && (
-          <button 
+          <motion.button 
             onClick={handleRefresh}
             className="flex items-center space-x-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md transition-colors"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
             <RefreshCw className="h-4 w-4" />
             <span>Refresh</span>
-          </button>
+          </motion.button>
         )}
       </div>
       
@@ -255,13 +258,20 @@ export default function ReusedPasswordsView({ passwords, onSelectLogin, isLoadin
       
       <div className="space-y-4">
           {passwordGroups.map((group, index) => (
-            <div
+            <motion.div
               key={index}
               className="bg-slate-800/50 border border-slate-700/50 rounded-lg overflow-hidden"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: index * 0.1 }}
+              whileHover={{ y: -2 }}
+              layout
             >
-              <div 
+              <motion.div 
                 className="flex items-center justify-between p-4 cursor-pointer"
                 onClick={() => toggleExpand(index)}
+                whileHover={{ backgroundColor: 'rgba(51, 65, 85, 0.3)' }}
+                transition={{ duration: 0.2 }}
               >
                 <div className="flex items-center space-x-3">
                   <div className={`${getRiskColor(group.riskLevel)} p-2 rounded-md`}>
@@ -279,17 +289,19 @@ export default function ReusedPasswordsView({ passwords, onSelectLogin, isLoadin
                         <span className={`font-mono ${getStrengthColor(group.strength)}`}>
                           {group.showPassword ? group.decryptedPassword : group.passwordHash}
                         </span>
-                        <button 
+                        <motion.button 
                           onClick={(e) => {
                             e.stopPropagation();
                             toggleShowPassword(index);
                           }}
                           className="ml-2 text-gray-500 hover:text-gray-300"
                           aria-label={group.showPassword ? "Hide password" : "Show password"}
+                          whileHover={{ scale: 1.2 }}
+                          whileTap={{ scale: 0.9 }}
                         >
                           {group.showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                        <button 
+                        </motion.button>
+                        <motion.button 
                           onClick={(e) => {
                             e.stopPropagation();
                             if (group.decryptedPassword) {
@@ -298,9 +310,11 @@ export default function ReusedPasswordsView({ passwords, onSelectLogin, isLoadin
                           }}
                           className="ml-2 text-gray-500 hover:text-gray-300"
                           aria-label="Copy password"
+                          whileHover={{ scale: 1.2 }}
+                          whileTap={{ scale: 0.9 }}
                         >
                           <Copy className="h-4 w-4" />
-                        </button>
+                        </motion.button>
                       </div>
                     </div>
                   </div>
@@ -309,12 +323,25 @@ export default function ReusedPasswordsView({ passwords, onSelectLogin, isLoadin
                   <div className="text-xs text-gray-400 mr-3">
                     {group.strength === 'weak' ? 'Weak' : group.strength === 'okay' ? 'Moderate' : 'Strong'}
                   </div>
-                  {group.isExpanded ? <ChevronUp className="h-5 w-5 text-gray-400" /> : <ChevronDown className="h-5 w-5 text-gray-400" />}
+                  <motion.div
+                    animate={{ rotate: group.isExpanded ? 180 : 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <ChevronDown className="h-5 w-5 text-gray-400" />
+                  </motion.div>
                 </div>
-              </div>
+              </motion.div>
               
-              {group.isExpanded && (
-                <div className="border-t border-slate-700/50 p-4">
+              <AnimatePresence>
+                {group.isExpanded && (
+                  <motion.div 
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    className="overflow-hidden"
+                  >
+                    <div className="border-t border-slate-700/50 p-4">
                     <div className="flex justify-between items-center mb-3">
                       <h4 className="text-sm font-medium text-gray-300">Accounts using this password:</h4>
                       <div className="flex items-center space-x-1 text-xs text-gray-400">
@@ -323,11 +350,15 @@ export default function ReusedPasswordsView({ passwords, onSelectLogin, isLoadin
                       </div>
                     </div>
                     <div className="space-y-2">
-                      {group.accounts.map((account) => (
-                        <div
+                      {group.accounts.map((account, accountIndex) => (
+                        <motion.div
                           key={account.id}
                           className="flex items-center justify-between p-2 rounded-md hover:bg-slate-700/30 cursor-pointer"
                           onClick={() => onSelectLogin(account)}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.2, delay: 0.05 * accountIndex }}
+                          whileHover={{ scale: 1.02, backgroundColor: 'rgba(51, 65, 85, 0.5)' }}
                         >
                           <div className="flex items-center space-x-3">
                             <div className="w-8 h-8 rounded-md bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold">
@@ -339,17 +370,25 @@ export default function ReusedPasswordsView({ passwords, onSelectLogin, isLoadin
                             </div>
                           </div>
                           {account.securityRisk && !account.securityRisk.isSafe && (
-                            <div className="text-red-400 text-xs flex items-center">
+                            <motion.div 
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.3 }}
+                              className="text-red-400 text-xs flex items-center"
+                            >
                               <AlertCircle className="h-3.5 w-3.5 mr-1" />
                               <span>At risk</span>
-                            </div>
+                            </motion.div>
                           )}
-                        </div>
+                        </motion.div>
                       ))}
+                      </div>
                     </div>
-                </div>
-              )}
-            </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
           ))}
       </div>
     </div>
