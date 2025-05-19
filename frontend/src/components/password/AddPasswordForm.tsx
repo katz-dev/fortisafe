@@ -1,15 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Dialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AlertTriangle, Check, RefreshCw, AlertCircle, Eye, EyeOff, Save, X } from "lucide-react";
 import { toast } from "sonner";
-import { createPassword, calculatePasswordStrength, checkReusedPassword, ReusedPasswordResult } from "@/lib/passwordService";
+import { createPassword, calculatePasswordStrength, checkReusedPassword, ReusedPasswordResult, LoginItem } from "@/lib/passwordService";
 
 interface AddPasswordFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onPasswordAdded: (newPassword: any) => void;
+  onPasswordAdded: (newPassword: LoginItem) => void;
 }
 
 export default function AddPasswordForm({ isOpen, onClose, onPasswordAdded }: AddPasswordFormProps) {

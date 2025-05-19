@@ -32,7 +32,6 @@ export default function EditPasswordForm({
   const [reusedPasswordInfo, setReusedPasswordInfo] = useState<ReusedPasswordResult | null>(null);
   const [isCheckingReuse, setIsCheckingReuse] = useState(false);
   const [originalPassword, setOriginalPassword] = useState("");
-  const [passwordChanged, setPasswordChanged] = useState(false);
 
   // Initialize form data when the password prop changes
   useEffect(() => {
@@ -46,7 +45,7 @@ export default function EditPasswordForm({
       });
       setOriginalPassword(password.password);
       setPasswordStrength(password.strength);
-      setPasswordChanged(false);
+
     }
   }, [password]);
 
@@ -59,8 +58,7 @@ export default function EditPasswordForm({
     const newPassword = e.target.value;
     setFormData(prev => ({ ...prev, password: newPassword }));
     
-    // Check if password has been changed from original
-    setPasswordChanged(newPassword !== originalPassword);
+
     
     if (newPassword) {
       const strength = calculatePasswordStrength(newPassword);
@@ -99,7 +97,7 @@ export default function EditPasswordForm({
       setIsSubmitting(true);
       
       // Only include fields that have changed
-      const updateData: any = {};
+      const updateData: Partial<LoginItem> = {};
       if (formData.website !== (password.website || password.site)) updateData.website = formData.website;
       if (formData.url !== password.url) updateData.url = formData.url;
       if (formData.username !== password.username) updateData.username = formData.username;
