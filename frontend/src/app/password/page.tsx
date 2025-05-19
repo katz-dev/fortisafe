@@ -101,6 +101,25 @@ export default function PasswordVaultPage() {
     console.log("Add password clicked");
   };
 
+  const handleDeletePassword = (id: string) => {
+    // Remove the deleted password from the state
+    const updatedLogins = savedLogins.filter(login => login.id !== id);
+    setSavedLogins(updatedLogins);
+    
+    // If the deleted password was selected, select another one
+    if (selectedLogin && selectedLogin.id === id) {
+      if (updatedLogins.length > 0) {
+        setSelectedLogin(updatedLogins[0]);
+      } else {
+        setSelectedLogin(null);
+      }
+    }
+    
+    // Update weak password count
+    const weakCount = updatedLogins.filter(p => p.strength === 'weak').length;
+    setWeakPasswordCount(weakCount);
+  };
+
   return (
     <PageLayout className="h-screen flex flex-col bg-[#070b14]">
       {/* Page content wrapper - take full height */}
@@ -182,7 +201,10 @@ export default function PasswordVaultPage() {
           </div>
 
           {/* Right Content - Password Details */}          <div className="col-span-12 md:col-span-7 lg:col-span-8 flex flex-col h-full">            {selectedLogin ? (
-            <PasswordDetailView login={selectedLogin} />
+            <PasswordDetailView 
+              login={selectedLogin} 
+              onDelete={handleDeletePassword}
+            />
           ) : (
             <div className="flex items-center justify-center h-full bg-[#0a0f1a] border border-slate-800/60 rounded-xl p-6 shadow-lg backdrop-blur-md">
               <div className="text-center">
