@@ -1,3 +1,6 @@
+import { motion } from 'framer-motion';
+import { Shield, ShieldAlert, ShieldCheck } from 'lucide-react';
+
 interface PasswordStrengthIndicatorProps {
     strength: 'weak' | 'okay' | 'strong';
 }
@@ -6,13 +9,13 @@ export default function PasswordStrengthIndicator({ strength }: PasswordStrength
     const getStrengthColor = (strength: string) => {
         switch (strength) {
             case 'weak':
-                return 'bg-red-500';
+                return 'from-red-600 to-red-400';
             case 'okay':
-                return 'bg-orange-500';
+                return 'from-orange-600 to-orange-400';
             case 'strong':
-                return 'bg-green-500';
+                return 'from-emerald-600 to-emerald-400';
             default:
-                return 'bg-gray-500';
+                return 'from-gray-600 to-gray-400';
         }
     };
 
@@ -36,49 +39,74 @@ export default function PasswordStrengthIndicator({ strength }: PasswordStrength
     const getStrengthDescription = (strength: string) => {
         switch (strength) {
             case 'weak':
-                return 'Vulnerable';
+                return 'High risk - easily guessable';
             case 'okay':
-                return 'Moderate';
+                return 'Better but could be stronger';
             case 'strong':
-                return 'Secure';
+                return 'Excellent protection';
             default:
-                return 'Unknown';
+                return 'Unknown strength';
+        }
+    };
+
+    const getStrengthIcon = (strength: string) => {
+        switch (strength) {
+            case 'weak':
+                return <ShieldAlert className="w-5 h-5 text-red-400" />;
+            case 'okay':
+                return <Shield className="w-5 h-5 text-orange-400" />;
+            case 'strong':
+                return <ShieldCheck className="w-5 h-5 text-emerald-400" />;
+            default:
+                return <Shield className="w-5 h-5 text-gray-400" />;
         }
     };
 
     return (
-        <div className="mt-2">
-            <div className="w-full bg-slate-800/70 rounded-full h-2.5 mb-2 overflow-hidden">
-                <div
-                    className={`h-2.5 rounded-full ${getStrengthColor(strength)} ${getStrengthWidth(strength)} transition-all duration-700 ease-in-out shadow-glow`}
-                    style={{
-                        boxShadow: strength === 'weak'
-                            ? '0 0 8px rgba(239, 68, 68, 0.5)'
-                            : strength === 'okay'
-                                ? '0 0 8px rgba(249, 115, 22, 0.5)'
-                                : '0 0 8px rgba(34, 197, 94, 0.5)'
-                    }}
-                ></div>
+        <motion.div 
+            className="mt-4 bg-slate-800/30 rounded-xl p-4 border border-slate-700/30"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+        >
+            <div className="w-full bg-slate-800/70 rounded-full h-3 mb-4 overflow-hidden">
+                <motion.div
+                    className={`h-3 rounded-full bg-gradient-to-r ${getStrengthColor(strength)} ${getStrengthWidth(strength)}`}
+                    initial={{ width: 0 }}
+                    animate={{ width: getStrengthWidth(strength).replace('w-', '').replace('full', '100%') }}
+                    transition={{ duration: 0.7, ease: 'easeOut' }}
+                />
             </div>
-            <div className="flex justify-between text-xs">
-                <p className="text-gray-400">
-                    Password strength:
-                    <span className={
-                        strength === 'strong' ? 'text-green-400 ml-1 font-medium' :
-                            strength === 'okay' ? 'text-orange-400 ml-1 font-medium' :
-                                'text-red-400 ml-1 font-medium'
-                    }>
-                        {getStrengthText(strength)}
-                    </span>
-                </p>
-                <span className={
-                    strength === 'strong' ? 'text-green-400 font-medium' :
-                        strength === 'okay' ? 'text-orange-400 font-medium' :
-                            'text-red-400 font-medium'
-                }>
-                    {getStrengthDescription(strength)}
-                </span>
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <motion.div
+                        initial={{ scale: 0.5, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ duration: 0.3, delay: 0.2 }}
+                    >
+                        {getStrengthIcon(strength)}
+                    </motion.div>
+                    <div>
+                        <p className="text-sm font-medium">
+                            <span className={
+                                strength === 'strong' ? 'text-emerald-400' :
+                                strength === 'okay' ? 'text-orange-400' :
+                                'text-red-400'
+                            }>
+                                {getStrengthText(strength)}
+                            </span>
+                            <span className="text-slate-400 ml-1">Password</span>
+                        </p>
+                        <p className={
+                            `text-xs ${strength === 'strong' ? 'text-emerald-500/70' :
+                            strength === 'okay' ? 'text-orange-500/70' :
+                            'text-red-500/70'}`
+                        }>
+                            {getStrengthDescription(strength)}
+                        </p>
+                    </div>
+                </div>
             </div>
-        </div>
+        </motion.div>
     );
 }
