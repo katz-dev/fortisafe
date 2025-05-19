@@ -12,6 +12,7 @@ import PasswordDetailView from "@/components/password/PasswordDetailView";
 import AddPasswordButton from "@/components/password/AddPasswordButton";
 import AddPasswordForm from "@/components/password/AddPasswordForm";
 import ReusedPasswordsView from "@/components/password/ReusedPasswordsView";
+import WebsitePasswordsView from "@/components/password/WebsitePasswordsView";
 import { Plus } from "lucide-react";
 import { getAllPasswords, getDecryptedPassword, LoginItem, calculatePasswordStrength, checkReusedPassword, checkSecurityRisks } from "@/lib/passwordService";
 import { toast } from "sonner";
@@ -335,18 +336,32 @@ export default function PasswordVaultPage() {
           {/* Left Sidebar - Logins List */}
           <div className="col-span-12 md:col-span-5 lg:col-span-4 flex flex-col h-full">
             <div className="bg-[#0a0f1a] border border-slate-800/60 rounded-xl overflow-hidden shadow-lg h-full backdrop-blur-md">
-              {activeTab === "reused" ? (
-                <ReusedPasswordsView 
-                  passwords={savedLogins.filter(login => reusedPasswordIds.has(login.id))}
-                  onSelectLogin={setSelectedLogin}
-                />
-              ) : (
-                <SavedLogins
-                  logins={filteredPasswords}
-                  onSelectLogin={setSelectedLogin}
-                  isLoading={isLoading}
-                />
-              )}
+              {(() => {
+                switch (activeTab) {
+                  case "reused":
+                    return (
+                      <ReusedPasswordsView
+                        passwords={savedLogins.filter(login => reusedPasswordIds.has(login.id))}
+                        onSelectLogin={setSelectedLogin}
+                      />
+                    );
+                  case "all":
+                    return (
+                      <WebsitePasswordsView
+                        passwords={filteredPasswords}
+                        onSelectLogin={setSelectedLogin}
+                      />
+                    );
+                  default:
+                    return (
+                      <SavedLogins
+                        logins={filteredPasswords}
+                        onSelectLogin={setSelectedLogin}
+                        isLoading={isLoading}
+                      />
+                    );
+                }
+              })()}
             </div>
           </div>
 
