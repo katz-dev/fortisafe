@@ -259,4 +259,51 @@ export class PasswordsService {
 
     return updatedPassword;
   }
+
+  /**
+   * Check if a password is reused across multiple accounts
+   * @param userId The user ID
+   * @param password The password to check for reuse
+   * @param currentPasswordId Optional ID to exclude from the check (useful when updating a password)
+   * @returns Object containing whether the password is reused and sites where it's used
+   */
+  async checkReusedPassword(
+    userId: string,
+    password: string,
+    currentPasswordId?: string,
+  ): Promise<{ isReused: boolean; usedIn: { website: string; username: string }[] }> {
+    // Get all passwords for the user
+    const userPasswords = await this.passwordModel.find({ userId }).exec();
+    
+    const usedIn: { website: string; username: string }[] = [];
+    
+    // Check each password
+    for (const storedPassword of userPasswords) {
+      // Skip the current password if ID is provided
+      if (currentPasswordId && storedPassword._id && storedPassword._id.toString() === currentPasswordId) {
+        continue;
+      }
+      
+      try {
+        // Decrypt the stored password
+        const decryptedPassword = this.decrypt(storedPassword.password);
+        
+        // If the password matches, add it to the list
+        if (decryptedPassword === password) {
+          usedIn.push({
+            website: storedPassword.website,
+            username: storedPassword.username,
+          });
+        }
+      } catch (error) {
+        console.error(`Error decrypting password: ${error.message}`);
+        // Continue checking other passwords even if one fails
+      }
+    }
+    
+    return {
+      isReused: usedIn.length > 0,
+      usedIn,
+    };
+  }
 }

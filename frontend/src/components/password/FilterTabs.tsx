@@ -2,10 +2,12 @@ import { motion } from "framer-motion";
 
 interface FilterTabsProps {
     activeTab: string;
-    setActiveTab: (tab: string) => void;
+    onTabChange: (tab: string) => void;
+    weakCount?: number;
+    reusedCount?: number;
 }
 
-export default function FilterTabs({ activeTab, setActiveTab }: FilterTabsProps) {
+export default function FilterTabs({ activeTab, onTabChange, weakCount = 0, reusedCount = 0 }: FilterTabsProps) {
     const tabs = [
         {
             id: "all",
@@ -62,12 +64,22 @@ export default function FilterTabs({ activeTab, setActiveTab }: FilterTabsProps)
                         ? "bg-gradient-to-r from-indigo-600 to-indigo-800 text-white shadow-lg border border-indigo-500/70 font-medium"
                         : "text-gray-400 hover:text-white bg-[#0a0f1a]/90 backdrop-blur-md border border-slate-800/60 hover:border-slate-700/70 hover:shadow-md"
                         }`}
-                    onClick={() => setActiveTab(tab.id)}
+                    onClick={() => onTabChange(tab.id)}
                 >
                     <span className={`flex items-center justify-center w-5 h-5 mr-2 rounded-md ${tab.bgColor} text-white shadow-sm`}>
                         {tab.icon}
                     </span>
                     <span>{tab.label}</span>
+                    {tab.id === 'weak' && weakCount > 0 && (
+                        <span className="ml-2 text-xs bg-red-500/20 text-red-300 px-1.5 py-0.5 rounded-full">
+                            {weakCount}
+                        </span>
+                    )}
+                    {tab.id === 'reused' && reusedCount > 0 && (
+                        <span className="ml-2 text-xs bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded-full">
+                            {reusedCount}
+                        </span>
+                    )}
                     {activeTab === tab.id && (
                         <motion.span
                             layoutId="activeTabIndicator"

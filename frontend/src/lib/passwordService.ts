@@ -227,3 +227,81 @@ export async function deletePassword(id: string): Promise<void> {
         throw error;
     }
 }
+
+// Function to get the access token
+function getAccessToken(): string | null {
+    return localStorage.getItem('access_token');
+}
+
+// Check if a website and username combination already exists
+export async function checkDuplicate(website: string, username: string): Promise<boolean> {
+  try {
+    const token = getAccessToken();
+    if (!token) {
+      throw new Error('No access token available');
+    }
+
+    const response = await fetch(
+      `${backendUrl}/passwords/check-duplicate?website=${encodeURIComponent(
+        website,
+      )}&username=${encodeURIComponent(username)}`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to check for duplicate');
+    }
+
+    const data = await response.json();
+    return data.exists;
+  } catch (error) {
+    console.error('Error checking for duplicate:', error);
+    return false;
+  }
+}
+
+// Interface for the reused password check result
+export interface ReusedPasswordResult {
+  isReused: boolean;
+  usedIn: { website: string; username: string }[];
+}
+
+// Check if a password is reused across multiple accounts
+export async function checkReusedPassword(
+  password: string,
+  currentPasswordId?: string
+): Promise<ReusedPasswordResult> {
+  try {
+    const token = getAccessToken();
+    if (!token) {
+      throw new Error('No access token available');
+    }
+
+    const url = currentPasswordId
+      ? `${backendUrl}/passwords/check-reused?currentPasswordId=${encodeURIComponent(currentPasswordId)}`
+      : `${backendUrl}/passwords/check-reused`;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ password }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to check for reused password');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error checking for reused password:', error);
+    return { isReused: false, usedIn: [] };
+  }
+}

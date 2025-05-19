@@ -10,9 +10,10 @@ interface DialogProps {
   description?: string;
   confirmText?: string;
   cancelText?: string;
-  onConfirm: () => void;
+  onConfirm?: () => void;
   variant?: "danger" | "info" | "success" | "warning";
   icon?: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 export function Dialog({
@@ -25,6 +26,7 @@ export function Dialog({
   onConfirm,
   variant = "info",
   icon,
+  children,
 }: DialogProps) {
   const [isMounted, setIsMounted] = useState(false);
 
@@ -126,25 +128,36 @@ export function Dialog({
                 </div>
               )}
 
+              {/* Custom Content */}
+              {children}
+
               {/* Actions */}
-              <div className="flex justify-end space-x-3">
-                <Button
-                  variant="outline"
-                  className="border-slate-700 bg-slate-800/50 hover:bg-slate-700 text-gray-300"
-                  onClick={onClose}
-                >
-                  {cancelText}
-                </Button>
-                <Button
-                  className={styles.confirmButton}
-                  onClick={() => {
-                    onConfirm();
-                    onClose();
-                  }}
-                >
-                  {confirmText}
-                </Button>
-              </div>
+              {(confirmText || cancelText) && onConfirm && (
+                <div className="flex justify-end space-x-3 mt-6">
+                  {cancelText && (
+                    <Button
+                      variant="outline"
+                      className="border-slate-700 bg-slate-800/50 hover:bg-slate-700 text-gray-300"
+                      onClick={onClose}
+                    >
+                      {cancelText}
+                    </Button>
+                  )}
+                  {confirmText && (
+                    <Button
+                      className={styles.confirmButton}
+                      onClick={() => {
+                        if (onConfirm) {
+                          onConfirm();
+                        }
+                        onClose();
+                      }}
+                    >
+                      {confirmText}
+                    </Button>
+                  )}
+                </div>
+              )}
             </motion.div>
           </motion.div>
         </>
