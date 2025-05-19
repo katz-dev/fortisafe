@@ -32,11 +32,15 @@ export default function WebsitePasswordsView({ passwords, onSelectLogin, isLoadi
     
     // Convert map to array and sort by domain name
     const groups = Array.from(groupMap.entries())
-      .map(([domain, accounts]) => ({
-        domain,
-        accounts,
-        isExpanded: false
-      }))
+      .map(([domain, accounts]) => {
+        // Preserve expanded state if group already exists
+        const existingGroup = websiteGroups.find(g => g.domain === domain);
+        return {
+          domain,
+          accounts,
+          isExpanded: existingGroup ? existingGroup.isExpanded : false
+        };
+      })
       .sort((a, b) => a.domain.localeCompare(b.domain));
     
     setWebsiteGroups(groups);

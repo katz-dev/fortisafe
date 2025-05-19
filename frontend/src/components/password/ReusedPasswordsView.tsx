@@ -58,12 +58,16 @@ export default function ReusedPasswordsView({ passwords, onSelectLogin, isLoadin
       passwordMap.forEach((accounts, passwordValue) => {
         // Only include groups with more than one account
         if (accounts.length > 1) {
+          // Find existing group to preserve state
+          const existingGroup = passwordGroups.find(g => 
+            g.decryptedPassword === passwordValue
+          );
           groups.push({
             passwordHash: hashPassword(passwordValue),
             accounts,
-            isExpanded: false,
+            isExpanded: existingGroup ? existingGroup.isExpanded : false,
             decryptedPassword: passwordValue,
-            showPassword: false
+            showPassword: existingGroup ? existingGroup.showPassword : false
           });
         }
       });
