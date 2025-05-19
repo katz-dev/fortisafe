@@ -32,6 +32,7 @@ export default function EditPasswordForm({
   const [reusedPasswordInfo, setReusedPasswordInfo] = useState<ReusedPasswordResult | null>(null);
   const [isCheckingReuse, setIsCheckingReuse] = useState(false);
   const [originalPassword, setOriginalPassword] = useState("");
+  const [passwordChanged, setPasswordChanged] = useState(false);
 
   // Initialize form data when the password prop changes
   useEffect(() => {
@@ -58,7 +59,8 @@ export default function EditPasswordForm({
     const newPassword = e.target.value;
     setFormData(prev => ({ ...prev, password: newPassword }));
     
-
+    // Set passwordChanged to true if the password is different from the original
+    setPasswordChanged(newPassword !== originalPassword);
     
     if (newPassword) {
       const strength = calculatePasswordStrength(newPassword);
@@ -101,7 +103,7 @@ export default function EditPasswordForm({
       if (formData.website !== (password.website || password.site)) updateData.website = formData.website;
       if (formData.url !== password.url) updateData.url = formData.url;
       if (formData.username !== password.username) updateData.username = formData.username;
-      if (formData.password !== originalPassword) updateData.password = formData.password;
+      if (passwordChanged) updateData.password = formData.password;
       if (formData.notes !== password.notes) updateData.notes = formData.notes;
       
       // If nothing changed, just close the dialog
