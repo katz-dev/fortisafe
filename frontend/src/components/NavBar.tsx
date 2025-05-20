@@ -16,7 +16,6 @@ export default function NavBar() {
 
     // Define navigation items
     const navItems = [
-        { name: 'Dashboard', href: '/dashboard', icon: Shield },
         { name: 'Passwords', href: '/password', icon: Lock },
         { name: 'Security', href: '/security', icon: Activity },
     ];

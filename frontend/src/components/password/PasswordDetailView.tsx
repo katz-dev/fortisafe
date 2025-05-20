@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Copy, Check, AlertTriangle, ExternalLink, Info, Edit, Trash2, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, Copy, Check, AlertTriangle, ExternalLink, Info, Edit, Trash2, AlertCircle, History } from "lucide-react";
 import PasswordStrengthIndicator from "./PasswordStrengthIndicator";
+import PasswordHistoryView from "./PasswordHistoryView";
 import { deletePassword } from "@/lib/passwordService";
 import { toast } from "sonner";
 import { Dialog } from "@/components/ui/dialog";
@@ -80,6 +82,15 @@ interface LoginItem {
         isCompromised: boolean;
         breachCount: number;
     };
+    history?: {
+        id: string;
+        passwordId: string;
+        website: string;
+        username: string;
+        password: string;
+        createdAt: Date;
+        replacedAt?: Date;
+    }[];
 }
 
 interface PasswordDetailViewProps {
@@ -96,6 +107,7 @@ export default function PasswordDetailView({ login, onDelete, onUpdate }: Passwo
     const [isDeleting, setIsDeleting] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+    const [showPasswordHistory, setShowPasswordHistory] = useState(false);
 
     const handleCopyPassword = () => {
         navigator.clipboard.writeText(login.password);
@@ -421,6 +433,34 @@ export default function PasswordDetailView({ login, onDelete, onUpdate }: Passwo
                                     </div>
                                 )}
                             </div>
+                        </motion.div>
+
+                        {/* Password History Section */}
+                        <motion.div
+                            className="space-y-1.5 mt-4"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.5, duration: 0.3 }}
+                        >
+                            <div className="flex items-center justify-between">
+                                <label className="text-gray-400 text-sm font-medium flex items-center cursor-pointer" htmlFor="show-history-toggle">
+                                    <span className="w-5 h-5 mr-1.5 text-indigo-400 inline-flex items-center justify-center">
+                                        <History className="h-4 w-4" />
+                                    </span>
+                                    Password History
+                                </label>
+                                <Switch
+                                    id="show-history-toggle"
+                                    checked={showPasswordHistory}
+                                    onCheckedChange={setShowPasswordHistory}
+                                />
+                            </div>
+                            
+                            {/* Password History Component */}
+                            <PasswordHistoryView 
+                                passwordId={login.id} 
+                                isVisible={showPasswordHistory} 
+                            />
                         </motion.div>
                     </div>
                 </CardContent>

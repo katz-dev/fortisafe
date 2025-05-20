@@ -25,6 +25,7 @@ import { CreatePasswordDto } from './dto/create-password.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { CheckReusedPasswordDto } from './dto/check-reused-password.dto';
 import { Password } from './entities/password.schema';
+import { PasswordHistoryResponseDto } from './dto/password-history.dto';
 
 @ApiTags('passwords')
 @ApiBearerAuth('JWT-auth')
@@ -228,7 +229,6 @@ export class PasswordsController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'The password has been successfully deleted.',
-    type: Password,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
@@ -240,6 +240,47 @@ export class PasswordsController {
   })
   remove(@Request() req, @Param('id') id: string) {
     return this.passwordsService.remove(req.user.userId, id);
+  }
+
+  @Get(':id/history')
+  @ApiOperation({ summary: 'Get password history for a specific password' })
+  @ApiParam({ name: 'id', description: 'Password ID' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Password history entries.',
+    type: [PasswordHistoryResponseDto],
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Password not found.',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized.',
+  })
+  getPasswordHistory(@Request() req, @Param('id') id: string) {
+    return this.passwordsService.getPasswordHistory(req.user.userId, id);
+  }
+
+  @Get('history/all')
+  @ApiOperation({ summary: 'Get all password history for the authenticated user' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'All password history entries grouped by password ID.',
+    schema: {
+      type: 'object',
+      additionalProperties: {
+        type: 'array',
+        items: { $ref: '#/components/schemas/PasswordHistoryResponseDto' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized.',
+  })
+  getAllPasswordHistory(@Request() req) {
+    return this.passwordsService.getAllPasswordHistory(req.user.userId);
   }
 
   @Get(':id/decrypt')

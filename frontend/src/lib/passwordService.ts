@@ -19,6 +19,8 @@ export interface LoginItem {
         isCompromised: boolean;
         breachCount: number;
     };
+    // Optional field to store password history
+    history?: PasswordHistoryItem[];
 }
 
 interface PasswordResponse {
@@ -34,6 +36,26 @@ interface PasswordResponse {
     lastUpdated: string;
     createdAt: string;
     updatedAt: string;
+}
+
+export interface PasswordHistoryItem {
+    id: string;
+    passwordId: string;
+    website: string;
+    username: string;
+    password: string;
+    createdAt: Date;
+    replacedAt?: Date;
+}
+
+interface PasswordHistoryResponse {
+    id: string;
+    passwordId: string;
+    website: string;
+    username: string;
+    password: string;
+    createdAt: string;
+    replacedAt?: string;
 }
 
 // Helper function to calculate password strength
@@ -336,32 +358,116 @@ export async function checkReusedPassword(
   password: string,
   currentPasswordId?: string
 ): Promise<ReusedPasswordResult> {
-  try {
-    const token = getAccessToken();
-    if (!token) {
-      throw new Error('No access token available');
-    }
+  const token = localStorage.getItem('access_token');
 
+  if (!token) {
+    throw new Error('No access token found');
+  }
+
+  try {
     const url = currentPasswordId
-      ? `${backendUrl}/passwords/check-reused?currentPasswordId=${encodeURIComponent(currentPasswordId)}`
+      ? `${backendUrl}/passwords/check-reused?currentPasswordId=${currentPasswordId}`
       : `${backendUrl}/passwords/check-reused`;
 
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({ password }),
     });
 
     if (!response.ok) {
-      throw new Error('Failed to check for reused password');
+      throw new Error(`Failed to check reused password: ${response.statusText}`);
     }
 
-    return await response.json();
+    const data = await response.json();
+    return data;
   } catch (error) {
-    console.error('Error checking for reused password:', error);
-    return { isReused: false, usedIn: [] };
+    console.error('Error checking reused password:', error);
+    throw error;
+  }
+}
+
+// Get password history for a specific password
+export async function getPasswordHistory(id: string): Promise<PasswordHistoryItem[]> {
+  const token = localStorage.getItem('access_token');
+
+  if (!token) {
+    throw new Error('No access token found');
+  }
+
+  try {
+    const response = await fetch(`${backendUrl}/passwords/${id}/history`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch password history: ${response.statusText}`);
+    }
+
+    const data: PasswordHistoryResponse[] = await response.json();
+    
+    // Transform the response data
+    return data.map(item => ({
+      id: item.id,
+      passwordId: item.passwordId,
+      website: item.website,
+      username: item.username,
+      password: item.password,
+      createdAt: new Date(item.createdAt),
+      replacedAt: item.replacedAt ? new Date(item.replacedAt) : undefined,
+    }));
+  } catch (error) {
+    console.error('Error fetching password history:', error);
+    throw error;
+  }
+}
+
+// Get all password history for the user
+export async function getAllPasswordHistory(): Promise<Record<string, PasswordHistoryItem[]>> {
+  const token = localStorage.getItem('access_token');
+
+  if (!token) {
+    throw new Error('No access token found');
+  }
+
+  try {
+    const response = await fetch(`${backendUrl}/passwords/history/all`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch all password history: ${response.statusText}`);
+    }
+
+    const data: Record<string, PasswordHistoryResponse[]> = await response.json();
+    
+    // Transform the response data
+    const transformedData: Record<string, PasswordHistoryItem[]> = {};
+    
+    Object.keys(data).forEach(passwordId => {
+      transformedData[passwordId] = data[passwordId].map(item => ({
+        id: item.id,
+        passwordId: item.passwordId,
+        website: item.website,
+        username: item.username,
+        password: item.password,
+        createdAt: new Date(item.createdAt),
+        replacedAt: item.replacedAt ? new Date(item.replacedAt) : undefined,
+      }));
+    });
+    
+    return transformedData;
+  } catch (error) {
+    console.error('Error fetching all password history:', error);
+    throw error;
   }
 }

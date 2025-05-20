@@ -57,8 +57,8 @@ export default function LandingPage() {
           </div>
           <div className="relative">
             <Image
-              src="/dashboard-preview.svg"
-              alt="Dashboard Preview"
+              src="/app-preview.svg"
+              alt="Application Preview"
               width={600}
               height={400}
               className="rounded-xl shadow-lg mx-auto"
