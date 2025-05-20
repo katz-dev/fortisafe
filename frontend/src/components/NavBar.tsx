@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ export default function NavBar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const pathname = usePathname();
+    const profileMenuRef = useRef<HTMLDivElement>(null);
 
     // Define navigation items
     const navItems = [
@@ -27,6 +28,20 @@ export default function NavBar() {
     const toggleProfileMenu = () => {
         setIsProfileMenuOpen(!isProfileMenuOpen);
     };
+    
+    // Close profile menu when clicking outside
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+                setIsProfileMenuOpen(false);
+            }
+        }
+        
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     // Get display name from profile
     const displayName = user?.auth0Profile?.name ||
@@ -38,7 +53,7 @@ export default function NavBar() {
     const profilePicture = user?.auth0Profile?.picture || user?.picture;
 
     return (
-        <nav className="bg-[#0a0f1a]/90 backdrop-blur-md border-b border-gray-800/60">
+        <nav className="bg-[#0a0f1a]/90 backdrop-blur-md border-b border-gray-800/60 relative z-40">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex h-16 items-center justify-between">
                     {/* Logo and Brand */}
@@ -79,7 +94,7 @@ export default function NavBar() {
                         {isLoading ? (
                             <div className="w-8 h-8 rounded-full bg-gray-700 animate-pulse"></div>
                         ) : user ? (
-                            <div className="relative ml-3">
+                            <div className="relative ml-3" ref={profileMenuRef}>
                                 <div>
                                     <button
                                         onClick={toggleProfileMenu}
@@ -110,7 +125,13 @@ export default function NavBar() {
                                 {/* Profile dropdown */}
                                 {isProfileMenuOpen && (
                                     <div
-                                        className="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-[#1a1f2e] ring-1 ring-black ring-opacity-5 z-50"
+                                        className="fixed right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-[#1a1f2e] ring-1 ring-black ring-opacity-5 z-[9999] origin-top-right"
+                                        style={{
+                                            top: 'auto',
+                                            position: 'absolute',
+                                            right: '0',
+                                            marginTop: '0.5rem'
+                                        }}
                                         role="menu"
                                         aria-orientation="vertical"
                                         aria-labelledby="user-menu"
