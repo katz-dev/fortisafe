@@ -10,6 +10,8 @@ import { ConfigService } from '@nestjs/config';
 import { Password, PasswordDocument } from './entities/password.schema';
 import { CreatePasswordDto } from './dto/create-password.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
+import { LogsService } from '../logs/logs.service';
+import { LogLevel } from '../logs/entities/log.entity';
 
 @Injectable()
 export class PasswordsService {
@@ -19,6 +21,7 @@ export class PasswordsService {
   constructor(
     @InjectModel(Password.name) private passwordModel: Model<PasswordDocument>,
     private configService: ConfigService,
+    private logsService: LogsService,
   ) {
     // Get encryption key from environment variables
     const key = this.configService.get<string>('PASSWORD_ENCRYPTION_KEY');
@@ -90,7 +93,26 @@ export class PasswordsService {
     console.log(
       `[PasswordsService] Creating password for user ID: ${userId}, Email: ${userEmail}`,
     );
-    return newPassword.save();
+    
+    const savedPassword = await newPassword.save();
+    
+    // Create a log entry for the new password
+    await this.logsService.create({
+      level: LogLevel.INFO,
+      message: `New password created for ${createPasswordDto.website}`,
+      source: 'passwords',
+      metadata: {
+        userId,
+        website: createPasswordDto.website,
+        username: createPasswordDto.username,
+        url: createPasswordDto.url || 'Not provided',
+        tags: createPasswordDto.tags || [],
+        timestamp: new Date().toISOString(),
+        action: 'create_password'
+      }
+    });
+    
+    return savedPassword;
   }
 
   async findAll(userId: string): Promise<PasswordDocument[]> {
@@ -122,46 +144,58 @@ export class PasswordsService {
     id: string,
     updatePasswordDto: UpdatePasswordDto,
   ): Promise<PasswordDocument> {
-    // First check if the password exists and belongs to the user
-    await this.findOne(userId, id);
+    const password = await this.findOne(userId, id);
 
-    // If password field is provided, encrypt it
-    const updateData = { ...updatePasswordDto };
-    if (updateData.password) {
-      updateData.password = this.encrypt(updateData.password);
+    // Only encrypt the password if it's provided in the update
+    if (updatePasswordDto.password) {
+      updatePasswordDto.password = this.encrypt(updatePasswordDto.password);
     }
 
     // Update the lastUpdated field
-    updateData.lastUpdated = new Date();
+    updatePasswordDto.lastUpdated = new Date();
 
-    const updatedPassword = await this.passwordModel
-      .findByIdAndUpdate(id, { $set: updateData }, { new: true })
-      .exec();
-
-    if (!updatedPassword) {
-      throw new NotFoundException(
-        `Password with ID ${id} not found after update`,
-      );
-    }
-
+    Object.assign(password, updatePasswordDto);
+    const updatedPassword = await password.save();
+    
+    // Create a log entry for the password update
+    await this.logsService.create({
+      level: LogLevel.INFO,
+      message: `Password updated for ${password.website}`,
+      source: 'passwords',
+      metadata: {
+        userId,
+        passwordId: id,
+        website: password.website,
+        username: password.username,
+        wasPasswordChanged: !!updatePasswordDto.password,
+        timestamp: new Date().toISOString(),
+        action: 'update_password'
+      }
+    });
+    
     return updatedPassword;
   }
 
-  async remove(userId: string, id: string): Promise<PasswordDocument> {
-    // First check if the password exists and belongs to the user
-    await this.findOne(userId, id);
-
-    const deletedPassword = await this.passwordModel
-      .findByIdAndDelete(id)
-      .exec();
-
-    if (!deletedPassword) {
-      throw new NotFoundException(
-        `Password with ID ${id} not found after deletion`,
-      );
-    }
-
-    return deletedPassword;
+  async remove(userId: string, id: string): Promise<void> {
+    const password = await this.findOne(userId, id);
+    const websiteName = password.website;
+    const username = password.username;
+    
+    await password.deleteOne();
+    
+    // Create a log entry for the password deletion
+    await this.logsService.create({
+      level: LogLevel.INFO,
+      message: `Password deleted for ${websiteName}`,
+      source: 'passwords',
+      metadata: {
+        userId,
+        website: websiteName,
+        username: username,
+        timestamp: new Date().toISOString(),
+        action: 'delete_password'
+      }
+    });
   }
 
   async decryptPassword(userId: string, id: string): Promise<string> {

@@ -8,10 +8,11 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function PasswordGenerator() {
-  const [password, setPassword] = useState("/L-76+7e1rGj");
+  const [password, setPassword] = useState("");
   const [copied, setCopied] = useState(false);
   const [strength, setStrength] = useState<'weak' | 'okay' | 'strong'>('strong');
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   // Calculate password strength
   const calculateStrength = (pwd: string) => {
@@ -31,14 +32,20 @@ export default function PasswordGenerator() {
   };
 
   useEffect(() => {
-    setStrength(calculateStrength(password));
+    // Generate a random password when component mounts
+    if (isInitialLoad) {
+      generatePasswordSilently();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (password) {
+      setStrength(calculateStrength(password));
+    }
   }, [password]);
 
-  const generatePassword = () => {
-    setIsGenerating(true);
-
-    // Here you would implement your password generation logic
-    // This is a simple example that creates a random string
+  // Helper function to generate password logic
+  const generatePasswordLogic = () => {
     const lowercase = "abcdefghijklmnopqrstuvwxyz";
     const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     const numbers = "0123456789";
@@ -60,11 +67,30 @@ export default function PasswordGenerator() {
     }
 
     // Shuffle the password characters
-    newPassword = newPassword
+    return newPassword
       .split('')
       .sort(() => Math.random() - 0.5)
       .join('');
+  };
 
+  // Generate password silently (for initial load)
+  const generatePasswordSilently = () => {
+    setIsGenerating(true);
+    const newPassword = generatePasswordLogic();
+    
+    // Simulate delay for visual effect
+    setTimeout(() => {
+      setPassword(newPassword);
+      setIsGenerating(false);
+      setIsInitialLoad(false); // Mark initial load as complete
+    }, 500);
+  };
+
+  // Generate password with notification (for user-triggered generations)
+  const generatePassword = () => {
+    setIsGenerating(true);
+    const newPassword = generatePasswordLogic();
+    
     // Simulate delay for visual effect
     setTimeout(() => {
       setPassword(newPassword);

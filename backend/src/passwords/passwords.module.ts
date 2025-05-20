@@ -4,6 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { PasswordsService } from './passwords.service';
 import { PasswordsController } from './passwords.controller';
 import { Password, PasswordSchema } from './entities/password.schema';
+import { LogsModule } from '../logs/logs.module';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { Password, PasswordSchema } from './entities/password.schema';
       { name: Password.name, schema: PasswordSchema },
     ]),
     ConfigModule,
+    LogsModule,
   ],
   controllers: [PasswordsController],
   providers: [PasswordsService],
