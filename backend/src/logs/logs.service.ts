@@ -69,4 +69,13 @@ export class LogsService {
   async getSystemLogs(): Promise<Log[]> {
     return this.logModel.find({ source: 'system' }).sort({ timestamp: -1 }).exec();
   }
+  
+  /**
+   * Get logs for a specific user
+   * @param userId The ID of the user to get logs for
+   * @returns Array of logs for the specified user
+   */
+  async getUserLogs(userId: string): Promise<Log[]> {
+    return this.logModel.find({ userId }).sort({ timestamp: -1 }).exec();
+  }
 }

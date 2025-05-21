@@ -6,6 +6,7 @@ import { PasswordsController } from './passwords.controller';
 import { Password, PasswordSchema } from './entities/password.schema';
 import { PasswordHistory, PasswordHistorySchema } from './entities/password-history.schema';
 import { LogsModule } from '../logs/logs.module';
+import { UtilsModule } from '../utils/utils.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { LogsModule } from '../logs/logs.module';
     ]),
     ConfigModule,
     LogsModule,
+    UtilsModule,
   ],
   controllers: [PasswordsController],
   providers: [PasswordsService],

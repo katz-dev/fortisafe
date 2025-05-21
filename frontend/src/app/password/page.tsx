@@ -36,72 +36,63 @@ export default function PasswordVaultPage() {
     setIsLoading(true);
     try {
       const passwords = await getAllPasswords();
-      // Update saved logins without triggering other state updates
-      setSavedLogins(prevLogins => {
-        if (prevLogins.length === passwords.length) {
-          return prevLogins; // Don't update if count hasn't changed
-        }
-        return passwords;
-      });
-
-      // Count weak passwords and check for reused passwords
+      
+      // Count security metrics
       let weakCount = 0;
       let securityRiskCount = 0;
       let compromisedCount = 0;
       const reusedIds = new Set<string>();
-      const reusedMap = new Map<string, string[]>(); // Map of password -> [id1, id2, ...]
       
-      // First pass: decrypt passwords and count weak ones
+      // Process each password
       for (const password of passwords) {
         try {
+          // Decrypt the password to calculate strength
           const decryptedPassword = await getDecryptedPassword(password.id);
           password.password = decryptedPassword;
           password.strength = calculatePasswordStrength(decryptedPassword);
+          
+          // Count weak passwords
           if (password.strength === "weak") {
             weakCount++;
           }
           
-          // Track passwords for reuse detection
-          if (!reusedMap.has(decryptedPassword)) {
-            reusedMap.set(decryptedPassword, [password.id]);
-          } else {
-            reusedMap.get(decryptedPassword)?.push(password.id);
+          // Count compromised passwords
+          if (password.isCompromised) {
+            compromisedCount++;
+            
+            // Set the compromiseInfo for UI compatibility
+            if (!password.compromiseInfo) {
+              password.compromiseInfo = {
+                isCompromised: password.isCompromised,
+                breachCount: password.breachCount || 0
+              };
+            }
           }
-
-          // Check URL security and password compromise
-          const securityResult = await checkSecurityRisks(
-            password.url,
-            decryptedPassword
-          );
           
-          // Handle URL security
-          if (password.url && securityResult.urlResults.length > 0) {
-            password.securityRisk = securityResult.urlResults[0];
-            if (!password.securityRisk.isSafe) {
-              securityRiskCount++;
+          // Count unsafe URLs
+          if (password.isUrlUnsafe) {
+            securityRiskCount++;
+            
+            // Set the securityRisk for UI compatibility
+            if (!password.securityRisk) {
+              password.securityRisk = {
+                isSafe: !password.isUrlUnsafe,
+                threatTypes: password.urlThreatTypes
+              };
             }
           }
-
-          // Handle password compromise
-          if (securityResult.passwordResult) {
-            password.compromiseInfo = securityResult.passwordResult;
-            if (securityResult.passwordResult.isCompromised) {
-              compromisedCount++;
-            }
+          
+          // Track reused passwords
+          if (password.isReused) {
+            reusedIds.add(password.id);
           }
         } catch (error) {
           console.error(`Error processing password ${password.id}:`, error);
         }
       }
       
-      // Second pass: mark reused passwords
-      for (const [, ids] of reusedMap.entries()) {
-        if (ids.length > 1) {
-          // This password is used in multiple accounts
-          ids.forEach(id => reusedIds.add(id));
-        }
-      }
-      
+      // Update state with the processed passwords
+      setSavedLogins(passwords);
       setWeakPasswordCount(weakCount);
       setReusedPasswordCount(reusedIds.size);
       setReusedPasswordIds(reusedIds);
@@ -157,29 +148,61 @@ export default function PasswordVaultPage() {
       setWeakPasswordCount(prevCount => prevCount + 1);
     }
     
-    // Check if this password is reused
+    // Perform security checks on the new password
     try {
-      const reusedResult = await checkReusedPassword(newPassword.password);
-      if (reusedResult.isReused) {
-        // Update reused password IDs
-        const newReusedIds = new Set(reusedPasswordIds);
-        newReusedIds.add(newPassword.id);
-        
-        // Also add the IDs of the passwords this one is reused with
-        for (const site of reusedResult.usedIn) {
-          const matchingPassword = savedLogins.find(
-            p => p.website === site.website && p.username === site.username
-          );
-          if (matchingPassword) {
-            newReusedIds.add(matchingPassword.id);
+      // The backend will automatically check for compromised passwords and unsafe URLs
+      // during creation, but we'll perform a scan to get the results for immediate UI update
+      const securityResult = await checkSecurityRisks(
+        newPassword.url,
+        newPassword.password,
+        newPassword.id
+      );
+      
+      // Update the password with security information
+      if (securityResult.markedPasswords && securityResult.markedPasswords.length > 0) {
+        const markedPassword = securityResult.markedPasswords.find(p => p.id === newPassword.id);
+        if (markedPassword) {
+          // Update the password with security information
+          newPassword.isCompromised = markedPassword.isCompromised;
+          newPassword.breachCount = markedPassword.breachCount;
+          newPassword.isUrlUnsafe = markedPassword.isUrlUnsafe;
+          newPassword.urlThreatTypes = markedPassword.urlThreatTypes;
+          newPassword.isReused = markedPassword.isReused;
+          newPassword.reusedIn = markedPassword.reusedIn;
+          
+          // Update UI-specific fields for backward compatibility
+          if (markedPassword.isCompromised) {
+            newPassword.compromiseInfo = {
+              isCompromised: markedPassword.isCompromised,
+              breachCount: markedPassword.breachCount || 0
+            };
+            setCompromisedPasswordCount(prevCount => prevCount + 1);
+          }
+          
+          if (markedPassword.isUrlUnsafe) {
+            newPassword.securityRisk = {
+              isSafe: !markedPassword.isUrlUnsafe,
+              threatTypes: markedPassword.urlThreatTypes
+            };
+            setSecurityRiskCount(prevCount => prevCount + 1);
+          }
+          
+          if (markedPassword.isReused) {
+            // Update reused password IDs
+            const newReusedIds = new Set(reusedPasswordIds);
+            newReusedIds.add(newPassword.id);
+            setReusedPasswordIds(newReusedIds);
+            setReusedPasswordCount(newReusedIds.size);
           }
         }
-        
-        setReusedPasswordIds(newReusedIds);
-        setReusedPasswordCount(newReusedIds.size);
       }
+      
+      // Update the saved logins with the updated password
+      setSavedLogins(prevLogins => {
+        return prevLogins.map(p => p.id === newPassword.id ? newPassword : p);
+      });
     } catch (error) {
-      console.error('Error checking for password reuse:', error);
+      console.error('Error checking security for new password:', error);
     }
     
     // Select the newly added password
@@ -211,7 +234,7 @@ export default function PasswordVaultPage() {
     setReusedPasswordCount(newReusedIds.size);
   };
   
-  const handleUpdatePassword = (updatedPassword: LoginItem) => {
+  const handleUpdatePassword = async (updatedPassword: LoginItem) => {
     // Update the password in the state
     const updatedLogins = savedLogins.map(login => 
       login.id === updatedPassword.id ? updatedPassword : login
@@ -227,39 +250,91 @@ export default function PasswordVaultPage() {
     const weakCount = updatedLogins.filter(p => p.strength === 'weak').length;
     setWeakPasswordCount(weakCount);
     
-    // Check for password reuse
-    checkForPasswordReuse(updatedPassword);
-  };
-  
-  const checkForPasswordReuse = async (password: LoginItem) => {
+    // Perform security checks on the updated password
     try {
-      const reusedResult = await checkReusedPassword(password.password, password.id);
+      // The backend will automatically check for compromised passwords and unsafe URLs
+      // during update, but we'll perform a scan to get the results for immediate UI update
+      const securityResult = await checkSecurityRisks(
+        updatedPassword.url,
+        updatedPassword.password,
+        updatedPassword.id
+      );
       
-      // Update reused password IDs
-      const newReusedIds = new Set(reusedPasswordIds);
-      
-      if (reusedResult.isReused) {
-        // This password is reused, add it to the set
-        newReusedIds.add(password.id);
-        
-        // Also add the IDs of the passwords this one is reused with
-        for (const site of reusedResult.usedIn) {
-          const matchingPassword = savedLogins.find(
-            p => p.website === site.website && p.username === site.username
-          );
-          if (matchingPassword) {
-            newReusedIds.add(matchingPassword.id);
+      // Update the password with security information
+      if (securityResult.markedPasswords && securityResult.markedPasswords.length > 0) {
+        const markedPassword = securityResult.markedPasswords.find(p => p.id === updatedPassword.id);
+        if (markedPassword) {
+          // Track previous security state to update counts
+          const wasCompromised = updatedPassword.isCompromised || false;
+          const wasUrlUnsafe = updatedPassword.isUrlUnsafe || false;
+          const wasReused = updatedPassword.isReused || false;
+          
+          // Update the password with security information
+          updatedPassword.isCompromised = markedPassword.isCompromised;
+          updatedPassword.breachCount = markedPassword.breachCount;
+          updatedPassword.isUrlUnsafe = markedPassword.isUrlUnsafe;
+          updatedPassword.urlThreatTypes = markedPassword.urlThreatTypes;
+          updatedPassword.isReused = markedPassword.isReused;
+          updatedPassword.reusedIn = markedPassword.reusedIn;
+          
+          // Update UI-specific fields for backward compatibility
+          if (markedPassword.isCompromised) {
+            updatedPassword.compromiseInfo = {
+              isCompromised: markedPassword.isCompromised,
+              breachCount: markedPassword.breachCount || 0
+            };
+            
+            // Update compromised count if status changed
+            if (!wasCompromised) {
+              setCompromisedPasswordCount(prevCount => prevCount + 1);
+            }
+          } else if (wasCompromised) {
+            // Password is no longer compromised
+            setCompromisedPasswordCount(prevCount => Math.max(0, prevCount - 1));
           }
+          
+          if (markedPassword.isUrlUnsafe) {
+            updatedPassword.securityRisk = {
+              isSafe: !markedPassword.isUrlUnsafe,
+              threatTypes: markedPassword.urlThreatTypes
+            };
+            
+            // Update security risk count if status changed
+            if (!wasUrlUnsafe) {
+              setSecurityRiskCount(prevCount => prevCount + 1);
+            }
+          } else if (wasUrlUnsafe) {
+            // URL is no longer unsafe
+            setSecurityRiskCount(prevCount => Math.max(0, prevCount - 1));
+          }
+          
+          // Update reused password IDs
+          const newReusedIds = new Set(reusedPasswordIds);
+          
+          if (markedPassword.isReused) {
+            // This password is reused, add it to the set
+            newReusedIds.add(updatedPassword.id);
+          } else if (wasReused) {
+            // This password is no longer reused, remove it from the set
+            newReusedIds.delete(updatedPassword.id);
+          }
+          
+          setReusedPasswordIds(newReusedIds);
+          setReusedPasswordCount(newReusedIds.size);
         }
-      } else {
-        // This password is not reused, remove it from the set
-        newReusedIds.delete(password.id);
       }
       
-      setReusedPasswordIds(newReusedIds);
-      setReusedPasswordCount(newReusedIds.size);
+      // Update the saved logins with the updated password
+      setSavedLogins(prevLogins => {
+        return prevLogins.map(p => p.id === updatedPassword.id ? updatedPassword : p);
+      });
+      
+      // Update the selected login if it was the one that was updated
+      if (selectedLogin && selectedLogin.id === updatedPassword.id) {
+        setSelectedLogin(updatedPassword);
+      }
     } catch (error) {
-      console.error('Error checking for password reuse:', error);
+      console.error('Error checking security for updated password:', error);
     }
   };
 

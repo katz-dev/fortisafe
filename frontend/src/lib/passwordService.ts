@@ -11,6 +11,15 @@ export interface LoginItem {
     notes?: string;
     lastUpdated?: Date;
     tags?: string[];
+    // Security-related fields
+    isCompromised?: boolean;
+    breachCount?: number;
+    isUrlUnsafe?: boolean;
+    urlThreatTypes?: string[];
+    isReused?: boolean;
+    reusedIn?: { website: string; username: string }[];
+    lastScanned?: Date;
+    // UI-specific fields (not from API)
     securityRisk?: {
         isSafe: boolean;
         threatTypes?: string[];
@@ -36,6 +45,14 @@ interface PasswordResponse {
     lastUpdated: string;
     createdAt: string;
     updatedAt: string;
+    // Security-related fields
+    isCompromised?: boolean;
+    breachCount?: number;
+    isUrlUnsafe?: boolean;
+    urlThreatTypes?: string[];
+    isReused?: boolean;
+    reusedIn?: { website: string; username: string }[];
+    lastScanned?: string;
 }
 
 export interface PasswordHistoryItem {
@@ -92,8 +109,25 @@ const transformPasswordData = (data: PasswordResponse): LoginItem => {
         notes: data.notes,
         lastUpdated: new Date(data.lastUpdated),
         tags: data.tags,
+        // Security-related fields
+        isCompromised: data.isCompromised,
+        breachCount: data.breachCount,
+        isUrlUnsafe: data.isUrlUnsafe,
+        urlThreatTypes: data.urlThreatTypes,
+        isReused: data.isReused,
+        reusedIn: data.reusedIn,
+        lastScanned: data.lastScanned ? new Date(data.lastScanned) : undefined,
         // We'll calculate strength later when we get the decrypted password
         strength: 'okay', // Default, will be updated when we get the real password
+        // Map security data to UI-specific fields for backward compatibility
+        securityRisk: data.isUrlUnsafe ? {
+            isSafe: !data.isUrlUnsafe,
+            threatTypes: data.urlThreatTypes
+        } : undefined,
+        compromiseInfo: data.isCompromised ? {
+            isCompromised: data.isCompromised,
+            breachCount: data.breachCount || 0
+        } : undefined
     };
 };
 
@@ -311,10 +345,26 @@ export interface SecurityScanResult {
     isCompromised: boolean;
     breachCount: number;
   };
+  markedPasswords?: {
+    id: string;
+    isCompromised: boolean;
+    isUrlUnsafe: boolean;
+    website?: string;
+    username?: string;
+    breachCount?: number;
+    urlThreatTypes?: string[];
+    isReused?: boolean;
+    reusedIn?: { website: string; username: string }[];
+    lastScanned?: string;
+  }[];
 }
 
 // Check security risks for a URL and password
-export async function checkSecurityRisks(url?: string, password?: string): Promise<SecurityScanResult> {
+export async function checkSecurityRisks(
+  url?: string, 
+  password?: string, 
+  passwordId?: string
+): Promise<SecurityScanResult> {
   try {
     const token = getAccessToken();
     if (!token) {
@@ -329,7 +379,9 @@ export async function checkSecurityRisks(url?: string, password?: string): Promi
       },
       body: JSON.stringify({
         urls: url ? [url] : [],
-        password: password
+        password: password,
+        passwordId: passwordId, // Include passwordId for the backend to update the database
+        url: url // Include single URL for direct matching
       }),
     });
 
@@ -337,7 +389,8 @@ export async function checkSecurityRisks(url?: string, password?: string): Promi
       throw new Error('Failed to check security risks');
     }
 
-    return await response.json();
+    const result = await response.json();
+    return result;
   } catch (error) {
     console.error('Error checking security risks:', error);
     return { 
@@ -348,7 +401,8 @@ export async function checkSecurityRisks(url?: string, password?: string): Promi
       passwordResult: {
         isCompromised: false,
         breachCount: 0
-      }
+      },
+      markedPasswords: []
     };
   }
 }

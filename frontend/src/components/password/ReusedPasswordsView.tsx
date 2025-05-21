@@ -66,59 +66,123 @@ export default function ReusedPasswordsView({ passwords, onSelectLogin, isLoadin
     return 'low';
   }, []);
 
-  // Group passwords by their actual password value
+  // Group passwords by reuse patterns using the isReused and reusedIn fields from API
   useEffect(() => {
     const groupPasswords = async () => {
       setInternalLoading(true);
       
-      // Create a map to group passwords
-      const passwordMap = new Map<string, LoginItem[]>();
+      // Create a map to track password groups by ID
+      const passwordGroupMap = new Map<string, Set<string>>();
+      const reusedPasswords = passwords.filter(p => p.isReused);
       
-      // First, decrypt all passwords and group them
-      for (const password of passwords) {
-        try {
-          // If the password is already decrypted (has a real value, not placeholder)
-          const passwordValue = password.password !== '********' 
-            ? password.password 
-            : await getDecryptedPassword(password.id);
-          
-          // Use the password value as the key
-          if (!passwordMap.has(passwordValue)) {
-            passwordMap.set(passwordValue, []);
+      // First, identify all the reused password groups
+      for (const password of reusedPasswords) {
+        // Create a set for this password if it doesn't exist
+        if (!passwordGroupMap.has(password.id)) {
+          passwordGroupMap.set(password.id, new Set<string>([password.id]));
+        }
+        
+        // Add all the passwords this one is reused with
+        const currentGroup = passwordGroupMap.get(password.id)!;
+        if (password.reusedIn && password.reusedIn.length > 0) {
+          // Find the matching passwords in our list
+          for (const reusedItem of password.reusedIn) {
+            const matchingPassword = passwords.find(
+              p => p.website === reusedItem.website && p.username === reusedItem.username
+            );
+            if (matchingPassword) {
+              currentGroup.add(matchingPassword.id);
+              
+              // Also update the other password's group to include this one
+              if (!passwordGroupMap.has(matchingPassword.id)) {
+                passwordGroupMap.set(matchingPassword.id, new Set<string>([matchingPassword.id]));
+              }
+              passwordGroupMap.get(matchingPassword.id)!.add(password.id);
+            }
           }
-          
-          passwordMap.get(passwordValue)?.push({
-            ...password,
-            password: passwordValue
-          });
-        } catch (error) {
-          console.error(`Error decrypting password ${password.id}:`, error);
         }
       }
       
-      // Convert map to array of groups
+      // Merge overlapping groups
+      const mergedGroups: Set<string>[] = [];
+      const processedIds = new Set<string>();
+      
+      for (const [id, group] of passwordGroupMap.entries()) {
+        if (processedIds.has(id)) continue;
+        
+        // Mark this ID as processed
+        processedIds.add(id);
+        
+        // Create a new merged group starting with this group
+        const mergedGroup = new Set<string>(group);
+        
+        // Check all IDs in this group
+        for (const groupId of group) {
+          if (groupId !== id && passwordGroupMap.has(groupId)) {
+            // Add all IDs from the related group
+            for (const relatedId of passwordGroupMap.get(groupId)!) {
+              mergedGroup.add(relatedId);
+              processedIds.add(relatedId);
+            }
+          }
+        }
+        
+        // Only add groups with more than one password
+        if (mergedGroup.size > 1) {
+          mergedGroups.push(mergedGroup);
+        }
+      }
+      
+      // Now create the password groups
       const groups: PasswordGroup[] = [];
-      passwordMap.forEach((accounts, passwordValue) => {
-        // Only include groups with more than one account
-        if (accounts.length > 1) {
+      
+      for (const idGroup of mergedGroups) {
+        // Get all the passwords in this group
+        const accounts: LoginItem[] = [];
+        let decryptedPassword: string | undefined;
+        
+        for (const id of idGroup) {
+          const password = passwords.find(p => p.id === id);
+          if (password) {
+            try {
+              // Decrypt the password if needed
+              if (!decryptedPassword && password.password !== '********') {
+                decryptedPassword = password.password;
+              } else if (!decryptedPassword) {
+                decryptedPassword = await getDecryptedPassword(password.id);
+              }
+              
+              accounts.push({
+                ...password,
+                password: decryptedPassword
+              });
+            } catch (error) {
+              console.error(`Error decrypting password ${password.id}:`, error);
+              // Still add the password to the group even if we can't decrypt it
+              accounts.push(password);
+            }
+          }
+        }
+        
+        if (accounts.length > 1 && decryptedPassword) {
           // Find existing group to preserve state
           const existingGroup = passwordGroupsRef.current.find(g => 
-            g.decryptedPassword === passwordValue
+            g.accounts.some(a => accounts.some(acc => acc.id === a.id))
           );
-          const strength = calculateStrength(passwordValue);
+          const strength = calculateStrength(decryptedPassword);
           const riskLevel = calculateRiskLevel(strength, accounts.length);
           
           groups.push({
-            passwordHash: hashPassword(passwordValue),
+            passwordHash: hashPassword(decryptedPassword),
             accounts,
             isExpanded: existingGroup ? existingGroup.isExpanded : false,
-            decryptedPassword: passwordValue,
+            decryptedPassword,
             showPassword: existingGroup ? existingGroup.showPassword : false,
             strength,
             riskLevel
           });
         }
-      });
+      }
       
       // Sort groups by risk level (high to low) and then by number of accounts (high to low)
       groups.sort((a, b) => {

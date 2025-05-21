@@ -22,4 +22,9 @@ export class CreateLogDto {
   @IsObject()
   @IsOptional()
   metadata?: Record<string, any>;
+  
+  @ApiProperty({ required: false, description: 'ID of the user associated with this log' })
+  @IsString()
+  @IsOptional()
+  userId?: string;
 }

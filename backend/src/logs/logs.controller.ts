@@ -42,6 +42,15 @@ export class LogsController {
     return this.logsService.getSystemLogs();
   }
 
+  @Get('user/:userId')
+  @ApiOperation({ summary: 'Get all logs for a specific user' })
+  @ApiParam({ name: 'userId', description: 'User ID' })
+  @ApiResponse({ status: 200, description: 'Returns all logs for the specified user', type: [Log] })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  getUserLogs(@Param('userId') userId: string) {
+    return this.logsService.getUserLogs(userId);
+  }
+
   @Get('level/:level')
   @ApiOperation({ summary: 'Get logs by level' })
   @ApiParam({ name: 'level', enum: LogLevel })
