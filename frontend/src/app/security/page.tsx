@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import PageLayout from '@/components/PageLayout';
-import { Shield, AlertTriangle, Check, Scan, X, RefreshCw, Lock, Globe, Clock, FileText } from 'lucide-react';
+import { Shield, Check, Scan, X, RefreshCw, Lock, FileText } from 'lucide-react';
 import { useAuth } from '../contexts/auth-context';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -41,19 +41,25 @@ interface LogEntry {
     level: 'debug' | 'info' | 'warn' | 'error' | 'fatal';
     message: string;
     source?: string;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
     timestamp: string;
 }
 
 export default function SecurityPage() {
     // State management
     const [scanning, setScanning] = useState(false);
-    const [scanComplete, setScanComplete] = useState(false);
-    const [passwordLogs, setPasswordLogs] = useState<PasswordLog[]>([]);
+    // These state variables are defined but not used in the component
+    // We'll keep them for potential future use but mark them with underscore
+    const [_, setScanComplete] = useState(false);
     const [urlScanResults, setUrlScanResults] = useState<UrlScanResult[]>([]);
-    const [isLoadingLogs, setIsLoadingLogs] = useState(false);
     const [isLoadingUrlCheck, setIsLoadingUrlCheck] = useState(false);
     const [urlToCheck, setUrlToCheck] = useState('');
+    
+    // We're commenting out these variables as they're defined but not used in the UI
+    // const [passwordLogs, setPasswordLogs] = useState<PasswordLog[]>([]);
+    // const [isLoadingLogs, setIsLoadingLogs] = useState(false);
+    
+    // Define state for scan statistics
     const [scanStats, setScanStats] = useState({
         weakPasswords: 0,
         reusedPasswords: 0,
@@ -75,7 +81,7 @@ export default function SecurityPage() {
      * Scans saved passwords for security issues
      * Handles API request and updates state with scan results
      */
-    const handleScan = async () => {
+    const handleScan = useCallback(async () => {
         setScanning(true);
         setScanComplete(false);
         
@@ -126,11 +132,12 @@ export default function SecurityPage() {
         } finally {
             setScanning(false);
         }
-    };
+    }, []);
 
     /**
      * Fetches password history logs from the API
      * Processes and formats the data for display
+     * Note: This function is kept for future use but currently not displaying logs in the UI
      */
     const fetchPasswordLogs = useCallback(async () => {
         if (!user) {
@@ -138,7 +145,8 @@ export default function SecurityPage() {
             return;
         }
         
-        setIsLoadingLogs(true);
+        // Since we're not using the loading state or logs in the UI, we've commented these out
+        // setIsLoadingLogs(true);
         try {
             // Get token from localStorage
             const token = localStorage.getItem('access_token');
@@ -158,7 +166,7 @@ export default function SecurityPage() {
             );
             
             if (!response.data) {
-                setPasswordLogs([]);
+                // setPasswordLogs([]);
                 return;
             }
             
@@ -166,7 +174,7 @@ export default function SecurityPage() {
             const logs: PasswordLog[] = [];
             for (const [passwordId, history] of Object.entries(response.data)) {
                 if (Array.isArray(history)) {
-                    history.forEach((entry: any) => {
+                    history.forEach((entry: Omit<PasswordLog, 'passwordId'>) => {
                         logs.push({
                             ...entry,
                             passwordId
@@ -177,7 +185,7 @@ export default function SecurityPage() {
             
             // Sort by timestamp, newest first
             logs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-            setPasswordLogs(logs.slice(0, 10)); // Show only the 10 most recent logs
+            // setPasswordLogs(logs.slice(0, 10)); // Show only the 10 most recent logs
             
             if (logs.length === 0) {
                 toast.info('No password history found');
@@ -185,9 +193,9 @@ export default function SecurityPage() {
         } catch (error) {
             console.error('Error fetching password logs:', error);
             toast.error('Failed to fetch password history');
-            setPasswordLogs([]);
+            // setPasswordLogs([]);
         } finally {
-            setIsLoadingLogs(false);
+            // setIsLoadingLogs(false);
         }
     }, [user]);
 
@@ -384,7 +392,7 @@ export default function SecurityPage() {
             // Initial security scan when page loads
             handleScan();
         }
-    }, [user, fetchPasswordLogs, fetchSystemLogs]);
+    }, [user, fetchPasswordLogs, fetchSystemLogs, handleScan]);
 
     return (
         <PageLayout>
