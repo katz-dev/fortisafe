@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsOptional, IsArray, IsUrl } from 'class-validator';
+import { IsString, IsOptional, IsArray, IsUrl, IsMongoId } from 'class-validator';
 
 export class CreateScannerDto {
   @ApiProperty({
@@ -10,6 +10,15 @@ export class CreateScannerDto {
   @IsArray()
   @IsOptional()
   urls?: string[];
+
+  @ApiProperty({
+    example: 'https://example.com',
+    description: 'Single URL to scan for malicious content',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  url?: string;
 
   @ApiProperty({
     example: 'user@example.com',
@@ -28,4 +37,22 @@ export class CreateScannerDto {
   @IsString()
   @IsOptional()
   password?: string;
+  
+  @ApiProperty({
+    example: '507f1f77bcf86cd799439011',
+    description: 'User ID to associate with the scan results',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  userId?: string;
+  
+  @ApiProperty({
+    example: '507f1f77bcf86cd799439011',
+    description: 'Password ID to update with scan results',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  passwordId?: string;
 }

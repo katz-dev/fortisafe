@@ -1,0 +1,43 @@
+# Dependencies
+node_modules
+npm-debug.log
+pnpm-debug.log
+yarn-debug.log
+yarn-error.log
+.pnpm-store
+
+# Testing
+coverage
+.nyc_output
+
+# IDE
+.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+.vscode/*
+
+# OS
+.DS_Store
+
+# Environment
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build
+dist
+build
+
+# Git
+.git
+.gitignore
+
+# Logs
+logs
+*.log

@@ -39,6 +39,7 @@ async function bootstrap() {
     .addTag('auth')
     .addTag('users')
     .addTag('passwords')
+    .addTag('logs')
     .addBearerAuth(
       {
         type: 'http',

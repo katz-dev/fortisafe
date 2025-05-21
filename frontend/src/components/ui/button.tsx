@@ -40,19 +40,36 @@ function Button({
   variant,
   size,
   asChild = false,
+  isLoading = false,
+  loadingText,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean
+    isLoading?: boolean
+    loadingText?: string
   }) {
   const Comp = asChild ? Slot : "button"
 
   return (
     <Comp
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(
+        buttonVariants({ variant, size, className }),
+        isLoading && "cursor-wait opacity-70"
+      )}
+      disabled={isLoading || props.disabled}
       {...props}
-    />
+    >
+      {isLoading ? (
+        <>
+          <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />
+          {loadingText && <span>{loadingText}</span>}
+        </>
+      ) : (
+        props.children
+      )}
+    </Comp>
   )
 }
 

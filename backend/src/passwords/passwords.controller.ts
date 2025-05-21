@@ -23,7 +23,9 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { PasswordsService } from './passwords.service';
 import { CreatePasswordDto } from './dto/create-password.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
+import { CheckReusedPasswordDto } from './dto/check-reused-password.dto';
 import { Password } from './entities/password.schema';
+import { PasswordHistoryResponseDto } from './dto/password-history.dto';
 
 @ApiTags('passwords')
 @ApiBearerAuth('JWT-auth')
@@ -93,6 +95,49 @@ export class PasswordsController {
       username,
     );
     return { exists };
+  }
+
+  @Post('check-reused')
+  @ApiOperation({ summary: 'Check if a password is reused across multiple accounts' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Information about password reuse',
+    schema: {
+      type: 'object',
+      properties: {
+        isReused: {
+          type: 'boolean',
+          example: true,
+        },
+        usedIn: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              website: {
+                type: 'string',
+                example: 'example.com',
+              },
+              username: {
+                type: 'string',
+                example: 'user@example.com',
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+  async checkReusedPassword(
+    @Request() req,
+    @Body() checkReusedPasswordDto: CheckReusedPasswordDto,
+    @Query('currentPasswordId') currentPasswordId?: string,
+  ) {
+    return this.passwordsService.checkReusedPassword(
+      req.user.userId,
+      checkReusedPasswordDto.password,
+      currentPasswordId,
+    );
   }
 
   @Get('check-password-change')
@@ -184,7 +229,6 @@ export class PasswordsController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'The password has been successfully deleted.',
-    type: Password,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
@@ -196,6 +240,47 @@ export class PasswordsController {
   })
   remove(@Request() req, @Param('id') id: string) {
     return this.passwordsService.remove(req.user.userId, id);
+  }
+
+  @Get(':id/history')
+  @ApiOperation({ summary: 'Get password history for a specific password' })
+  @ApiParam({ name: 'id', description: 'Password ID' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Password history entries.',
+    type: [PasswordHistoryResponseDto],
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Password not found.',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized.',
+  })
+  getPasswordHistory(@Request() req, @Param('id') id: string) {
+    return this.passwordsService.getPasswordHistory(req.user.userId, id);
+  }
+
+  @Get('history/all')
+  @ApiOperation({ summary: 'Get all password history for the authenticated user' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'All password history entries grouped by password ID.',
+    schema: {
+      type: 'object',
+      additionalProperties: {
+        type: 'array',
+        items: { $ref: '#/components/schemas/PasswordHistoryResponseDto' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized.',
+  })
+  getAllPasswordHistory(@Request() req) {
+    return this.passwordsService.getAllPasswordHistory(req.user.userId);
   }
 
   @Get(':id/decrypt')

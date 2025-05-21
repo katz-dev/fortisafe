@@ -70,6 +70,55 @@ export class Password {
   })
   @Prop({ default: Date.now })
   lastUpdated: Date;
+
+  @ApiProperty({
+    example: true,
+    description: 'Whether the password has been found in data breaches',
+  })
+  @Prop({ default: false })
+  isCompromised: boolean;
+
+  @ApiProperty({
+    example: 42,
+    description: 'Number of times the password has been found in data breaches',
+  })
+  @Prop({ default: 0 })
+  breachCount: number;
+
+  @ApiProperty({
+    example: false,
+    description: 'Whether the URL is flagged as unsafe by security scanners',
+  })
+  @Prop({ default: false })
+  isUrlUnsafe: boolean;
+
+  @ApiProperty({
+    example: ['MALWARE', 'SOCIAL_ENGINEERING'],
+    description: 'Types of threats associated with the URL',
+  })
+  @Prop([String])
+  urlThreatTypes: string[];
+
+  @ApiProperty({
+    example: true,
+    description: 'Whether this password is reused across multiple accounts',
+  })
+  @Prop({ default: false })
+  isReused: boolean;
+
+  @ApiProperty({
+    example: ['Google', 'Facebook'],
+    description: 'List of other websites where this password is used',
+  })
+  @Prop({ type: [{ website: String, username: String }], default: [] })
+  reusedIn: { website: string; username: string }[];
+
+  @ApiProperty({
+    example: '2023-01-01T00:00:00.000Z',
+    description: 'When the password was last scanned for security issues',
+  })
+  @Prop()
+  lastScanned: Date;
 }
 
 export const PasswordSchema = SchemaFactory.createForClass(Password);
