@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { AlertCircle, ChevronDown, Copy, Eye, EyeOff, Shield, RefreshCw } from "lucide-react";
-import { toast } from "sonner";
+import { AlertCircle, RefreshCw, ShieldAlert, ChevronDown, Eye, EyeOff, Copy, Shield } from "lucide-react";
 import { LoginItem, getDecryptedPassword } from "@/lib/passwordService";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 
 interface ReusedPasswordsViewProps {
   passwords: LoginItem[];
@@ -12,10 +12,9 @@ interface ReusedPasswordsViewProps {
 }
 
 interface PasswordGroup {
-  passwordHash: string;
+  groupId: string;
   accounts: LoginItem[];
   isExpanded: boolean;
-  decryptedPassword?: string;
   showPassword: boolean;
   strength: 'weak' | 'okay' | 'strong';
   riskLevel: 'high' | 'medium' | 'low';
@@ -146,15 +145,19 @@ export default function ReusedPasswordsView({ passwords, onSelectLogin, isLoadin
           if (password) {
             try {
               // Decrypt the password if needed
-              if (!decryptedPassword && password.password !== '********') {
-                decryptedPassword = password.password;
-              } else if (!decryptedPassword) {
-                decryptedPassword = await getDecryptedPassword(password.id);
+              let passwordValue = password.password;
+              if (passwordValue === '********') {
+                passwordValue = await getDecryptedPassword(password.id);
+              }
+              
+              // Set the decrypted password for the group if not already set
+              if (!decryptedPassword) {
+                decryptedPassword = passwordValue;
               }
               
               accounts.push({
                 ...password,
-                password: decryptedPassword
+                password: passwordValue // Store the actual decrypted password in the account
               });
             } catch (error) {
               console.error(`Error decrypting password ${password.id}:`, error);
@@ -173,10 +176,9 @@ export default function ReusedPasswordsView({ passwords, onSelectLogin, isLoadin
           const riskLevel = calculateRiskLevel(strength, accounts.length);
           
           groups.push({
-            passwordHash: hashPassword(decryptedPassword),
+            groupId: [...idGroup].join('-'),
             accounts,
             isExpanded: existingGroup ? existingGroup.isExpanded : false,
-            decryptedPassword,
             showPassword: existingGroup ? existingGroup.showPassword : false,
             strength,
             riskLevel
@@ -198,31 +200,42 @@ export default function ReusedPasswordsView({ passwords, onSelectLogin, isLoadin
     
     groupPasswords();
   }, [passwords, calculateStrength, calculateRiskLevel, hashPassword]);
-  
 
-  
+  // Function to toggle group expansion
   const toggleExpand = useCallback((index: number) => {
     setPasswordGroups(prev => {
-      // Create a shallow copy to avoid unnecessary re-renders of unchanged items
       const newGroups = [...prev];
-      newGroups[index] = { ...newGroups[index], isExpanded: !newGroups[index].isExpanded };
+      if (newGroups[index]) {
+        newGroups[index] = { 
+          ...newGroups[index], 
+          isExpanded: !newGroups[index].isExpanded 
+        };
+      }
       return newGroups;
     });
   }, []);
   
+  // Function to toggle password visibility
   const toggleShowPassword = useCallback((index: number) => {
-    setPasswordGroups(prev => 
-      prev.map((group, i) => 
-        i === index ? { ...group, showPassword: !group.showPassword } : group
-      )
-    );
+    setPasswordGroups(prev => {
+      const newGroups = [...prev];
+      if (newGroups[index]) {
+        newGroups[index] = { 
+          ...newGroups[index], 
+          showPassword: !newGroups[index].showPassword 
+        };
+      }
+      return newGroups;
+    });
   }, []);
   
+  // Function to copy password to clipboard
   const copyPassword = useCallback((password: string) => {
     navigator.clipboard.writeText(password);
     toast.success("Password copied to clipboard");
   }, []);
   
+  // Function to get color based on strength
   const getStrengthColor = useCallback((strength: 'weak' | 'okay' | 'strong') => {
     switch (strength) {
       case 'weak': return 'text-red-400';
@@ -232,21 +245,13 @@ export default function ReusedPasswordsView({ passwords, onSelectLogin, isLoadin
     }
   }, []);
   
+  // Function to get color based on risk level
   const getRiskColor = useCallback((risk: 'high' | 'medium' | 'low') => {
     switch (risk) {
       case 'high': return 'bg-red-500/20 text-red-400';
       case 'medium': return 'bg-amber-500/20 text-amber-400';
       case 'low': return 'bg-green-500/20 text-green-400';
       default: return 'bg-purple-500/20 text-purple-400';
-    }
-  }, []);
-  
-  const getRiskLabel = useCallback((risk: 'high' | 'medium' | 'low') => {
-    switch (risk) {
-      case 'high': return 'High Risk';
-      case 'medium': return 'Medium Risk';
-      case 'low': return 'Low Risk';
-      default: return 'Unknown Risk';
     }
   }, []);
 
@@ -298,7 +303,10 @@ export default function ReusedPasswordsView({ passwords, onSelectLogin, isLoadin
       </div>
     );
   }
-
+  
+  // Calculate total reused passwords count - count unique passwords that are reused
+  const reusedPasswordCount = passwords.filter(p => p.isReused).length;
+  
   return (
     <div className="p-4">
       <div className="flex justify-between items-center mb-4">
@@ -316,145 +324,137 @@ export default function ReusedPasswordsView({ passwords, onSelectLogin, isLoadin
         )}
       </div>
       
-      <p className="text-gray-400 mb-6">
-        These passwords are used across multiple accounts, which is a security risk. Consider using unique passwords for each account.
-      </p>
+      {/* Summary panel showing count */}
+      <div className="bg-slate-800/50 rounded-lg p-6 mb-4 border border-slate-700/50">
+        <div className="flex items-center justify-between">
+          <div className="flex items-start space-x-4">
+            <div className="p-3 bg-red-500/20 rounded-full">
+              <ShieldAlert className="h-6 w-6 text-red-400" />
+            </div>
+            <div>
+              <h3 className="text-lg font-medium text-white mb-1">Reused Password Alert</h3>
+              <p className="text-gray-400">
+                You have <span className="text-red-400 font-medium">{reusedPasswordCount}</span> {reusedPasswordCount === 1 ? 'password' : 'passwords'} that {reusedPasswordCount === 1 ? 'is' : 'are'} used across multiple accounts.
+              </p>
+              <p className="text-gray-400 mt-2">
+                Using the same password for multiple accounts creates a security risk. If one account is compromised, all accounts using that password are vulnerable.  
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
       
+      {/* Dropdown list of reused password groups */}
       <div className="space-y-4">
-          {passwordGroups.map((group, index) => (
-            <motion.div
-              key={index}
-              className="bg-slate-800/50 border border-slate-700/50 rounded-lg overflow-hidden"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: index * 0.1 }}
-              whileHover={{ y: -2 }}
-              layout
+        {passwordGroups.map((group, index) => (
+          <motion.div 
+            key={group.groupId}
+            className="bg-slate-800/50 rounded-lg border border-slate-700/50 overflow-hidden"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.05 }}
+          >
+            <div 
+              className="p-4 flex items-center justify-between cursor-pointer"
+              onClick={() => toggleExpand(index)}
             >
-              <motion.div 
-                className="flex items-center justify-between p-4 cursor-pointer"
-                onClick={() => toggleExpand(index)}
-                whileHover={{ backgroundColor: 'rgba(51, 65, 85, 0.3)' }}
-                transition={{ duration: 0.2 }}
-              >
-                <div className="flex items-center space-x-3">
-                  <div className={`${getRiskColor(group.riskLevel)} p-2 rounded-md`}>
-                    <AlertCircle className="h-5 w-5" />
+              <div className="flex items-center space-x-3">
+                <Shield className="h-5 w-5 text-indigo-400" />
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-white font-medium">Password used in {group.accounts.length} accounts</span>
+                    {renderRiskBadge(group.riskLevel)}
                   </div>
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <h3 className="text-white font-medium">
-                        Password used in {group.accounts.length} accounts
-                      </h3>
-                      {renderRiskBadge(group.riskLevel)}
-                    </div>
-                    <div className="flex items-center mt-1">
-                      <div className="text-gray-400 text-sm flex items-center">
-                        <span className={`font-mono ${getStrengthColor(group.strength)}`}>
-                          {group.showPassword ? group.decryptedPassword : group.passwordHash}
-                        </span>
-                        <motion.button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleShowPassword(index);
-                          }}
-                          className="ml-2 text-gray-500 hover:text-gray-300"
-                          aria-label={group.showPassword ? "Hide password" : "Show password"}
-                          whileHover={{ scale: 1.2 }}
-                          whileTap={{ scale: 0.9 }}
-                        >
-                          {group.showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </motion.button>
-                        <motion.button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (group.decryptedPassword) {
-                              copyPassword(group.decryptedPassword);
-                            }
-                          }}
-                          className="ml-2 text-gray-500 hover:text-gray-300"
-                          aria-label="Copy password"
-                          whileHover={{ scale: 1.2 }}
-                          whileTap={{ scale: 0.9 }}
-                        >
-                          <Copy className="h-4 w-4" />
-                        </motion.button>
-                      </div>
-                    </div>
+                  <div className="text-gray-400 text-sm">
+                    Strength: <span className={getStrengthColor(group.strength)}>{group.strength}</span>
                   </div>
                 </div>
-                <div className="flex items-center">
-                  <div className="text-xs text-gray-400 mr-3">
-                    {group.strength === 'weak' ? 'Weak' : group.strength === 'okay' ? 'Moderate' : 'Strong'}
-                  </div>
-                  <motion.div
-                    animate={{ rotate: group.isExpanded ? 180 : 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <ChevronDown className="h-5 w-5 text-gray-400" />
-                  </motion.div>
-                </div>
-              </motion.div>
+              </div>
               
-              <AnimatePresence>
-                {group.isExpanded && (
-                  <motion.div 
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3, ease: "easeInOut" }}
-                    className="overflow-hidden"
-                  >
-                    <div className="border-t border-slate-700/50 p-4">
-                    <div className="flex justify-between items-center mb-3">
-                      <h4 className="text-sm font-medium text-gray-300">Accounts using this password:</h4>
-                      <div className="flex items-center space-x-1 text-xs text-gray-400">
-                        <Shield className="h-3.5 w-3.5 mr-1" />
-                        <span>Security risk: {getRiskLabel(group.riskLevel)}</span>
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleShowPassword(index);
+                  }}
+                  className="p-2 hover:bg-slate-700/50 rounded-full transition-colors"
+                  aria-label={group.showPassword ? "Hide password" : "Show password"}
+                >
+                  {group.showPassword ? <EyeOff className="h-4 w-4 text-gray-400" /> : <Eye className="h-4 w-4 text-gray-400" />}
+                </button>
+                
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const account = group.accounts[0];
+                    if (account && account.password) {
+                      copyPassword(account.password);
+                    }
+                  }}
+                  className="p-2 hover:bg-slate-700/50 rounded-full transition-colors"
+                  aria-label="Copy password"
+                >
+                  <Copy className="h-4 w-4 text-gray-400" />
+                </button>
+                
+                <ChevronDown 
+                  className={`h-5 w-5 text-gray-400 transition-transform ${group.isExpanded ? 'rotate-180' : ''}`} 
+                />
+              </div>
+            </div>
+            
+            <AnimatePresence>
+              {group.isExpanded && (
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="overflow-hidden"
+                >
+                  <div className="p-4 pt-0 border-t border-slate-700/50">
+                    {group.showPassword && (
+                      <div className="mb-3 p-3 bg-slate-900/50 rounded-lg">
+                        <div className="text-sm text-gray-400 mb-1">Password:</div>
+                        <div className="font-mono text-white">{group.accounts[0]?.password || '********'}</div>
                       </div>
-                    </div>
+                    )}
+                    
+                    <h4 className="text-white font-medium mb-2">Accounts using this password:</h4>
                     <div className="space-y-2">
-                      {group.accounts.map((account, accountIndex) => (
-                        <motion.div
-                          key={account.id}
-                          className="flex items-center justify-between p-2 rounded-md hover:bg-slate-700/30 cursor-pointer"
+                      {group.accounts.map((account, idx) => (
+                        <div 
+                          key={idx} 
+                          className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg hover:bg-slate-900/80 transition-colors cursor-pointer"
                           onClick={() => onSelectLogin(account)}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.2, delay: 0.05 * accountIndex }}
-                          whileHover={{ scale: 1.02, backgroundColor: 'rgba(51, 65, 85, 0.5)' }}
                         >
                           <div className="flex items-center space-x-3">
                             <div className="w-8 h-8 rounded-md bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold">
-                              {account.site.charAt(0).toUpperCase()}
+                              {account.website?.charAt(0).toUpperCase() || 'A'}
                             </div>
                             <div>
-                              <div className="text-white font-medium">{account.site}</div>
-                              <div className="text-gray-400 text-sm">{account.username}</div>
+                              <div className="text-white font-medium">{account.website || 'Unknown'}</div>
+                              <div className="text-gray-400 text-sm">{account.username || 'No username'}</div>
                             </div>
                           </div>
-                          {account.securityRisk && !account.securityRisk.isSafe && (
-                            <motion.div 
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              exit={{ opacity: 0 }}
-                              transition={{ duration: 0.3 }}
-                              className="text-red-400 text-xs flex items-center"
-                            >
+                          {account.isCompromised && (
+                            <div className="text-red-400 text-xs flex items-center">
                               <AlertCircle className="h-3.5 w-3.5 mr-1" />
                               <span>At risk</span>
-                            </motion.div>
+                            </div>
                           )}
-                        </motion.div>
+                        </div>
                       ))}
-                      </div>
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        ))}
       </div>
     </div>
   );
+
+
 }

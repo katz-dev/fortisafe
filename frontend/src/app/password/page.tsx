@@ -127,9 +127,11 @@ export default function PasswordVaultPage() {
       case "secure":
         return login.strength === "strong";
       case "reused":
-        return reusedPasswordIds.has(login.id);
+        // Use the isReused field from the API
+        return login.isReused === true;
       case "security":
-        return (login.securityRisk && !login.securityRisk.isSafe) || (login.compromiseInfo && login.compromiseInfo.isCompromised);
+        // Use the isUrlUnsafe and isCompromised fields from the API
+        return login.isUrlUnsafe === true || login.isCompromised === true;
       default:
         return true;
     }
@@ -235,22 +237,7 @@ export default function PasswordVaultPage() {
   };
   
   const handleUpdatePassword = async (updatedPassword: LoginItem) => {
-    // Update the password in the state
-    const updatedLogins = savedLogins.map(login => 
-      login.id === updatedPassword.id ? updatedPassword : login
-    );
-    setSavedLogins(updatedLogins);
-    
-    // Update the selected login if it was the one that was updated
-    if (selectedLogin && selectedLogin.id === updatedPassword.id) {
-      setSelectedLogin(updatedPassword);
-    }
-    
-    // Update weak password count
-    const weakCount = updatedLogins.filter(p => p.strength === 'weak').length;
-    setWeakPasswordCount(weakCount);
-    
-    // Perform security checks on the updated password
+    // Perform security checks on the updated password first
     try {
       // The backend will automatically check for compromised passwords and unsafe URLs
       // during update, but we'll perform a scan to get the results for immediate UI update
@@ -276,6 +263,7 @@ export default function PasswordVaultPage() {
           updatedPassword.urlThreatTypes = markedPassword.urlThreatTypes;
           updatedPassword.isReused = markedPassword.isReused;
           updatedPassword.reusedIn = markedPassword.reusedIn;
+          updatedPassword.lastScanned = new Date();
           
           // Update UI-specific fields for backward compatibility
           if (markedPassword.isCompromised) {
@@ -314,27 +302,54 @@ export default function PasswordVaultPage() {
           if (markedPassword.isReused) {
             // This password is reused, add it to the set
             newReusedIds.add(updatedPassword.id);
+            
+            // Also check if we need to update other passwords that might be reused with this one
+            if (markedPassword.reusedIn && markedPassword.reusedIn.length > 0) {
+              // Find all the passwords that are reused with this one
+              for (const reusedItem of markedPassword.reusedIn) {
+                const matchingPassword = savedLogins.find(
+                  p => p.website === reusedItem.website && p.username === reusedItem.username
+                );
+                if (matchingPassword) {
+                  // Mark this password as reused too
+                  matchingPassword.isReused = true;
+                  if (!matchingPassword.reusedIn) matchingPassword.reusedIn = [];
+                  
+                  // Add this password to the reused set
+                  newReusedIds.add(matchingPassword.id);
+                }
+              }
+            }
           } else if (wasReused) {
             // This password is no longer reused, remove it from the set
             newReusedIds.delete(updatedPassword.id);
+            
+            // We should also refresh all passwords to make sure reuse status is correct
+            // This is a bit heavy but ensures consistency
+            fetchPasswords();
           }
           
           setReusedPasswordIds(newReusedIds);
           setReusedPasswordCount(newReusedIds.size);
         }
       }
-      
-      // Update the saved logins with the updated password
-      setSavedLogins(prevLogins => {
-        return prevLogins.map(p => p.id === updatedPassword.id ? updatedPassword : p);
-      });
-      
-      // Update the selected login if it was the one that was updated
-      if (selectedLogin && selectedLogin.id === updatedPassword.id) {
-        setSelectedLogin(updatedPassword);
-      }
     } catch (error) {
       console.error('Error checking security for updated password:', error);
+    }
+    
+    // Update weak password count
+    const updatedLogins = savedLogins.map(login => 
+      login.id === updatedPassword.id ? updatedPassword : login
+    );
+    const weakCount = updatedLogins.filter(p => p.strength === 'weak').length;
+    setWeakPasswordCount(weakCount);
+    
+    // Update the saved logins with the updated password
+    setSavedLogins(updatedLogins);
+    
+    // Update the selected login if it was the one that was updated
+    if (selectedLogin && selectedLogin.id === updatedPassword.id) {
+      setSelectedLogin(updatedPassword);
     }
   };
 
