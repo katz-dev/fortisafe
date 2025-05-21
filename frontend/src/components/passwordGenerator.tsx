@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { KeyRound, Copy, RefreshCw, Shield, Check } from "lucide-react";
@@ -31,21 +31,8 @@ export default function PasswordGenerator() {
     return 'strong';
   };
 
-  useEffect(() => {
-    // Generate a random password when component mounts
-    if (isInitialLoad) {
-      generatePasswordSilently();
-    }
-  }, []);
-
-  useEffect(() => {
-    if (password) {
-      setStrength(calculateStrength(password));
-    }
-  }, [password]);
-
   // Helper function to generate password logic
-  const generatePasswordLogic = () => {
+  const generatePasswordLogic = useCallback(() => {
     const lowercase = "abcdefghijklmnopqrstuvwxyz";
     const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     const numbers = "0123456789";
@@ -71,10 +58,10 @@ export default function PasswordGenerator() {
       .split('')
       .sort(() => Math.random() - 0.5)
       .join('');
-  };
+  }, []);
 
   // Generate password silently (for initial load)
-  const generatePasswordSilently = () => {
+  const generatePasswordSilently = useCallback(() => {
     setIsGenerating(true);
     const newPassword = generatePasswordLogic();
     
@@ -84,10 +71,23 @@ export default function PasswordGenerator() {
       setIsGenerating(false);
       setIsInitialLoad(false); // Mark initial load as complete
     }, 500);
-  };
+  }, [generatePasswordLogic]);
+
+  useEffect(() => {
+    // Generate a random password when component mounts
+    if (isInitialLoad) {
+      generatePasswordSilently();
+    }
+  }, [isInitialLoad, generatePasswordSilently]);
+
+  useEffect(() => {
+    if (password) {
+      setStrength(calculateStrength(password));
+    }
+  }, [password]);
 
   // Generate password with notification (for user-triggered generations)
-  const generatePassword = () => {
+  const generatePassword = useCallback(() => {
     setIsGenerating(true);
     const newPassword = generatePasswordLogic();
     
@@ -97,7 +97,7 @@ export default function PasswordGenerator() {
       setIsGenerating(false);
       toast.success("New password generated");
     }, 500);
-  };
+  }, [generatePasswordLogic]);
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(password);

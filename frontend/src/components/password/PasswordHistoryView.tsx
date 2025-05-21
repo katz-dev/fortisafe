@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { History, ChevronDown, ChevronUp, Eye, EyeOff, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,13 +17,7 @@ export default function PasswordHistoryView({ passwordId, isVisible }: PasswordH
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [showPasswords, setShowPasswords] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    if (isVisible && passwordId) {
-      fetchPasswordHistory();
-    }
-  }, [passwordId, isVisible]);
-
-  const fetchPasswordHistory = async () => {
+  const fetchPasswordHistory = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -35,7 +29,13 @@ export default function PasswordHistoryView({ passwordId, isVisible }: PasswordH
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [passwordId]);
+
+  useEffect(() => {
+    if (isVisible && passwordId) {
+      fetchPasswordHistory();
+    }
+  }, [passwordId, isVisible, fetchPasswordHistory]);
 
   const toggleExpandItem = (itemId: string) => {
     const newExpandedItems = new Set(expandedItems);

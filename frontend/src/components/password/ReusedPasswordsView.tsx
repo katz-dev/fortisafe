@@ -245,16 +245,6 @@ export default function ReusedPasswordsView({ passwords, onSelectLogin, isLoadin
     }
   }, []);
   
-  // Function to get color based on risk level
-  const getRiskColor = useCallback((risk: 'high' | 'medium' | 'low') => {
-    switch (risk) {
-      case 'high': return 'bg-red-500/20 text-red-400';
-      case 'medium': return 'bg-amber-500/20 text-amber-400';
-      case 'low': return 'bg-green-500/20 text-green-400';
-      default: return 'bg-purple-500/20 text-purple-400';
-    }
-  }, []);
-
   // Function to render the risk badge
   const renderRiskBadge = useCallback((risk: 'high' | 'medium' | 'low') => {
     const colors = {

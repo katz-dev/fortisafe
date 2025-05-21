@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
-import { LogOut, Menu, X, Shield, Lock, Activity, Settings, User as UserIcon } from 'lucide-react';
+import { LogOut, Menu, X, Lock, Activity, Settings, User as UserIcon } from 'lucide-react';
 import { useAuth } from '@/app/contexts/auth-context';
 
 export default function NavBar() {

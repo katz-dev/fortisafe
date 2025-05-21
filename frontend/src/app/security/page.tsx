@@ -48,9 +48,9 @@ interface LogEntry {
 export default function SecurityPage() {
     // State management
     const [scanning, setScanning] = useState(false);
-    // These state variables are defined but not used in the component
-    // We'll keep them for potential future use but mark them with underscore
-    const [_, setScanComplete] = useState(false);
+    // This state variable is defined but not used in the component
+    // We'll keep it for potential future use
+    const [, setScanComplete] = useState(false);
     const [urlScanResults, setUrlScanResults] = useState<UrlScanResult[]>([]);
     const [isLoadingUrlCheck, setIsLoadingUrlCheck] = useState(false);
     const [urlToCheck, setUrlToCheck] = useState('');
@@ -76,6 +76,42 @@ export default function SecurityPage() {
     
     // Auth context
     const { user } = useAuth();
+
+    /**
+     * Calculates a security score based on password strength and URL scan results
+     * @param stats Password statistics
+     * @param urlResults URL scan results
+     */
+    const calculateSecurityScore = useCallback((stats: typeof scanStats, urlResults: UrlScanResult[]) => {
+        // Base score starts at 100
+        let score = 100;
+        
+        // Deduct for weak passwords (up to -40)
+        const totalPasswords = stats.weakPasswords + stats.reusedPasswords + stats.strongPasswords + stats.compromisedPasswords;
+        if (totalPasswords > 0) {
+            const weakPercentage = stats.weakPasswords / totalPasswords;
+            score -= Math.min(weakPercentage * 40, 40);
+            
+            // Deduct for reused passwords (up to -30)
+            const reusedPercentage = stats.reusedPasswords / totalPasswords;
+            score -= Math.min(reusedPercentage * 30, 30);
+            
+            // Deduct for compromised passwords (up to -30)
+            const compromisedPercentage = stats.compromisedPasswords / totalPasswords;
+            score -= Math.min(compromisedPercentage * 30, 30);
+        }
+        
+        // Deduct for unsafe URLs (up to -20)
+        if (urlResults.length > 0) {
+            const unsafeUrls = urlResults.filter(url => !url.isSafe).length;
+            const unsafePercentage = unsafeUrls / urlResults.length;
+            score -= Math.min(unsafePercentage * 20, 20);
+        }
+        
+        // Ensure score is between 0 and 100
+        score = Math.max(0, Math.min(100, Math.round(score)));
+        setSecurityScore(score);
+    }, [setSecurityScore]);
 
     /**
      * Scans saved passwords for security issues
@@ -132,7 +168,7 @@ export default function SecurityPage() {
         } finally {
             setScanning(false);
         }
-    }, []);
+    }, [calculateSecurityScore]);
 
     /**
      * Fetches password history logs from the API
@@ -255,41 +291,7 @@ export default function SecurityPage() {
         }
     };
 
-    /**
-     * Calculates a security score based on password strength and URL scan results
-     * @param stats Password statistics
-     * @param urlResults URL scan results
-     */
-    const calculateSecurityScore = (stats: typeof scanStats, urlResults: UrlScanResult[]) => {
-        // Base score starts at 100
-        let score = 100;
-        
-        // Deduct for weak passwords (up to -40)
-        const totalPasswords = stats.weakPasswords + stats.reusedPasswords + stats.strongPasswords + stats.compromisedPasswords;
-        if (totalPasswords > 0) {
-            const weakPercentage = stats.weakPasswords / totalPasswords;
-            score -= Math.min(weakPercentage * 40, 40);
-            
-            // Deduct for reused passwords (up to -30)
-            const reusedPercentage = stats.reusedPasswords / totalPasswords;
-            score -= Math.min(reusedPercentage * 30, 30);
-            
-            // Deduct for compromised passwords (up to -30)
-            const compromisedPercentage = stats.compromisedPasswords / totalPasswords;
-            score -= Math.min(compromisedPercentage * 30, 30);
-        }
-        
-        // Deduct for unsafe URLs (up to -20)
-        if (urlResults.length > 0) {
-            const unsafeUrls = urlResults.filter(url => !url.isSafe).length;
-            const unsafePercentage = unsafeUrls / urlResults.length;
-            score -= Math.min(unsafePercentage * 20, 20);
-        }
-        
-        // Ensure score is between 0 and 100
-        score = Math.max(0, Math.min(100, Math.round(score)));
-        setSecurityScore(score);
-    };
+    // The calculateSecurityScore function has been moved above the handleScan function
     
     /**
      * Fetches user logs from the API

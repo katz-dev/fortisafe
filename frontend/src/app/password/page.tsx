@@ -15,7 +15,7 @@ import AddPasswordForm from "@/components/password/AddPasswordForm";
 import ReusedPasswordsView from "@/components/password/ReusedPasswordsView";
 import WebsitePasswordsView from "@/components/password/WebsitePasswordsView";
 import { Plus } from "lucide-react";
-import { getAllPasswords, getDecryptedPassword, LoginItem, calculatePasswordStrength, checkReusedPassword, checkSecurityRisks } from "@/lib/passwordService";
+import { getAllPasswords, getDecryptedPassword, LoginItem, calculatePasswordStrength, checkSecurityRisks } from "@/lib/passwordService";
 import { toast } from "sonner";
 
 export default function PasswordVaultPage() {
