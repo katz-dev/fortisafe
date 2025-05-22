@@ -360,4 +360,29 @@ export class PasswordsController {
       updateData.password,
     );
   }
+
+  @Post('synchronize-reused')
+  @ApiOperation({ summary: 'Synchronize reused password information across all passwords' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Number of passwords updated.',
+    schema: {
+      type: 'object',
+      properties: {
+        updatedCount: {
+          type: 'number',
+          example: 5,
+          description: 'Number of passwords that were updated'
+        }
+      }
+    }
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized.',
+  })
+  async synchronizeReusedPasswords(@Request() req) {
+    const updatedCount = await this.passwordsService.synchronizeReusedPasswords(req.user.userId);
+    return { updatedCount };
+  }
 }

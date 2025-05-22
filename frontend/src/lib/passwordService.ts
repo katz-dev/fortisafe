@@ -505,23 +505,52 @@ export async function getAllPasswordHistory(): Promise<Record<string, PasswordHi
     const data: Record<string, PasswordHistoryResponse[]> = await response.json();
     
     // Transform the response data
-    const transformedData: Record<string, PasswordHistoryItem[]> = {};
+    const result: Record<string, PasswordHistoryItem[]> = {};
     
-    Object.keys(data).forEach(passwordId => {
-      transformedData[passwordId] = data[passwordId].map(item => ({
+    for (const [passwordId, historyItems] of Object.entries(data)) {
+      result[passwordId] = historyItems.map(item => ({
         id: item.id,
         passwordId: item.passwordId,
         website: item.website,
         username: item.username,
         password: item.password,
         createdAt: new Date(item.createdAt),
-        replacedAt: item.replacedAt ? new Date(item.replacedAt) : undefined,
+        replacedAt: item.replacedAt ? new Date(item.replacedAt) : undefined
       }));
-    });
+    }
     
-    return transformedData;
+    return result;
   } catch (error) {
     console.error('Error fetching all password history:', error);
+    throw error;
+  }
+}
+
+// Synchronize reused password information across all passwords
+export async function synchronizeReusedPasswords(): Promise<number> {
+  const token = localStorage.getItem('access_token');
+
+  if (!token) {
+    throw new Error('No access token found');
+  }
+
+  try {
+    const response = await fetch(`${backendUrl}/passwords/synchronize-reused`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to synchronize reused passwords: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.updatedCount;
+  } catch (error) {
+    console.error('Error synchronizing reused passwords:', error);
     throw error;
   }
 }

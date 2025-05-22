@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { AlertCircle, RefreshCw, ShieldAlert, ChevronDown, Eye, EyeOff, Copy, Shield } from "lucide-react";
-import { LoginItem, getDecryptedPassword } from "@/lib/passwordService";
+import { AlertCircle, RefreshCw, ShieldAlert, ChevronDown, Eye, EyeOff, Copy, Shield, RotateCw } from "lucide-react";
+import { LoginItem, getDecryptedPassword, synchronizeReusedPasswords } from "@/lib/passwordService";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
@@ -273,6 +273,25 @@ export default function ReusedPasswordsView({ passwords, onSelectLogin, isLoadin
       onRefresh();
     }
   }, [onRefresh]);
+  
+  // Function to synchronize reused passwords
+  const handleSynchronize = useCallback(async () => {
+    try {
+      setInternalLoading(true);
+      const updatedCount = await synchronizeReusedPasswords();
+      toast.success(`Synchronized ${updatedCount} passwords`);
+      
+      // Refresh the passwords list after synchronization
+      if (onRefresh) {
+        onRefresh();
+      }
+    } catch (error) {
+      console.error('Error synchronizing passwords:', error);
+      toast.error('Failed to synchronize passwords');
+    } finally {
+      setInternalLoading(false);
+    }
+  }, [onRefresh]);
 
   if (isLoading) {
     return (
@@ -301,17 +320,28 @@ export default function ReusedPasswordsView({ passwords, onSelectLogin, isLoadin
     <div className="p-4">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-white">Reused Passwords</h2>
-        {onRefresh && (
+        <div className="flex space-x-2">
           <motion.button 
-            onClick={handleRefresh}
-            className="flex items-center space-x-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md transition-colors"
+            onClick={handleSynchronize}
+            className="flex items-center space-x-1 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-md transition-colors"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <RefreshCw className="h-4 w-4" />
-            <span>Refresh</span>
+            <RotateCw className="h-4 w-4" />
+            <span>Synchronize</span>
           </motion.button>
-        )}
+          {onRefresh && (
+            <motion.button 
+              onClick={handleRefresh}
+              className="flex items-center space-x-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md transition-colors"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <RefreshCw className="h-4 w-4" />
+              <span>Refresh</span>
+            </motion.button>
+          )}
+        </div>
       </div>
       
       {/* Summary panel showing count */}
