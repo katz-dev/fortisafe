@@ -279,7 +279,9 @@ export class ScannerService {
         const isStrong = this.isStrongPassword(decryptedPassword);
         if (isStrong && result.strongPasswords !== undefined) {
           result.strongPasswords++;
-        } else if (result.weakPasswords !== undefined) {
+        } else if (!isStrong && result.weakPasswords !== undefined) {
+          // Count all weak passwords regardless of other security statuses
+          // This ensures accurate reporting of weak passwords
           result.weakPasswords++;
         }
       }

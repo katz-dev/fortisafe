@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import PageLayout from '@/components/PageLayout';
 import { Shield, Check, Scan, X, RefreshCw, Lock, FileText } from 'lucide-react';
 import { useAuth } from '../contexts/auth-context';
+import { useSecurityContext } from '../contexts/security-context';
 import axios from 'axios';
 import { toast } from 'sonner';
 
@@ -76,6 +77,9 @@ export default function SecurityPage() {
     
     // Auth context
     const { user } = useAuth();
+    
+    // Security context for refreshing data when passwords are updated
+    const { securityDataVersion } = useSecurityContext();
 
     /**
      * Calculates a security score based on password strength and URL scan results
@@ -352,6 +356,16 @@ export default function SecurityPage() {
             handleScan();
         }
     }, [user, fetchPasswordLogs, fetchSystemLogs, handleScan]);
+    
+    // Refresh security data when securityDataVersion changes
+    // This ensures the security page updates when passwords are modified elsewhere
+    useEffect(() => {
+        if (user && securityDataVersion > 0) {
+            // Refresh security scan data
+            handleScan();
+            toast.success('Security data refreshed');
+        }
+    }, [securityDataVersion, user, handleScan]);
 
     return (
         <PageLayout>
