@@ -49,6 +49,12 @@ export class AuthController {
     // Add state parameter to identify client type (extension or frontend)
     const clientType = req.query.client || 'frontend';
     params.append('state', clientType);
+    
+    // Add prompt parameter to control login behavior
+    // 'none' will not show the login page if the user is already logged in
+    // 'login' will always show the login page
+    const promptType = req.query.prompt || 'none';
+    params.append('prompt', promptType);
 
     return res.redirect(authorizationUrl + params.toString());
   }
@@ -203,10 +209,12 @@ export class AuthController {
   @ApiOperation({ summary: 'Logout from Auth0' })
   @ApiResponse({ status: 302, description: 'Redirect to Auth0 logout' })
   logout(@Res() res: Response) {
+    // Set a flag in the returnTo URL to indicate this is a logout redirect
     const returnTo = encodeURIComponent(
-      this.configService.get('FRONTEND_URL') || '',
+      `${this.configService.get('FRONTEND_URL')}/login?force_login=true` || '',
     );
-    const logoutUrl = `https://${this.configService.get('AUTH0_DOMAIN')}/v2/logout?client_id=${this.configService.get('AUTH0_CLIENT_ID')}&returnTo=${returnTo}`;
+    // Add federated parameter to perform a complete logout from Auth0 and all identity providers
+    const logoutUrl = `https://${this.configService.get('AUTH0_DOMAIN')}/v2/logout?client_id=${this.configService.get('AUTH0_CLIENT_ID')}&returnTo=${returnTo}&federated`;
     return res.redirect(logoutUrl);
   }
 }
