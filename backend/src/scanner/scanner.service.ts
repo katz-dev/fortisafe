@@ -236,40 +236,7 @@ export class ScannerService {
             passwordId
           );
         
-        // Log if password is compromised
-        if (passwordCheck.isCompromised) {
-          await this.logsService.create({
-            level: LogLevel.WARN,
-            message: `Compromised password detected for ${passwordEntry.website}`,
-            source: 'scanner',
-            userId,
-            metadata: {
-              website: passwordEntry.website,
-              username: passwordEntry.username,
-              breachCount: passwordCheck.breachCount || 0,
-              timestamp: new Date().toISOString(),
-              action: 'compromised_password_detected'
-            }
-          });
-        }
-        
-        // Log if password is reused
-        if (reusedCheck.isReused) {
-          await this.logsService.create({
-            level: LogLevel.WARN,
-            message: `Reused password detected for ${passwordEntry.website}`,
-            source: 'scanner',
-            userId,
-            metadata: {
-              website: passwordEntry.website,
-              username: passwordEntry.username,
-              reusedIn: reusedCheck.usedIn.map(entry => `${entry.website} (${entry.username})`),
-              reusedCount: reusedCheck.usedIn.length,
-              timestamp: new Date().toISOString(),
-              action: 'reused_password_detected'
-            }
-          });
-        }
+        // Security scan logs removed
 
         // Update password security information in the database
         await this.passwordsService.updateSecurityInfo({
