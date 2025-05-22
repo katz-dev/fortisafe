@@ -132,8 +132,8 @@ export class PasswordsService {
       level: LogLevel.INFO,
       message: `New password created for ${createPasswordDto.website}`,
       source: 'passwords',
+      userId,
       metadata: {
-        userId,
         website: createPasswordDto.website,
         username: createPasswordDto.username,
         url: createPasswordDto.url || 'Not provided',
@@ -275,8 +275,8 @@ export class PasswordsService {
       level: LogLevel.INFO,
       message: `Password entry updated for ${originalPassword.website}`,
       source: 'passwords',
+      userId,
       metadata: {
-        userId,
         passwordId: id,
         website: originalPassword.website,
         username: originalPassword.username,
@@ -309,8 +309,8 @@ export class PasswordsService {
       level: LogLevel.INFO,
       message: `Password deleted for ${password.website}`,
       source: 'passwords',
+      userId,
       metadata: {
-        userId,
         website: password.website,
         username: password.username,
         timestamp: new Date().toISOString(),
