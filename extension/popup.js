@@ -1,5 +1,13 @@
-const BACKEND_URL = 'http://localhost:8080/api';
-const BACKEND_ORIGIN = 'http://localhost:8080';
+// Backend URLs for different environments
+const PRODUCTION_BACKEND_URL = 'https://api.fortisafe.live/api';
+const LOCAL_BACKEND_URL = 'http://localhost:8080/api';
+
+// Set this to false to use local backend, true to use production
+const USE_PRODUCTION = false;
+
+// The active backend URL based on environment setting
+const BACKEND_URL = USE_PRODUCTION ? PRODUCTION_BACKEND_URL : LOCAL_BACKEND_URL;
+const BACKEND_ORIGIN = USE_PRODUCTION ? 'https://api.fortisafe.live' : 'http://localhost:8080';
 
 // Function to get the current active tab URL
 function getCurrentTabUrl(callback) {
@@ -1393,7 +1401,7 @@ async function saveManualPassword() {
 
         // Check for duplicates first
         const duplicateCheckResponse = await fetch(
-            `http://localhost:8080/api/passwords/check-duplicate?website=${encodeURIComponent(website)}&username=${encodeURIComponent(username)}`,
+            `https://api.fortisafe.live/api/passwords/check-duplicate?website=${encodeURIComponent(website)}&username=${encodeURIComponent(username)}`,
             {
                 method: 'GET',
                 headers: {
@@ -1413,7 +1421,7 @@ async function saveManualPassword() {
         }
 
         // Try to save to backend
-        const response = await fetch('http://localhost:8080/api/passwords', {
+        const response = await fetch('https://api.fortisafe.live/api/passwords', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

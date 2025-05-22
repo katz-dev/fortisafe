@@ -1,4 +1,13 @@
-const BACKEND_URL = 'http://localhost:8080/api';
+// Backend URLs for different environments
+const PRODUCTION_BACKEND_URL = 'https://api.fortisafe.live/api';
+const LOCAL_BACKEND_URL = 'http://localhost:8080/api';
+
+// Set this to false to use local backend, true to use production
+const USE_PRODUCTION = false;
+
+// The active backend URL based on environment setting
+const BACKEND_URL = USE_PRODUCTION ? PRODUCTION_BACKEND_URL : LOCAL_BACKEND_URL;
+const BACKEND_ORIGIN = USE_PRODUCTION ? 'https://api.fortisafe.live' : 'http://localhost:8080';
 
 document.addEventListener('DOMContentLoaded', function () {
     console.log('Auth success page loaded');
