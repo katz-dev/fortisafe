@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Controller, Get, UseGuards, Req, Res, Query } from '@nestjs/common';
+import { Controller, Get, Post, UseGuards, Req, Res, Query } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -15,6 +15,7 @@ import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { UsersService } from 'src/users/users.service';
+import { EmailService } from 'src/email/email.service';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -23,6 +24,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
     private readonly userService: UsersService,
+    private readonly emailService: EmailService,
   ) {}
 
   @Get('login')
@@ -139,10 +141,10 @@ export class AuthController {
                       accessToken: tokenData.access_token,
                       idToken: tokenData.id_token,
                     })}
-                  }, '${this.configService.get('EXTENSION_URL') || 'chrome-extension://lmkkjkgocfciicgheedmnpidkdbjmmfj'}');
+                  }, '${this.configService.get('EXTENSION_URL')}');
                   window.close();
                 } else {
-                  window.location.href = '${this.configService.get('EXTENSION_URL') || 'chrome-extension://lmkkjkgocfciicgheedmnpidkdbjmmfj'}/auth-success?access_token=${tokenData.access_token}&id_token=${tokenData.id_token}';
+                  window.location.href = '${this.configService.get('EXTENSION_URL')}/auth-success?access_token=${tokenData.access_token}&id_token=${tokenData.id_token}';
                 }
               </script>
             </body>
@@ -170,6 +172,31 @@ export class AuthController {
     // The access token is available from the request
     const accessToken = req.headers.authorization.split(' ')[1];
     return this.authService.getUserProfile(accessToken);
+  }
+  
+  @Post('send-test-email')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Send a test email to the authenticated user' })
+  @ApiResponse({ status: 200, description: 'Test email sent successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async sendTestEmail(@Req() req) {
+    // Get user profile from Auth0
+    const accessToken = req.headers.authorization.split(' ')[1];
+    const userProfile = await this.authService.getUserProfile(accessToken);
+    
+    // Send test email to the user
+    const result = await this.emailService.sendTestEmail(
+      userProfile.user.email,
+      userProfile.user.firstName || 'User'
+    );
+    
+    return {
+      success: true,
+      message: 'Test email sent successfully',
+      emailId: result.messageId,
+      sentTo: userProfile.user.email
+    };
   }
 
   @Get('logout')
