@@ -146,6 +146,40 @@ export class PasswordsService {
       }
     });
     
+    // Create specific logs for security issues
+    if (passwordCheck.isCompromised) {
+      await this.logsService.create({
+        level: LogLevel.WARN,
+        message: `Compromised password detected for ${createPasswordDto.website}`,
+        source: 'passwords',
+        userId,
+        metadata: {
+          website: createPasswordDto.website,
+          username: createPasswordDto.username,
+          breachCount: passwordCheck.breachCount || 0,
+          timestamp: new Date().toISOString(),
+          action: 'compromised_password_detected'
+        }
+      });
+    }
+    
+    if (reusedCheck.isReused) {
+      await this.logsService.create({
+        level: LogLevel.WARN,
+        message: `Reused password detected for ${createPasswordDto.website}`,
+        source: 'passwords',
+        userId,
+        metadata: {
+          website: createPasswordDto.website,
+          username: createPasswordDto.username,
+          reusedIn: reusedCheck.usedIn.map(entry => `${entry.website} (${entry.username})`),
+          reusedCount: reusedCheck.usedIn.length,
+          timestamp: new Date().toISOString(),
+          action: 'reused_password_detected'
+        }
+      });
+    }
+    
     return savedPassword;
   }
 
@@ -245,6 +279,40 @@ export class PasswordsService {
         
         // Add to updated fields
         updatedFields.push('isCompromised', 'breachCount', 'isReused', 'reusedIn');
+        
+        // Create specific logs for security issues
+        if (passwordCheck.isCompromised) {
+          await this.logsService.create({
+            level: LogLevel.WARN,
+            message: `Compromised password detected for ${originalPassword.website}`,
+            source: 'passwords',
+            userId,
+            metadata: {
+              website: originalPassword.website,
+              username: originalPassword.username,
+              breachCount: passwordCheck.breachCount || 0,
+              timestamp: new Date().toISOString(),
+              action: 'compromised_password_detected'
+            }
+          });
+        }
+        
+        if (reusedCheck.isReused) {
+          await this.logsService.create({
+            level: LogLevel.WARN,
+            message: `Reused password detected for ${originalPassword.website}`,
+            source: 'passwords',
+            userId,
+            metadata: {
+              website: originalPassword.website,
+              username: originalPassword.username,
+              reusedIn: reusedCheck.usedIn.map(entry => `${entry.website} (${entry.username})`),
+              reusedCount: reusedCheck.usedIn.length,
+              timestamp: new Date().toISOString(),
+              action: 'reused_password_detected'
+            }
+          });
+        }
       }
       
       // For URL security check

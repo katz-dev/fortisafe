@@ -9,6 +9,8 @@ import {
 } from './dto/scan-result.dto';
 import { PasswordsService } from '../passwords/passwords.service';
 import { SecurityUtilsService } from '../utils/security-utils.service';
+import { LogsService } from '../logs/logs.service';
+import { LogLevel } from '../logs/entities/log.entity';
 import * as crypto from 'crypto';
 import axios from 'axios';
 import { Password, PasswordDocument } from '../passwords/entities/password.schema';
@@ -25,6 +27,7 @@ export class ScannerService {
     private configService: ConfigService,
     private passwordsService: PasswordsService,
     private securityUtilsService: SecurityUtilsService,
+    private logsService: LogsService,
   ) {
     this.googleSafeBrowsingApiKey = this.configService.get<string>(
       'GOOGLE_SAFE_BROWSING_API_KEY',
@@ -232,6 +235,41 @@ export class ScannerService {
             decryptedPassword,
             passwordId
           );
+        
+        // Log if password is compromised
+        if (passwordCheck.isCompromised) {
+          await this.logsService.create({
+            level: LogLevel.WARN,
+            message: `Compromised password detected for ${passwordEntry.website}`,
+            source: 'scanner',
+            userId,
+            metadata: {
+              website: passwordEntry.website,
+              username: passwordEntry.username,
+              breachCount: passwordCheck.breachCount || 0,
+              timestamp: new Date().toISOString(),
+              action: 'compromised_password_detected'
+            }
+          });
+        }
+        
+        // Log if password is reused
+        if (reusedCheck.isReused) {
+          await this.logsService.create({
+            level: LogLevel.WARN,
+            message: `Reused password detected for ${passwordEntry.website}`,
+            source: 'scanner',
+            userId,
+            metadata: {
+              website: passwordEntry.website,
+              username: passwordEntry.username,
+              reusedIn: reusedCheck.usedIn.map(entry => `${entry.website} (${entry.username})`),
+              reusedCount: reusedCheck.usedIn.length,
+              timestamp: new Date().toISOString(),
+              action: 'reused_password_detected'
+            }
+          });
+        }
 
         // Update password security information in the database
         await this.passwordsService.updateSecurityInfo({
