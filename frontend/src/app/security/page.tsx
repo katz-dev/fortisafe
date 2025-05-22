@@ -311,71 +311,28 @@ export default function SecurityPage() {
                 return;
             }
             
-            // Create mock data for testing if the API endpoint is not available
-            const mockLogs: LogEntry[] = [
+            // Fetch user logs from API
+            const response = await axios.get(
+                `${API_URL}/logs/user`,
                 {
-                    _id: '1',
-                    level: 'info',
-                    message: 'User logged in successfully',
-                    source: 'auth-service',
-                    timestamp: new Date().toISOString()
-                },
-                {
-                    _id: '2',
-                    level: 'warn',
-                    message: 'Failed login attempt detected',
-                    source: 'auth-service',
-                    timestamp: new Date(Date.now() - 300000).toISOString() // 5 minutes ago
-                },
-                {
-                    _id: '3',
-                    level: 'error',
-                    message: 'Database connection error',
-                    source: 'database-service',
-                    timestamp: new Date(Date.now() - 600000).toISOString() // 10 minutes ago
-                },
-                {
-                    _id: '4',
-                    level: 'info',
-                    message: 'Password updated for user account',
-                    source: 'password-service',
-                    timestamp: new Date(Date.now() - 900000).toISOString() // 15 minutes ago
-                },
-                {
-                    _id: '5',
-                    level: 'warn',
-                    message: 'Suspicious URL detected and blocked',
-                    source: 'scanner-service',
-                    timestamp: new Date(Date.now() - 1200000).toISOString() // 20 minutes ago
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                    timeout: 10000 // 10 second timeout
                 }
-            ];
+            );
             
-            try {
-                // Try to fetch user logs from API first
-                const response = await axios.get(
-                    `${API_URL}/logs/user/${user._id}`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                        timeout: 10000 // 10 second timeout
-                    }
-                );
-                
-                if (response.data && Array.isArray(response.data)) {
-                    setSystemLogs(response.data);
-                    toast.success('User logs loaded successfully');
+            if (response.data && Array.isArray(response.data)) {
+                setSystemLogs(response.data);
+                if (response.data.length === 0) {
+                    toast.info('No logs found for your account');
                 } else {
-                    // Fallback to mock data
-                    console.warn('API returned invalid data format, using mock data');
-                    setSystemLogs(mockLogs);
-                    toast.info('Using sample log data for demonstration');
+                    toast.success('User logs loaded successfully');
                 }
-            } catch (apiError) {
-                console.warn('User logs endpoint not available, using mock data:', apiError);
-                // Use mock data as fallback
-                setSystemLogs(mockLogs);
-                toast.info('Using sample log data for demonstration');
+            } else {
+                console.warn('API returned invalid data format');
+                setSystemLogs([]);
+                toast.error('Failed to load logs: Invalid data format');
             }
         } catch (error) {
             console.error('Error in logs component:', error);
