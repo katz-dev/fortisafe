@@ -17,6 +17,7 @@ import WebsitePasswordsView from "@/components/password/WebsitePasswordsView";
 import { Plus } from "lucide-react";
 import { getAllPasswords, getDecryptedPassword, LoginItem, calculatePasswordStrength, checkSecurityRisks } from "@/lib/passwordService";
 import { toast } from "sonner";
+import { useSecurityContext } from "../contexts/security-context";
 
 export default function PasswordVaultPage() {
   const [activeTab, setActiveTab] = useState("all");
@@ -30,6 +31,9 @@ export default function PasswordVaultPage() {
   const [securityRiskCount, setSecurityRiskCount] = useState(0);
   const [compromisedPasswordCount, setCompromisedPasswordCount] = useState(0);
   const [isAddPasswordModalOpen, setIsAddPasswordModalOpen] = useState(false);
+  
+  // Get the security context to trigger refreshes
+  const { refreshSecurityData } = useSecurityContext();
 
   // Fetch password function that can be reused
   const fetchPasswords = useCallback(async () => {
@@ -351,6 +355,9 @@ export default function PasswordVaultPage() {
     if (selectedLogin && selectedLogin.id === updatedPassword.id) {
       setSelectedLogin(updatedPassword);
     }
+    
+    // Trigger a refresh of the security page data
+    refreshSecurityData();
   };
 
   return (

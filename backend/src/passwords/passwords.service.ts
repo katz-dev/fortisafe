@@ -127,20 +127,45 @@ export class PasswordsService {
     
     const savedPassword = await newPassword.save();
     
-    // Create a log entry for the new password with security information
+    // Update reused password information for all affected passwords
+    if (reusedCheck.isReused && reusedCheck.usedIn.length > 0) {
+      // Add this new password to the reusedIn arrays of all passwords it's reused with
+      for (const reusedItem of reusedCheck.usedIn) {
+        const reusedPassword = await this.passwordModel.findOne({
+          userId,
+          website: reusedItem.website,
+          username: reusedItem.username
+        }).exec();
+        
+        if (reusedPassword && reusedPassword._id) {
+          // Add this new password to the reusedIn array if not already there
+          if (!reusedPassword.reusedIn) {
+            reusedPassword.reusedIn = [];
+          }
+          
+          // Add the new password to the reusedIn array
+          reusedPassword.reusedIn.push({
+            website: savedPassword.website,
+            username: savedPassword.username
+          });
+          
+          reusedPassword.isReused = true;
+          await reusedPassword.save();
+        }
+      }
+    }
+    
+    // Create a log entry for the new password (without security information)
     await this.logsService.create({
       level: LogLevel.INFO,
       message: `New password created for ${createPasswordDto.website}`,
       source: 'passwords',
+      userId,
       metadata: {
-        userId,
         website: createPasswordDto.website,
         username: createPasswordDto.username,
         url: createPasswordDto.url || 'Not provided',
         tags: createPasswordDto.tags || [],
-        isCompromised: passwordCheck.isCompromised,
-        isUrlUnsafe: !urlCheck.isSafe,
-        isReused: reusedCheck.isReused,
         timestamp: new Date().toISOString(),
         action: 'create_password'
       }
@@ -189,6 +214,7 @@ export class PasswordsService {
     let shouldCheckPassword = false;
     let shouldCheckUrl = false;
     let decryptedPassword: string | null = null;
+    let originalDecryptedPassword: string | null = null;
     
     // If password is being updated, save the old one to history and check security
     if (updatePasswordDto.password) {
@@ -199,6 +225,8 @@ export class PasswordsService {
       await this.savePasswordToHistory(userId, originalPassword);
       // Keep the decrypted password for security checks
       decryptedPassword = updatePasswordDto.password;
+      // Get the original decrypted password for reuse updates
+      originalDecryptedPassword = this.decrypt(originalPassword.password);
       // Encrypt the new password
       updatePasswordDto.password = this.encrypt(updatePasswordDto.password);
     }
@@ -270,13 +298,114 @@ export class PasswordsService {
     Object.assign(originalPassword, updatePasswordDto);
     const updatedPassword = await originalPassword.save();
     
-    // Create a detailed log entry for the password update
+    // Update reusedIn fields for all affected passwords if the password was changed
+    if (shouldCheckPassword && decryptedPassword && originalDecryptedPassword) {
+      // If the password was previously reused, we need to update all passwords that referenced it
+      if (originalPassword.isReused && originalPassword.reusedIn && originalPassword.reusedIn.length > 0) {
+        // Find all passwords that might have this password in their reusedIn array
+        const allUserPasswords = await this.passwordModel.find({ userId }).exec();
+        
+        for (const password of allUserPasswords) {
+          // Skip the current password
+          if (password._id && password._id.toString() === id) continue;
+          
+          // Check if this password needs to be updated
+          let needsUpdate = false;
+          
+          // If this password has the current one in its reusedIn array, we need to update it
+          if (password.reusedIn && password.reusedIn.length > 0) {
+            const originalIndex = password.reusedIn.findIndex(
+              item => item.website === originalPassword.website && item.username === originalPassword.username
+            );
+            
+            // If found, remove it from reusedIn
+            if (originalIndex !== -1) {
+              password.reusedIn.splice(originalIndex, 1);
+              needsUpdate = true;
+            }
+          }
+          
+          // Check if the password matches the new password
+          try {
+            const passwordValue = this.decrypt(password.password);
+            if (passwordValue === decryptedPassword) {
+              // This password now shares the same value as the updated password
+              // Add the updated password to its reusedIn array if not already there
+              if (!password.reusedIn) {
+                password.reusedIn = [];
+              }
+              
+              // Check if it's already in the reusedIn array
+              const exists = password.reusedIn.some(
+                item => item.website === updatedPassword.website && item.username === updatedPassword.username
+              );
+              
+              if (!exists) {
+                password.reusedIn.push({
+                  website: updatedPassword.website,
+                  username: updatedPassword.username
+                });
+                needsUpdate = true;
+              }
+              
+              // Update isReused flag
+              if (!password.isReused && password.reusedIn.length > 0) {
+                password.isReused = true;
+                needsUpdate = true;
+              }
+            }
+          } catch (error) {
+            console.error(`Error decrypting password during reused update: ${error.message}`);
+          }
+          
+          // Save the password if it was updated
+          if (needsUpdate) {
+            // Update isReused flag based on reusedIn length
+            password.isReused = password.reusedIn && password.reusedIn.length > 0;
+            await password.save();
+          }
+        }
+      } else if (updatePasswordDto.isReused && updatePasswordDto.reusedIn && updatePasswordDto.reusedIn.length > 0) {
+        // If the password is now reused, update all passwords it's reused with
+        for (const reusedItem of updatePasswordDto.reusedIn) {
+          // Find the matching password
+          const reusedPassword = await this.passwordModel.findOne({
+            userId,
+            website: reusedItem.website,
+            username: reusedItem.username
+          }).exec();
+          
+          if (reusedPassword && reusedPassword._id && reusedPassword._id.toString() !== id) {
+            // Add this password to the reusedIn array if not already there
+            if (!reusedPassword.reusedIn) {
+              reusedPassword.reusedIn = [];
+            }
+            
+            // Check if it's already in the reusedIn array
+            const exists = reusedPassword.reusedIn.some(
+              item => item.website === updatedPassword.website && item.username === updatedPassword.username
+            );
+            
+            if (!exists) {
+              reusedPassword.reusedIn.push({
+                website: updatedPassword.website,
+                username: updatedPassword.username
+              });
+              reusedPassword.isReused = true;
+              await reusedPassword.save();
+            }
+          }
+        }
+      }
+    }
+    
+    // Create a simplified log entry for the password update (without security information)
     await this.logsService.create({
       level: LogLevel.INFO,
       message: `Password entry updated for ${originalPassword.website}`,
       source: 'passwords',
+      userId,
       metadata: {
-        userId,
         passwordId: id,
         website: originalPassword.website,
         username: originalPassword.username,
@@ -284,9 +413,6 @@ export class PasswordsService {
         oldWebsite: updatePasswordDto.website ? originalPassword.website : undefined,
         oldUsername: updatePasswordDto.username ? originalPassword.username : undefined,
         wasPasswordChanged: !!decryptedPassword,
-        isCompromised: updatePasswordDto.isCompromised,
-        isUrlUnsafe: updatePasswordDto.isUrlUnsafe,
-        isReused: updatePasswordDto.isReused,
         timestamp: new Date().toISOString(),
         action: 'update_password'
       }
@@ -309,8 +435,8 @@ export class PasswordsService {
       level: LogLevel.INFO,
       message: `Password deleted for ${password.website}`,
       source: 'passwords',
+      userId,
       metadata: {
-        userId,
         website: password.website,
         username: password.username,
         timestamp: new Date().toISOString(),
@@ -595,5 +721,101 @@ export class PasswordsService {
     
     // Save and return the updated password
     return password.save();
+  }
+  
+  /**
+   * Synchronize reused password information across all passwords for a user
+   * This ensures that all password entries have consistent reused password information
+   * @param userId The user ID
+   * @returns Number of passwords updated
+   */
+  async synchronizeReusedPasswords(userId: string): Promise<number> {
+    // Get all passwords for the user
+    const userPasswords = await this.passwordModel.find({ userId }).exec();
+    
+    // Create a map of password values to password entries
+    const passwordMap = new Map<string, PasswordDocument[]>();
+    
+    // First pass: decrypt all passwords and group them by value
+    for (const password of userPasswords) {
+      try {
+        const decryptedPassword = this.decrypt(password.password);
+        
+        if (!passwordMap.has(decryptedPassword)) {
+          passwordMap.set(decryptedPassword, []);
+        }
+        
+        passwordMap.get(decryptedPassword)?.push(password);
+      } catch (error) {
+        console.error(`Error decrypting password during sync: ${error.message}`);
+      }
+    }
+    
+    // Second pass: update reused password information for each group
+    let updatedCount = 0;
+    
+    for (const [_, passwordGroup] of passwordMap.entries()) {
+      // If there's more than one password with the same value, they're reused
+      if (passwordGroup.length > 1) {
+        // For each password in the group
+        for (const password of passwordGroup) {
+          // Create a list of all other passwords in the group
+          const reusedIn = passwordGroup
+            .filter(p => p._id && password._id && p._id.toString() !== password._id.toString())
+            .map(p => ({
+              website: p.website,
+              username: p.username
+            }));
+          
+          // Check if we need to update this password
+          let needsUpdate = false;
+          
+          // If isReused flag is not set correctly
+          if (password.isReused !== true) {
+            password.isReused = true;
+            needsUpdate = true;
+          }
+          
+          // If reusedIn array doesn't match what we expect
+          if (!password.reusedIn || 
+              JSON.stringify(password.reusedIn.sort()) !== JSON.stringify(reusedIn.sort())) {
+            password.reusedIn = reusedIn;
+            needsUpdate = true;
+          }
+          
+          // Save if needed
+          if (needsUpdate) {
+            await password.save();
+            updatedCount++;
+          }
+        }
+      } else if (passwordGroup.length === 1) {
+        // If there's only one password with this value, it's not reused
+        const password = passwordGroup[0];
+        
+        // Check if we need to update this password
+        let needsUpdate = false;
+        
+        // If isReused flag is incorrectly set
+        if (password.isReused === true) {
+          password.isReused = false;
+          needsUpdate = true;
+        }
+        
+        // If reusedIn array is not empty
+        if (password.reusedIn && password.reusedIn.length > 0) {
+          password.reusedIn = [];
+          needsUpdate = true;
+        }
+        
+        // Save if needed
+        if (needsUpdate) {
+          await password.save();
+          updatedCount++;
+        }
+      }
+    }
+    
+    return updatedCount;
   }
 }

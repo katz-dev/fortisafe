@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, HttpCode, HttpStatus, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { LogsService } from './logs.service';
@@ -42,13 +42,12 @@ export class LogsController {
     return this.logsService.getSystemLogs();
   }
 
-  @Get('user/:userId')
-  @ApiOperation({ summary: 'Get all logs for a specific user' })
-  @ApiParam({ name: 'userId', description: 'User ID' })
-  @ApiResponse({ status: 200, description: 'Returns all logs for the specified user', type: [Log] })
+  @Get('user')
+  @ApiOperation({ summary: 'Get all logs for the authenticated user' })
+  @ApiResponse({ status: 200, description: 'Returns all logs for the authenticated user', type: [Log] })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  getUserLogs(@Param('userId') userId: string) {
-    return this.logsService.getUserLogs(userId);
+  getUserLogs(@Request() req) {
+    return this.logsService.getUserLogs(req.user.userId);
   }
 
   @Get('level/:level')

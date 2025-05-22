@@ -51,6 +51,13 @@ export async function getUserProfile() {
 export function logout() {
   // Show confirmation dialog
   if (window.confirm('Are you sure you want to log out?')) {
+    // Clear local tokens first
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('id_token');
+    
+    // Create a cookie to indicate that we've just logged out
+    document.cookie = 'just_logged_out=true; path=/; max-age=60';
+    
     // Redirect to backend logout endpoint which will handle Auth0 logout
     window.location.href = `${backendUrl}/auth/logout`;
   }

@@ -9,6 +9,7 @@ import { CommonModule } from './common/common.module';
 import { PasswordsModule } from './passwords/passwords.module';
 import { ScannerModule } from './scanner/scanner.module';
 import { LogsModule } from './logs/logs.module';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { LogsModule } from './logs/logs.module';
     PasswordsModule,
     ScannerModule,
     LogsModule,
+    EmailModule,
   ],
   controllers: [AppController],
   providers: [AppService],

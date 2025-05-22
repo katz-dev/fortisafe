@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import PageLayout from '@/components/PageLayout';
 import { Shield, Check, Scan, X, RefreshCw, Lock, FileText } from 'lucide-react';
 import { useAuth } from '../contexts/auth-context';
+import { useSecurityContext } from '../contexts/security-context';
 import axios from 'axios';
 import { toast } from 'sonner';
 
@@ -76,6 +77,9 @@ export default function SecurityPage() {
     
     // Auth context
     const { user } = useAuth();
+    
+    // Security context for refreshing data when passwords are updated
+    const { securityDataVersion } = useSecurityContext();
 
     /**
      * Calculates a security score based on password strength and URL scan results
@@ -311,71 +315,28 @@ export default function SecurityPage() {
                 return;
             }
             
-            // Create mock data for testing if the API endpoint is not available
-            const mockLogs: LogEntry[] = [
+            // Fetch user logs from API
+            const response = await axios.get(
+                `${API_URL}/logs/user`,
                 {
-                    _id: '1',
-                    level: 'info',
-                    message: 'User logged in successfully',
-                    source: 'auth-service',
-                    timestamp: new Date().toISOString()
-                },
-                {
-                    _id: '2',
-                    level: 'warn',
-                    message: 'Failed login attempt detected',
-                    source: 'auth-service',
-                    timestamp: new Date(Date.now() - 300000).toISOString() // 5 minutes ago
-                },
-                {
-                    _id: '3',
-                    level: 'error',
-                    message: 'Database connection error',
-                    source: 'database-service',
-                    timestamp: new Date(Date.now() - 600000).toISOString() // 10 minutes ago
-                },
-                {
-                    _id: '4',
-                    level: 'info',
-                    message: 'Password updated for user account',
-                    source: 'password-service',
-                    timestamp: new Date(Date.now() - 900000).toISOString() // 15 minutes ago
-                },
-                {
-                    _id: '5',
-                    level: 'warn',
-                    message: 'Suspicious URL detected and blocked',
-                    source: 'scanner-service',
-                    timestamp: new Date(Date.now() - 1200000).toISOString() // 20 minutes ago
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                    timeout: 10000 // 10 second timeout
                 }
-            ];
+            );
             
-            try {
-                // Try to fetch user logs from API first
-                const response = await axios.get(
-                    `${API_URL}/logs/user/${user._id}`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                        timeout: 10000 // 10 second timeout
-                    }
-                );
-                
-                if (response.data && Array.isArray(response.data)) {
-                    setSystemLogs(response.data);
-                    toast.success('User logs loaded successfully');
+            if (response.data && Array.isArray(response.data)) {
+                setSystemLogs(response.data);
+                if (response.data.length === 0) {
+                    toast.info('No logs found for your account');
                 } else {
-                    // Fallback to mock data
-                    console.warn('API returned invalid data format, using mock data');
-                    setSystemLogs(mockLogs);
-                    toast.info('Using sample log data for demonstration');
+                    toast.success('User logs loaded successfully');
                 }
-            } catch (apiError) {
-                console.warn('User logs endpoint not available, using mock data:', apiError);
-                // Use mock data as fallback
-                setSystemLogs(mockLogs);
-                toast.info('Using sample log data for demonstration');
+            } else {
+                console.warn('API returned invalid data format');
+                setSystemLogs([]);
+                toast.error('Failed to load logs: Invalid data format');
             }
         } catch (error) {
             console.error('Error in logs component:', error);
@@ -395,6 +356,16 @@ export default function SecurityPage() {
             handleScan();
         }
     }, [user, fetchPasswordLogs, fetchSystemLogs, handleScan]);
+    
+    // Refresh security data when securityDataVersion changes
+    // This ensures the security page updates when passwords are modified elsewhere
+    useEffect(() => {
+        if (user && securityDataVersion > 0) {
+            // Refresh security scan data
+            handleScan();
+            toast.success('Security data refreshed');
+        }
+    }, [securityDataVersion, user, handleScan]);
 
     return (
         <PageLayout>
@@ -490,27 +461,108 @@ export default function SecurityPage() {
                                                 <div className="bg-blue-500 h-2 animate-progress"></div>
                                             </div>
                                         ) : systemLogs.length > 0 ? (
-                                            <div className="space-y-2 max-h-60 overflow-y-auto">
-                                                {systemLogs.map((log) => (
-                                                    <div 
-                                                        key={log._id} 
-                                                        className={`p-2 rounded-md text-xs ${log.level === 'error' || log.level === 'fatal' ? 'bg-red-500/10 border border-red-500/30' : 
-                                                                                 log.level === 'warn' ? 'bg-amber-500/10 border border-amber-500/30' : 
-                                                                                 'bg-blue-500/10 border border-blue-500/30'}`}
-                                                    >
-                                                        <div className="flex items-center">
-                                                            <span className={`inline-block w-2 h-2 rounded-full mr-2 ${log.level === 'error' || log.level === 'fatal' ? 'bg-red-500' : 
-                                                                                                                  log.level === 'warn' ? 'bg-amber-500' : 
-                                                                                                                  'bg-blue-500'}`}></span>
-                                                            <span className="font-medium text-white">{log.level.toUpperCase()}</span>
-                                                            <span className="ml-auto text-gray-400 text-xs">
-                                                                {new Date(log.timestamp).toLocaleTimeString()}
-                                                            </span>
+                                            <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                                                {systemLogs.map((log) => {
+                                                    // Determine log type based on source and metadata
+                                                    let logIcon;
+                                                    let logTitle;
+                                                    const logDetails = [];
+                                                    
+                                                    // Set color based on log level
+                                                    const levelColor = 
+                                                        log.level === 'error' || log.level === 'fatal' ? 'bg-red-500/10 border-red-500/30 text-red-400' : 
+                                                        log.level === 'warn' ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' : 
+                                                        'bg-blue-500/10 border-blue-500/30 text-blue-400';
+                                                        
+                                                    // Determine log type and details based on source and metadata
+                                                    if (log.source === 'passwords') {
+                                                        logIcon = <Lock className="h-4 w-4" />;
+                                                        logTitle = 'Password Activity';
+                                                        
+                                                        if (log.metadata) {
+                                                            // Add website and username if available
+                                                            if (log.metadata.website) {
+                                                                logDetails.push(`Website: ${log.metadata.website}`);
+                                                            }
+                                                            if (log.metadata.username) {
+                                                                logDetails.push(`Username: ${log.metadata.username}`);
+                                                            }
+                                                            
+                                                            // Add security info if available
+                                                            if (log.metadata.isCompromised) {
+                                                                logDetails.push('Security: Compromised password detected');
+                                                            }
+                                                            if (log.metadata.isUrlUnsafe) {
+                                                                logDetails.push('Security: Unsafe URL detected');
+                                                            }
+                                                            if (log.metadata.isReused) {
+                                                                logDetails.push('Security: Password reuse detected');
+                                                            }
+                                                            
+                                                            // Add action if available
+                                                            if (log.metadata.action) {
+                                                                const action = log.metadata.action.toString().replace('_', ' ');
+                                                                logDetails.push(`Action: ${action}`);
+                                                            }
+                                                        }
+                                                    } else if (log.source === 'auth-service' || log.source === 'auth') {
+                                                        logIcon = <Shield className="h-4 w-4" />;
+                                                        logTitle = 'Authentication';
+                                                    } else if (log.source === 'scanner' || log.source === 'scanner-service') {
+                                                        logIcon = <Scan className="h-4 w-4" />;
+                                                        logTitle = 'Security Scan';
+                                                        
+                                                        if (log.metadata) {
+                                                            if (log.metadata.url) {
+                                                                logDetails.push(`URL: ${log.metadata.url}`);
+                                                            }
+                                                            if (log.metadata.threatTypes) {
+                                                                logDetails.push(`Threats: ${log.metadata.threatTypes}`);
+                                                            }
+                                                        }
+                                                    } else {
+                                                        logIcon = <FileText className="h-4 w-4" />;
+                                                        logTitle = log.source || 'System';
+                                                    }
+                                                    
+                                                    // Format timestamp
+                                                    const timestamp = new Date(log.timestamp);
+                                                    const formattedDate = timestamp.toLocaleDateString();
+                                                    const formattedTime = timestamp.toLocaleTimeString();
+                                                    
+                                                    return (
+                                                        <div 
+                                                            key={log._id} 
+                                                            className={`p-3 rounded-md text-sm border ${levelColor} bg-opacity-10 hover:bg-opacity-20 transition-colors`}
+                                                        >
+                                                            <div className="flex items-center gap-2">
+                                                                <div className={`p-1.5 rounded-full bg-opacity-20 ${levelColor.split(' ')[0]}`}>
+                                                                    {logIcon}
+                                                                </div>
+                                                                <div className="flex-1">
+                                                                    <div className="flex justify-between items-center">
+                                                                        <span className="font-medium text-white">{logTitle}</span>
+                                                                        <span className="text-gray-400 text-xs">
+                                                                            {formattedDate}, {formattedTime}
+                                                                        </span>
+                                                                    </div>
+                                                                    <p className="text-gray-300 mt-1">{log.message}</p>
+                                                                    
+                                                                    {logDetails.length > 0 && (
+                                                                        <div className="mt-2 space-y-1">
+                                                                            {logDetails.map((detail, idx) => (
+                                                                                <div key={idx} className="text-xs text-gray-400 flex items-center gap-1">
+                                                                                    <span className="w-1.5 h-1.5 rounded-full bg-gray-500"></span>
+                                                                                    <span>{detail}</span>
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
                                                         </div>
-                                                        <p className="mt-1 text-gray-300 break-words">{log.message}</p>
-                                                        {log.source && <p className="text-gray-400 text-xs mt-1">Source: {log.source}</p>}
-                                                    </div>
-                                                ))}
+                                                    );
+                                                })}
                                             </div>
                                         ) : (
                                             <div className="text-center py-6 text-gray-400">

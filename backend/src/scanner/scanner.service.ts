@@ -9,6 +9,8 @@ import {
 } from './dto/scan-result.dto';
 import { PasswordsService } from '../passwords/passwords.service';
 import { SecurityUtilsService } from '../utils/security-utils.service';
+import { LogsService } from '../logs/logs.service';
+import { LogLevel } from '../logs/entities/log.entity';
 import * as crypto from 'crypto';
 import axios from 'axios';
 import { Password, PasswordDocument } from '../passwords/entities/password.schema';
@@ -25,6 +27,7 @@ export class ScannerService {
     private configService: ConfigService,
     private passwordsService: PasswordsService,
     private securityUtilsService: SecurityUtilsService,
+    private logsService: LogsService,
   ) {
     this.googleSafeBrowsingApiKey = this.configService.get<string>(
       'GOOGLE_SAFE_BROWSING_API_KEY',
@@ -232,6 +235,8 @@ export class ScannerService {
             decryptedPassword,
             passwordId
           );
+        
+        // Security scan logs removed
 
         // Update password security information in the database
         await this.passwordsService.updateSecurityInfo({
@@ -274,7 +279,9 @@ export class ScannerService {
         const isStrong = this.isStrongPassword(decryptedPassword);
         if (isStrong && result.strongPasswords !== undefined) {
           result.strongPasswords++;
-        } else if (result.weakPasswords !== undefined) {
+        } else if (!isStrong && result.weakPasswords !== undefined) {
+          // Count all weak passwords regardless of other security statuses
+          // This ensures accurate reporting of weak passwords
           result.weakPasswords++;
         }
       }
