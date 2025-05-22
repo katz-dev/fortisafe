@@ -1,14 +1,13 @@
 'use client';
-import { useEffect, useState } from "react";
+import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getUserProfile } from "@/lib/api";
 
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-export default function LoginPage() {
+function LoginContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         async function checkExistingSession() {
@@ -62,15 +61,29 @@ export default function LoginPage() {
         }
 
         void checkExistingSession();
-    }, [router]);
+    }, [router, searchParams]);
 
     return (
+        <div className="text-white text-center">
+            <h1 className="text-2xl font-bold mb-4">FortiSafe</h1>
+            <p>Checking authentication status...</p>
+            <div className="mt-4 w-12 h-12 rounded-full border-4 border-t-transparent border-white animate-spin mx-auto"></div>
+        </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
         <div className="flex min-h-screen items-center justify-center bg-[#080b15]">
-            <div className="text-white text-center">
-                <h1 className="text-2xl font-bold mb-4">FortiSafe</h1>
-                <p>Checking authentication status...</p>
-                <div className="mt-4 w-12 h-12 rounded-full border-4 border-t-transparent border-white animate-spin mx-auto"></div>
-            </div>
+            <Suspense fallback={
+                <div className="text-white text-center">
+                    <h1 className="text-2xl font-bold mb-4">FortiSafe</h1>
+                    <p>Loading...</p>
+                    <div className="mt-4 w-12 h-12 rounded-full border-4 border-t-transparent border-white animate-spin mx-auto"></div>
+                </div>
+            }>
+                <LoginContent />
+            </Suspense>
         </div>
     );
 }

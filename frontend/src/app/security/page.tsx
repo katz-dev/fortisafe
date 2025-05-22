@@ -466,7 +466,7 @@ export default function SecurityPage() {
                                                     // Determine log type based on source and metadata
                                                     let logIcon;
                                                     let logTitle;
-                                                    let logDetails = [];
+                                                    const logDetails = [];
                                                     
                                                     // Set color based on log level
                                                     const levelColor = 
