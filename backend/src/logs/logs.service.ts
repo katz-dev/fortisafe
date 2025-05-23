@@ -19,15 +19,15 @@ export class LogsService {
 
   async findAll(query?: { level?: LogLevel; source?: string }): Promise<Log[]> {
     const filter: any = {};
-    
+
     if (query?.level) {
       filter.level = query.level;
     }
-    
+
     if (query?.source) {
       filter.source = query.source;
     }
-    
+
     return this.logModel.find(filter).sort({ timestamp: -1 }).exec();
   }
 
@@ -43,11 +43,11 @@ export class LogsService {
     const updatedLog = await this.logModel
       .findByIdAndUpdate(id, updateLogDto, { new: true })
       .exec();
-      
+
     if (!updatedLog) {
       throw new NotFoundException(`Log with ID ${id} not found`);
     }
-    
+
     return updatedLog;
   }
 
@@ -57,19 +57,22 @@ export class LogsService {
       throw new NotFoundException(`Log with ID ${id} not found`);
     }
   }
-  
+
   async clearLogs(): Promise<void> {
     await this.logModel.deleteMany({}).exec();
   }
-  
+
   async getLogsByLevel(level: LogLevel): Promise<Log[]> {
     return this.logModel.find({ level }).sort({ timestamp: -1 }).exec();
   }
-  
+
   async getSystemLogs(): Promise<Log[]> {
-    return this.logModel.find({ source: 'system' }).sort({ timestamp: -1 }).exec();
+    return this.logModel
+      .find({ source: 'system' })
+      .sort({ timestamp: -1 })
+      .exec();
   }
-  
+
   /**
    * Get logs for a specific user
    * @param userId The ID of the user to get logs for

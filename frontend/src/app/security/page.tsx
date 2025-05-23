@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import PageLayout from '@/components/PageLayout';
@@ -442,37 +443,55 @@ export default function SecurityPage() {
                                     <div className="bg-[#252b3b] p-4 rounded-lg">
                                         <div className="flex justify-between items-center mb-4">
                                             <p className="text-sm text-gray-400">Recent system activity</p>
-                                            <Button
+                                            <motion.button
                                                 onClick={fetchSystemLogs}
                                                 disabled={isLoadingSystemLogs}
-                                                size="sm"
-                                                className="bg-[#4f46e5] hover:bg-[#4338ca] text-white"
+                                                className="bg-[#4f46e5] hover:bg-[#4338ca] text-white rounded-md px-3 py-1.5 text-sm font-medium shadow-md transition-all duration-200 flex items-center justify-center"
+                                                whileHover={{ scale: 1.03 }}
+                                                whileTap={{ scale: 0.97 }}
                                             >
                                                 {isLoadingSystemLogs ? (
                                                     <RefreshCw className="h-4 w-4 animate-spin" />
                                                 ) : (
                                                     <RefreshCw className="h-4 w-4" />
                                                 )}
-                                            </Button>
+                                            </motion.button>
                                         </div>
                                         
                                         {isLoadingSystemLogs ? (
-                                            <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden mb-4">
-                                                <div className="bg-blue-500 h-2 animate-progress"></div>
-                                            </div>
-                                        ) : systemLogs.length > 0 ? (
-                                            <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
-                                                {systemLogs.map((log) => {
-                                                    // Determine log type based on source and metadata
-                                                    let logIcon;
-                                                    let logTitle;
-                                                    const logDetails = [];
-                                                    
-                                                    // Set color based on log level
-                                                    const levelColor = 
-                                                        log.level === 'error' || log.level === 'fatal' ? 'bg-red-500/10 border-red-500/30 text-red-400' : 
-                                                        log.level === 'warn' ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' : 
-                                                        'bg-blue-500/10 border-blue-500/30 text-blue-400';
+                                            <motion.div 
+                                                className="w-full bg-[#1a1f2e] h-2 rounded-full overflow-hidden mb-4 shadow-inner"
+                                                initial={{ opacity: 0, y: -10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ duration: 0.3 }}
+                                            >
+                                                <motion.div 
+                                                    className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2"
+                                                    initial={{ width: "0%" }}
+                                                    animate={{ width: "100%" }}
+                                                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                                                ></motion.div>
+                                            </motion.div>
+                                        ) : (
+                                            <AnimatePresence>
+                                                {systemLogs.length > 0 ? (
+                                                    <motion.div 
+                                                        className="space-y-3 max-h-80 overflow-y-auto pr-1 hide-scrollbar"
+                                                        initial={{ opacity: 0 }}
+                                                        animate={{ opacity: 1 }}
+                                                        transition={{ duration: 0.3 }}
+                                                    >
+                                                        {systemLogs.map((log, index) => {
+                                                            // Determine log type based on source and metadata
+                                                            let logIcon;
+                                                            let logTitle;
+                                                            const logDetails = [];
+                                                            
+                                                            // Set color based on log level
+                                                            const levelColor = 
+                                                                log.level === 'error' || log.level === 'fatal' ? 'bg-red-500/10 border-red-500/30 text-red-400' : 
+                                                                log.level === 'warn' ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' : 
+                                                                'bg-indigo-500/10 border-indigo-500/30 text-indigo-400';
                                                         
                                                     // Determine log type and details based on source and metadata
                                                     if (log.source === 'passwords') {
@@ -531,44 +550,77 @@ export default function SecurityPage() {
                                                     const formattedTime = timestamp.toLocaleTimeString();
                                                     
                                                     return (
-                                                        <div 
-                                                            key={log._id} 
-                                                            className={`p-3 rounded-md text-sm border ${levelColor} bg-opacity-10 hover:bg-opacity-20 transition-colors`}
+                                                        <motion.div 
+                                                            key={log._id}
+                                                            className={`p-3 rounded-lg text-sm border ${levelColor} backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-200`}
+                                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                            transition={{ duration: 0.3, delay: index * 0.05 }}
+                                                            whileHover={{ scale: 1.02, y: -2 }}
                                                         >
-                                                            <div className="flex items-center gap-2">
-                                                                <div className={`p-1.5 rounded-full bg-opacity-20 ${levelColor.split(' ')[0]}`}>
+                                                            <div className="flex items-center gap-3">
+                                                                <motion.div 
+                                                                    className={`p-2 rounded-full ${levelColor.split(' ')[0]} shadow-md`}
+                                                                    whileHover={{ rotate: 15 }}
+                                                                    transition={{ type: "spring", stiffness: 300 }}
+                                                                >
                                                                     {logIcon}
-                                                                </div>
+                                                                </motion.div>
                                                                 <div className="flex-1">
                                                                     <div className="flex justify-between items-center">
                                                                         <span className="font-medium text-white">{logTitle}</span>
-                                                                        <span className="text-gray-400 text-xs">
+                                                                        <span className="text-gray-400 text-xs bg-[#0a0f1a]/50 px-2 py-0.5 rounded-full">
                                                                             {formattedDate}, {formattedTime}
                                                                         </span>
                                                                     </div>
-                                                                    <p className="text-gray-300 mt-1">{log.message}</p>
+                                                                    <p className="text-gray-300 mt-1.5">{log.message}</p>
                                                                     
                                                                     {logDetails.length > 0 && (
-                                                                        <div className="mt-2 space-y-1">
+                                                                        <motion.div 
+                                                                            className="mt-3 space-y-1.5 bg-[#0a0f1a]/30 p-2 rounded-md"
+                                                                            initial={{ height: 0, opacity: 0 }}
+                                                                            animate={{ height: "auto", opacity: 1 }}
+                                                                            transition={{ duration: 0.2, delay: 0.1 }}
+                                                                        >
                                                                             {logDetails.map((detail, idx) => (
-                                                                                <div key={idx} className="text-xs text-gray-400 flex items-center gap-1">
-                                                                                    <span className="w-1.5 h-1.5 rounded-full bg-gray-500"></span>
+                                                                                <motion.div 
+                                                                                    key={idx} 
+                                                                                    className="text-xs text-gray-400 flex items-center gap-1.5"
+                                                                                    initial={{ opacity: 0, x: -5 }}
+                                                                                    animate={{ opacity: 1, x: 0 }}
+                                                                                    transition={{ duration: 0.2, delay: 0.1 + (idx * 0.05) }}
+                                                                                >
+                                                                                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
                                                                                     <span>{detail}</span>
-                                                                                </div>
+                                                                                </motion.div>
                                                                             ))}
-                                                                        </div>
+                                                                        </motion.div>
                                                                     )}
                                                                 </div>
                                                             </div>
-                                                        </div>
+                                                        </motion.div>
                                                     );
                                                 })}
-                                            </div>
-                                        ) : (
-                                            <div className="text-center py-6 text-gray-400">
-                                                <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                                                <p className="text-sm">No system logs available</p>
-                                            </div>
+                                                    </motion.div>
+                                                ) : (
+                                                    <motion.div 
+                                                        className="text-center py-8 text-gray-400 bg-[#0a0f1a]/30 rounded-lg border border-slate-800/60 shadow-inner"
+                                                        initial={{ opacity: 0, y: 10 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        transition={{ duration: 0.3 }}
+                                                    >
+                                                        <motion.div
+                                                            initial={{ scale: 0.8, opacity: 0.5 }}
+                                                            animate={{ scale: 1, opacity: 0.7 }}
+                                                            transition={{ duration: 1, repeat: Infinity, repeatType: "reverse" }}
+                                                        >
+                                                            <FileText className="h-10 w-10 mx-auto mb-3" />
+                                                        </motion.div>
+                                                        <p className="text-sm font-medium">No system logs available</p>
+                                                        <p className="text-xs mt-1 text-gray-500 max-w-xs mx-auto">System logs will appear here when there is activity in your account</p>
+                                                    </motion.div>
+                                                )}
+                                            </AnimatePresence>
                                         )}
                                     </div>
                                 </div>

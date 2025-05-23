@@ -265,11 +265,15 @@ export default function EditPasswordForm({
       isOpen={isOpen}
       onClose={onClose}
       title="Edit Password"
-      icon={<Save className="h-5 w-5 text-indigo-400" />}
+      description={`Update password details for ${formData.website}`}
+      confirmText=""
+      cancelText=""
+      variant="info"
+      icon={<Save className="h-5 w-5" />}
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-300">
+      <form onSubmit={handleSubmit} className="mt-3 sm:mt-4 space-y-3 sm:space-y-4">
+        <div className="space-y-1 sm:space-y-2">
+          <label className="block text-xs sm:text-sm font-medium text-gray-300">
             Website/Service Name*
           </label>
           <Input
@@ -277,14 +281,14 @@ export default function EditPasswordForm({
             name="website"
             value={formData.website}
             onChange={handleChange}
-            className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            placeholder="e.g. Google, Facebook, etc."
+            className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 text-sm bg-slate-800/50 border border-slate-700/50 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            placeholder="e.g. Google, Facebook, Twitter"
             required
           />
         </div>
 
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-300">
+        <div className="space-y-1 sm:space-y-2">
+          <label className="block text-xs sm:text-sm font-medium text-gray-300">
             URL (Optional)
           </label>
           <Input
@@ -292,13 +296,13 @@ export default function EditPasswordForm({
             name="url"
             value={formData.url}
             onChange={handleChange}
-            className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 text-sm bg-slate-800/50 border border-slate-700/50 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             placeholder="e.g. https://example.com"
           />
         </div>
 
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-300">
+        <div className="space-y-1 sm:space-y-2">
+          <label className="block text-xs sm:text-sm font-medium text-gray-300">
             Username/Email*
           </label>
           <Input
@@ -306,42 +310,42 @@ export default function EditPasswordForm({
             name="username"
             value={formData.username}
             onChange={handleChange}
-            className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 text-sm bg-slate-800/50 border border-slate-700/50 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             placeholder="e.g. user@example.com"
             required
           />
         </div>
 
-        <div className="mb-4">
-          <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
-            Password *
+        <div className="space-y-1 sm:space-y-2">
+          <label className="block text-xs sm:text-sm font-medium text-gray-300">
+            Password*
           </label>
           <div className="relative">
             <Input
-              id="password"
               type={showPassword ? "text" : "password"}
+              name="password"
               value={formData.password}
               onChange={handlePasswordChange}
-              className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent pr-20"
+              className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 text-sm bg-slate-800/50 border border-slate-700/50 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent pr-16 sm:pr-20"
               required
             />
-            <div className="absolute inset-y-0 right-0 flex items-center pr-3 space-x-2">
+            <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:pr-3 space-x-1 sm:space-x-2">
               <button
                 type="button"
                 onClick={generateRandomPassword}
-                className="text-gray-400 hover:text-white focus:outline-none"
+                className="text-gray-400 hover:text-white focus:outline-none p-1"
               >
-                <RefreshCw className="h-4 w-4" />
+                <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </button>
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="text-gray-400 hover:text-white focus:outline-none"
+                className="text-gray-400 hover:text-white focus:outline-none p-1"
               >
                 {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
+                  <EyeOff className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 ) : (
-                  <Eye className="h-4 w-4" />
+                  <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 )}
               </button>
             </div>
@@ -358,57 +362,62 @@ export default function EditPasswordForm({
                         : passwordStrength === "okay"
                         ? "66%"
                         : "100%",
+                    transition: "width 0.3s ease-in-out"
                   }}
                 ></div>
               </div>
-              {getStrengthText()}
+              <div className="mt-1 sm:mt-2">
+                {getStrengthText()}
+              </div>
               {isCheckingReuse && (
                 <div className="text-xs text-gray-400 mt-1">Checking for password reuse...</div>
               )}
-              {getReusedPasswordWarning()}
+              <div className="mt-1 sm:mt-2">
+                {getReusedPasswordWarning()}
+              </div>
             </>
           )}
         </div>
 
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-300">
+        <div className="space-y-1 sm:space-y-2">
+          <label className="block text-xs sm:text-sm font-medium text-gray-300">
             Notes (Optional)
           </label>
           <textarea
             name="notes"
             value={formData.notes}
             onChange={handleChange}
-            className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 text-sm bg-slate-800/50 border border-slate-700/50 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             placeholder="Add notes about this password"
             rows={3}
           />
         </div>
 
-        <div className="flex justify-end space-x-3 pt-4">
+        <div className="flex justify-end space-x-2 sm:space-x-3 pt-3 sm:pt-4">
           <Button
             type="button"
             variant="outline"
-            className="border-slate-700 bg-slate-800/50 hover:bg-slate-700 text-gray-300"
+            className="border-slate-700 bg-slate-800/50 hover:bg-slate-700 text-gray-300 text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3"
             onClick={onClose}
             disabled={isSubmitting}
           >
-            <X className="h-4 w-4 mr-2" />
+            <X className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
             Cancel
           </Button>
           <Button
             type="submit"
-            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3"
             disabled={isSubmitting}
           >
             {isSubmitting ? (
               <div className="flex items-center">
-                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
-                Updating...
+                <div className="animate-spin rounded-full h-3.5 w-3.5 sm:h-4 sm:w-4 border-t-2 border-b-2 border-white mr-1 sm:mr-2"></div>
+                <span>Updating...</span>
               </div>
             ) : (
               <div className="flex items-center">
-                <Save className="h-4 w-4 mr-2" />
-                Update Password
+                <Save className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                <span>Update Password</span>
               </div>
             )}
           </Button>

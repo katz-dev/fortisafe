@@ -57,8 +57,9 @@ export class MarkedPasswordInfo {
 
   @ApiProperty({
     example: 'compromised',
-    description: 'The reason why the password was marked (compromised, weak, or reused)',
-    enum: ['compromised', 'weak', 'reused']
+    description:
+      'The reason why the password was marked (compromised, weak, or reused)',
+    enum: ['compromised', 'weak', 'reused'],
   })
   reason: 'compromised' | 'weak' | 'reused';
 

@@ -12,6 +12,6 @@ import { AuthModule } from '../auth/auth.module';
   ],
   controllers: [LogsController],
   providers: [LogsService],
-  exports: [LogsService] // Export the service so other modules can use it for logging
+  exports: [LogsService], // Export the service so other modules can use it for logging
 })
 export class LogsModule {}

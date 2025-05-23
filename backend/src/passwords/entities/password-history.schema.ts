@@ -24,7 +24,8 @@ export class PasswordHistory {
 
   @ApiProperty({
     example: 'Google',
-    description: 'The website or service name at the time of this password version',
+    description:
+      'The website or service name at the time of this password version',
   })
   @Prop({ required: true })
   website: string;
@@ -38,7 +39,8 @@ export class PasswordHistory {
 
   @ApiProperty({
     example: 'user@example.com',
-    description: 'The username or email used for the account at the time of this password version',
+    description:
+      'The username or email used for the account at the time of this password version',
   })
   @Prop({ required: true })
   username: string;
@@ -65,4 +67,5 @@ export class PasswordHistory {
   replacedAt: Date;
 }
 
-export const PasswordHistorySchema = SchemaFactory.createForClass(PasswordHistory);
+export const PasswordHistorySchema =
+  SchemaFactory.createForClass(PasswordHistory);

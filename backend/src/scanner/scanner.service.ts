@@ -13,7 +13,10 @@ import { LogsService } from '../logs/logs.service';
 import { LogLevel } from '../logs/entities/log.entity';
 import * as crypto from 'crypto';
 import axios from 'axios';
-import { Password, PasswordDocument } from '../passwords/entities/password.schema';
+import {
+  Password,
+  PasswordDocument,
+} from '../passwords/entities/password.schema';
 
 @Injectable()
 export class ScannerService {
@@ -44,14 +47,14 @@ export class ScannerService {
       urlResults: [],
       passwordResult: {
         isCompromised: false,
-        breachCount: 0
+        breachCount: 0,
       },
       isEmailCompromised: false,
       markedPasswords: [],
       weakPasswords: 0,
       reusedPasswords: 0,
       strongPasswords: 0,
-      compromisedPasswords: 0
+      compromisedPasswords: 0,
     };
     const userId = createScannerDto.userId;
 
@@ -69,7 +72,7 @@ export class ScannerService {
               passwordId: createScannerDto.passwordId,
               isUrlUnsafe: !urlResult.isSafe,
               urlThreatTypes: urlResult.threatTypes || [],
-              lastScanned: new Date()
+              lastScanned: new Date(),
             });
           }
         }
@@ -85,15 +88,18 @@ export class ScannerService {
       // If userId is provided, update the password entry with security information
       if (userId && createScannerDto.passwordId) {
         // Check if password is reused (if userId is provided)
-        let reusedCheck: { isReused: boolean; usedIn: { website: string; username: string }[] } = {
+        let reusedCheck: {
+          isReused: boolean;
+          usedIn: { website: string; username: string }[];
+        } = {
           isReused: false,
-          usedIn: []
+          usedIn: [],
         };
         if (userId) {
           reusedCheck = await this.passwordsService.checkReusedPassword(
             userId,
             createScannerDto.password,
-            createScannerDto.passwordId
+            createScannerDto.passwordId,
           );
         }
 
@@ -104,7 +110,7 @@ export class ScannerService {
           breachCount: result.passwordResult.breachCount || 0,
           isReused: reusedCheck.isReused,
           reusedIn: reusedCheck.usedIn,
-          lastScanned: new Date()
+          lastScanned: new Date(),
         });
       }
     }
@@ -136,7 +142,7 @@ export class ScannerService {
         results.push({
           url,
           isSafe: urlCheck.isSafe,
-          threatTypes: urlCheck.threatTypes
+          threatTypes: urlCheck.threatTypes,
         });
       }
 
@@ -153,7 +159,8 @@ export class ScannerService {
   async checkPasswordSecurity(password: string): Promise<PasswordCheckResult> {
     try {
       // Use the SecurityUtilsService to check password security
-      const result = await this.securityUtilsService.checkPasswordSecurity(password);
+      const result =
+        await this.securityUtilsService.checkPasswordSecurity(password);
       return result;
     } catch (error) {
       console.error('Error checking password security:', error);
@@ -176,7 +183,7 @@ export class ScannerService {
       reusedPasswords: 0,
       strongPasswords: 0,
       compromisedPasswords: 0,
-      isEmailCompromised: false
+      isEmailCompromised: false,
     };
 
     try {
@@ -188,7 +195,7 @@ export class ScannerService {
       const urlToPasswordMap = new Map<string, PasswordDocument[]>();
 
       // Create a mapping of URLs to password entries
-      passwords.forEach(password => {
+      passwords.forEach((password) => {
         if (password.url) {
           if (!urlToPasswordMap.has(password.url)) {
             urlToPasswordMap.set(password.url, []);
@@ -216,7 +223,7 @@ export class ScannerService {
                 passwordId: passwordEntry._id.toString(),
                 isUrlUnsafe: !urlResult.isSafe,
                 urlThreatTypes: urlResult.threatTypes || [],
-                lastScanned: new Date()
+                lastScanned: new Date(),
               });
             }
           }
@@ -227,10 +234,18 @@ export class ScannerService {
       for (const password of passwords) {
         if (!password._id) continue;
 
-        const decryptedPassword = await this.passwordsService.decryptPassword(userId, password._id.toString());
-        const passwordCheck = await this.checkPasswordSecurity(decryptedPassword);
+        const decryptedPassword = await this.passwordsService.decryptPassword(
+          userId,
+          password._id.toString(),
+        );
+        const passwordCheck =
+          await this.checkPasswordSecurity(decryptedPassword);
         const isWeak = !this.isStrongPassword(decryptedPassword);
-        const reusedCheck = await this.passwordsService.checkReusedPassword(userId, decryptedPassword, password._id.toString());
+        const reusedCheck = await this.passwordsService.checkReusedPassword(
+          userId,
+          decryptedPassword,
+          password._id.toString(),
+        );
 
         // Update password security info
         await this.passwordsService.updateSecurityInfo({
@@ -240,7 +255,7 @@ export class ScannerService {
           breachCount: passwordCheck.breachCount || 0,
           isReused: reusedCheck.isReused,
           reusedIn: reusedCheck.usedIn,
-          lastScanned: new Date()
+          lastScanned: new Date(),
         });
 
         // Update result statistics
@@ -257,12 +272,18 @@ export class ScannerService {
             urlThreatTypes: password.urlThreatTypes || [],
             isReused: password.isReused || false,
             reusedIn: password.reusedIn || [],
-            lastScanned: new Date()
+            lastScanned: new Date(),
           });
         }
         if (isWeak) {
           result.weakPasswords++;
-          if (!result.markedPasswords.some(p => p.website === password.website && p.username === password.username)) {
+          if (
+            !result.markedPasswords.some(
+              (p) =>
+                p.website === password.website &&
+                p.username === password.username,
+            )
+          ) {
             result.markedPasswords.push({
               id: password._id.toString(),
               website: password.website,
@@ -274,13 +295,19 @@ export class ScannerService {
               urlThreatTypes: password.urlThreatTypes || [],
               isReused: password.isReused || false,
               reusedIn: password.reusedIn || [],
-              lastScanned: new Date()
+              lastScanned: new Date(),
             });
           }
         }
         if (reusedCheck.isReused) {
           result.reusedPasswords++;
-          if (!result.markedPasswords.some(p => p.website === password.website && p.username === password.username)) {
+          if (
+            !result.markedPasswords.some(
+              (p) =>
+                p.website === password.website &&
+                p.username === password.username,
+            )
+          ) {
             result.markedPasswords.push({
               id: password._id.toString(),
               website: password.website,
@@ -292,7 +319,7 @@ export class ScannerService {
               urlThreatTypes: password.urlThreatTypes || [],
               isReused: true,
               reusedIn: reusedCheck.usedIn,
-              lastScanned: new Date()
+              lastScanned: new Date(),
             });
           }
         }

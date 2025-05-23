@@ -32,7 +32,7 @@ import { PasswordHistoryResponseDto } from './dto/password-history.dto';
 @UseGuards(JwtAuthGuard)
 @Controller('passwords')
 export class PasswordsController {
-  constructor(private readonly passwordsService: PasswordsService) { }
+  constructor(private readonly passwordsService: PasswordsService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new password entry' })
@@ -98,7 +98,9 @@ export class PasswordsController {
   }
 
   @Post('check-reused')
-  @ApiOperation({ summary: 'Check if a password is reused across multiple accounts' })
+  @ApiOperation({
+    summary: 'Check if a password is reused across multiple accounts',
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Information about password reuse',
@@ -263,7 +265,9 @@ export class PasswordsController {
   }
 
   @Get('history/all')
-  @ApiOperation({ summary: 'Get all password history for the authenticated user' })
+  @ApiOperation({
+    summary: 'Get all password history for the authenticated user',
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'All password history entries grouped by password ID.',
@@ -362,7 +366,9 @@ export class PasswordsController {
   }
 
   @Post('synchronize-reused')
-  @ApiOperation({ summary: 'Synchronize reused password information across all passwords' })
+  @ApiOperation({
+    summary: 'Synchronize reused password information across all passwords',
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Number of passwords updated.',
@@ -372,17 +378,19 @@ export class PasswordsController {
         updatedCount: {
           type: 'number',
           example: 5,
-          description: 'Number of passwords that were updated'
-        }
-      }
-    }
+          description: 'Number of passwords that were updated',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
     description: 'Unauthorized.',
   })
   async synchronizeReusedPasswords(@Request() req) {
-    const updatedCount = await this.passwordsService.synchronizeReusedPasswords(req.user.userId);
+    const updatedCount = await this.passwordsService.synchronizeReusedPasswords(
+      req.user.userId,
+    );
     return { updatedCount };
   }
 }

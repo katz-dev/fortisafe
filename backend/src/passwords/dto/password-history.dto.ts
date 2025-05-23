@@ -19,14 +19,16 @@ export class PasswordHistoryResponseDto {
 
   @ApiProperty({
     example: 'Google',
-    description: 'The website or service name at the time of this password version',
+    description:
+      'The website or service name at the time of this password version',
   })
   @IsString()
   website: string;
 
   @ApiProperty({
     example: 'user@example.com',
-    description: 'The username or email used for the account at the time of this password version',
+    description:
+      'The username or email used for the account at the time of this password version',
   })
   @IsString()
   username: string;

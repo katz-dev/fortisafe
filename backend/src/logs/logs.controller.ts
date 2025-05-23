@@ -1,5 +1,25 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, HttpCode, HttpStatus, UseGuards, Request } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+  HttpCode,
+  HttpStatus,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiQuery,
+  ApiParam,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { LogsService } from './logs.service';
 import { CreateLogDto } from './dto/create-log.dto';
@@ -15,7 +35,11 @@ export class LogsController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new log entry' })
-  @ApiResponse({ status: 201, description: 'Log created successfully', type: Log })
+  @ApiResponse({
+    status: 201,
+    description: 'Log created successfully',
+    type: Log,
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   create(@Body() createLogDto: CreateLogDto) {
     return this.logsService.create(createLogDto);
@@ -27,16 +51,17 @@ export class LogsController {
   @ApiQuery({ name: 'source', required: false })
   @ApiResponse({ status: 200, description: 'Returns all logs', type: [Log] })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  findAll(
-    @Query('level') level?: LogLevel,
-    @Query('source') source?: string,
-  ) {
+  findAll(@Query('level') level?: LogLevel, @Query('source') source?: string) {
     return this.logsService.findAll({ level, source });
   }
 
   @Get('system')
   @ApiOperation({ summary: 'Get all system logs' })
-  @ApiResponse({ status: 200, description: 'Returns all system logs', type: [Log] })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns all system logs',
+    type: [Log],
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   getSystemLogs() {
     return this.logsService.getSystemLogs();
@@ -44,7 +69,11 @@ export class LogsController {
 
   @Get('user')
   @ApiOperation({ summary: 'Get all logs for the authenticated user' })
-  @ApiResponse({ status: 200, description: 'Returns all logs for the authenticated user', type: [Log] })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns all logs for the authenticated user',
+    type: [Log],
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   getUserLogs(@Request() req) {
     return this.logsService.getUserLogs(req.user.userId);
@@ -53,7 +82,11 @@ export class LogsController {
   @Get('level/:level')
   @ApiOperation({ summary: 'Get logs by level' })
   @ApiParam({ name: 'level', enum: LogLevel })
-  @ApiResponse({ status: 200, description: 'Returns logs filtered by level', type: [Log] })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns logs filtered by level',
+    type: [Log],
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   getLogsByLevel(@Param('level') level: LogLevel) {
     return this.logsService.getLogsByLevel(level);
@@ -72,7 +105,11 @@ export class LogsController {
   @Patch(':id')
   @ApiOperation({ summary: 'Update a log' })
   @ApiParam({ name: 'id', description: 'Log ID' })
-  @ApiResponse({ status: 200, description: 'Log updated successfully', type: Log })
+  @ApiResponse({
+    status: 200,
+    description: 'Log updated successfully',
+    type: Log,
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Log not found' })
   update(@Param('id') id: string, @Body() updateLogDto: UpdateLogDto) {

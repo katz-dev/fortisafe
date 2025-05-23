@@ -9,7 +9,10 @@ import { Model, Types } from 'mongoose';
 import * as crypto from 'crypto';
 import { ConfigService } from '@nestjs/config';
 import { Password, PasswordDocument } from './entities/password.schema';
-import { PasswordHistory, PasswordHistoryDocument } from './entities/password-history.schema';
+import {
+  PasswordHistory,
+  PasswordHistoryDocument,
+} from './entities/password-history.schema';
 import { CreatePasswordDto } from './dto/create-password.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { PasswordHistoryResponseDto } from './dto/password-history.dto';
@@ -27,7 +30,8 @@ export class PasswordsService {
 
   constructor(
     @InjectModel(Password.name) private passwordModel: Model<PasswordDocument>,
-    @InjectModel(PasswordHistory.name) private passwordHistoryModel: Model<PasswordHistoryDocument>,
+    @InjectModel(PasswordHistory.name)
+    private passwordHistoryModel: Model<PasswordHistoryDocument>,
     private configService: ConfigService,
     private logsService: LogsService,
     private securityUtilsService: SecurityUtilsService,
@@ -98,25 +102,38 @@ export class PasswordsService {
       urlThreatTypes?: string[];
       isReused?: boolean;
       reusedIn?: { website: string; username: string }[];
-    }
+    },
   ): Promise<void> {
     try {
       const user = await this.usersService.findOne(userId);
       if (!user || !user.email) {
-        this.logger.warn(`Could not send security alert: User ${userId} not found or has no email`);
+        this.logger.warn(
+          `Could not send security alert: User ${userId} not found or has no email`,
+        );
         return;
       }
 
-      const html = await this.emailService.renderTemplate('password-security-alert.hbs', {
-        name: user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'User',
-        isCompromised,
-        isWeak,
-        passwordDetails: passwordDetails ? {
-          ...passwordDetails,
-          reusedIn: passwordDetails.reusedIn?.map(item => `${item.website} (${item.username})`).join(', ') || 'None',
-          urlThreatTypes: passwordDetails.urlThreatTypes?.join(', ') || 'None'
-        } : null
-      });
+      const html = await this.emailService.renderTemplate(
+        'password-security-alert.hbs',
+        {
+          name: user.firstName
+            ? `${user.firstName} ${user.lastName || ''}`.trim()
+            : 'User',
+          isCompromised,
+          isWeak,
+          passwordDetails: passwordDetails
+            ? {
+                ...passwordDetails,
+                reusedIn:
+                  passwordDetails.reusedIn
+                    ?.map((item) => `${item.website} (${item.username})`)
+                    .join(', ') || 'None',
+                urlThreatTypes:
+                  passwordDetails.urlThreatTypes?.join(', ') || 'None',
+              }
+            : null,
+        },
+      );
 
       await this.emailService.sendEmail(
         [user.email],
@@ -137,19 +154,23 @@ export class PasswordsService {
   ): Promise<PasswordDocument> {
     // Check if the password is compromised
     const passwordCheck = await this.securityUtilsService.checkPasswordSecurity(
-      createPasswordDto.password
+      createPasswordDto.password,
     );
 
     // Check if the URL is safe (if provided)
-    let urlCheck: { isSafe: boolean; threatTypes?: string[] } = { isSafe: true };
+    let urlCheck: { isSafe: boolean; threatTypes?: string[] } = {
+      isSafe: true,
+    };
     if (createPasswordDto.url) {
-      urlCheck = await this.securityUtilsService.checkUrlSafety(createPasswordDto.url);
+      urlCheck = await this.securityUtilsService.checkUrlSafety(
+        createPasswordDto.url,
+      );
     }
 
     // Check if the password is reused across other accounts
     const reusedCheck = await this.checkReusedPassword(
       userId,
-      createPasswordDto.password
+      createPasswordDto.password,
     );
 
     // Encrypt the password before storing
@@ -169,7 +190,7 @@ export class PasswordsService {
       urlThreatTypes: urlCheck.threatTypes || [],
       isReused: reusedCheck.isReused,
       reusedIn: reusedCheck.usedIn,
-      lastScanned: new Date()
+      lastScanned: new Date(),
     });
 
     console.log(
@@ -179,7 +200,9 @@ export class PasswordsService {
     const savedPassword = await newPassword.save();
 
     // Check password security and send alert if needed
-    const isCompromised = await this.checkPasswordCompromise(createPasswordDto.password);
+    const isCompromised = await this.checkPasswordCompromise(
+      createPasswordDto.password,
+    );
     const isWeak = this.checkPasswordStrength(createPasswordDto.password);
 
     if (isCompromised || isWeak) {
@@ -190,11 +213,13 @@ export class PasswordsService {
     if (reusedCheck.isReused && reusedCheck.usedIn.length > 0) {
       // Add this new password to the reusedIn arrays of all passwords it's reused with
       for (const reusedItem of reusedCheck.usedIn) {
-        const reusedPassword = await this.passwordModel.findOne({
-          userId,
-          website: reusedItem.website,
-          username: reusedItem.username
-        }).exec();
+        const reusedPassword = await this.passwordModel
+          .findOne({
+            userId,
+            website: reusedItem.website,
+            username: reusedItem.username,
+          })
+          .exec();
 
         if (reusedPassword && reusedPassword._id) {
           // Add this new password to the reusedIn array if not already there
@@ -205,7 +230,7 @@ export class PasswordsService {
           // Add the new password to the reusedIn array
           reusedPassword.reusedIn.push({
             website: savedPassword.website,
-            username: savedPassword.username
+            username: savedPassword.username,
           });
 
           reusedPassword.isReused = true;
@@ -226,8 +251,8 @@ export class PasswordsService {
         url: createPasswordDto.url || 'Not provided',
         tags: createPasswordDto.tags || [],
         timestamp: new Date().toISOString(),
-        action: 'create_password'
-      }
+        action: 'create_password',
+      },
     });
 
     return savedPassword;
@@ -291,22 +316,38 @@ export class PasswordsService {
     }
 
     // Check other fields for changes
-    if (updatePasswordDto.website && updatePasswordDto.website !== originalPassword.website) {
+    if (
+      updatePasswordDto.website &&
+      updatePasswordDto.website !== originalPassword.website
+    ) {
       updatedFields.push('website');
       shouldSaveHistory = true;
     }
-    if (updatePasswordDto.username && updatePasswordDto.username !== originalPassword.username) {
+    if (
+      updatePasswordDto.username &&
+      updatePasswordDto.username !== originalPassword.username
+    ) {
       updatedFields.push('username');
       shouldSaveHistory = true;
     }
-    if (updatePasswordDto.url && updatePasswordDto.url !== originalPassword.url) {
+    if (
+      updatePasswordDto.url &&
+      updatePasswordDto.url !== originalPassword.url
+    ) {
       updatedFields.push('url');
       shouldCheckUrl = true;
     }
-    if (updatePasswordDto.notes && updatePasswordDto.notes !== originalPassword.notes) {
+    if (
+      updatePasswordDto.notes &&
+      updatePasswordDto.notes !== originalPassword.notes
+    ) {
       updatedFields.push('notes');
     }
-    if (updatePasswordDto.tags && JSON.stringify(updatePasswordDto.tags) !== JSON.stringify(originalPassword.tags)) {
+    if (
+      updatePasswordDto.tags &&
+      JSON.stringify(updatePasswordDto.tags) !==
+        JSON.stringify(originalPassword.tags)
+    ) {
       updatedFields.push('tags');
     }
 
@@ -319,10 +360,17 @@ export class PasswordsService {
       // For password security check
       if (shouldCheckPassword && decryptedPassword) {
         // Check if the password is compromised
-        const passwordCheck = await this.securityUtilsService.checkPasswordSecurity(decryptedPassword);
+        const passwordCheck =
+          await this.securityUtilsService.checkPasswordSecurity(
+            decryptedPassword,
+          );
 
         // Check if the password is reused across other accounts
-        const reusedCheck = await this.checkReusedPassword(userId, decryptedPassword, id);
+        const reusedCheck = await this.checkReusedPassword(
+          userId,
+          decryptedPassword,
+          id,
+        );
 
         // Update security information
         updatePasswordDto.isCompromised = passwordCheck.isCompromised;
@@ -331,7 +379,12 @@ export class PasswordsService {
         updatePasswordDto.reusedIn = reusedCheck.usedIn;
 
         // Add to updated fields
-        updatedFields.push('isCompromised', 'breachCount', 'isReused', 'reusedIn');
+        updatedFields.push(
+          'isCompromised',
+          'breachCount',
+          'isReused',
+          'reusedIn',
+        );
       }
 
       // For URL security check
@@ -359,7 +412,9 @@ export class PasswordsService {
 
     // Check password security and send alert if needed
     if (updatePasswordDto.password) {
-      const isCompromised = await this.checkPasswordCompromise(updatePasswordDto.password);
+      const isCompromised = await this.checkPasswordCompromise(
+        updatePasswordDto.password,
+      );
       const isWeak = this.checkPasswordStrength(updatePasswordDto.password);
 
       if (isCompromised || isWeak) {
@@ -370,9 +425,15 @@ export class PasswordsService {
     // Update reusedIn fields for all affected passwords if the password was changed
     if (shouldCheckPassword && decryptedPassword && originalDecryptedPassword) {
       // If the password was previously reused, we need to update all passwords that referenced it
-      if (originalPassword.isReused && originalPassword.reusedIn && originalPassword.reusedIn.length > 0) {
+      if (
+        originalPassword.isReused &&
+        originalPassword.reusedIn &&
+        originalPassword.reusedIn.length > 0
+      ) {
         // Find all passwords that might have this password in their reusedIn array
-        const allUserPasswords = await this.passwordModel.find({ userId }).exec();
+        const allUserPasswords = await this.passwordModel
+          .find({ userId })
+          .exec();
 
         for (const password of allUserPasswords) {
           // Skip the current password
@@ -384,7 +445,9 @@ export class PasswordsService {
           // If this password has the current one in its reusedIn array, we need to update it
           if (password.reusedIn && password.reusedIn.length > 0) {
             const originalIndex = password.reusedIn.findIndex(
-              item => item.website === originalPassword.website && item.username === originalPassword.username
+              (item) =>
+                item.website === originalPassword.website &&
+                item.username === originalPassword.username,
             );
 
             // If found, remove it from reusedIn
@@ -406,13 +469,15 @@ export class PasswordsService {
 
               // Check if it's already in the reusedIn array
               const exists = password.reusedIn.some(
-                item => item.website === updatedPassword.website && item.username === updatedPassword.username
+                (item) =>
+                  item.website === updatedPassword.website &&
+                  item.username === updatedPassword.username,
               );
 
               if (!exists) {
                 password.reusedIn.push({
                   website: updatedPassword.website,
-                  username: updatedPassword.username
+                  username: updatedPassword.username,
                 });
                 needsUpdate = true;
               }
@@ -424,27 +489,40 @@ export class PasswordsService {
               }
             }
           } catch (error) {
-            console.error(`Error decrypting password during reused update: ${error.message}`);
+            console.error(
+              `Error decrypting password during reused update: ${error.message}`,
+            );
           }
 
           // Save the password if it was updated
           if (needsUpdate) {
             // Update isReused flag based on reusedIn length
-            password.isReused = password.reusedIn && password.reusedIn.length > 0;
+            password.isReused =
+              password.reusedIn && password.reusedIn.length > 0;
             await password.save();
           }
         }
-      } else if (updatePasswordDto.isReused && updatePasswordDto.reusedIn && updatePasswordDto.reusedIn.length > 0) {
+      } else if (
+        updatePasswordDto.isReused &&
+        updatePasswordDto.reusedIn &&
+        updatePasswordDto.reusedIn.length > 0
+      ) {
         // If the password is now reused, update all passwords it's reused with
         for (const reusedItem of updatePasswordDto.reusedIn) {
           // Find the matching password
-          const reusedPassword = await this.passwordModel.findOne({
-            userId,
-            website: reusedItem.website,
-            username: reusedItem.username
-          }).exec();
+          const reusedPassword = await this.passwordModel
+            .findOne({
+              userId,
+              website: reusedItem.website,
+              username: reusedItem.username,
+            })
+            .exec();
 
-          if (reusedPassword && reusedPassword._id && reusedPassword._id.toString() !== id) {
+          if (
+            reusedPassword &&
+            reusedPassword._id &&
+            reusedPassword._id.toString() !== id
+          ) {
             // Add this password to the reusedIn array if not already there
             if (!reusedPassword.reusedIn) {
               reusedPassword.reusedIn = [];
@@ -452,13 +530,15 @@ export class PasswordsService {
 
             // Check if it's already in the reusedIn array
             const exists = reusedPassword.reusedIn.some(
-              item => item.website === updatedPassword.website && item.username === updatedPassword.username
+              (item) =>
+                item.website === updatedPassword.website &&
+                item.username === updatedPassword.username,
             );
 
             if (!exists) {
               reusedPassword.reusedIn.push({
                 website: updatedPassword.website,
-                username: updatedPassword.username
+                username: updatedPassword.username,
               });
               reusedPassword.isReused = true;
               await reusedPassword.save();
@@ -479,12 +559,16 @@ export class PasswordsService {
         website: originalPassword.website,
         username: originalPassword.username,
         updatedFields: updatedFields,
-        oldWebsite: updatePasswordDto.website ? originalPassword.website : undefined,
-        oldUsername: updatePasswordDto.username ? originalPassword.username : undefined,
+        oldWebsite: updatePasswordDto.website
+          ? originalPassword.website
+          : undefined,
+        oldUsername: updatePasswordDto.username
+          ? originalPassword.username
+          : undefined,
         wasPasswordChanged: !!decryptedPassword,
         timestamp: new Date().toISOString(),
-        action: 'update_password'
-      }
+        action: 'update_password',
+      },
     });
 
     return updatedPassword;
@@ -509,15 +593,18 @@ export class PasswordsService {
         website: password.website,
         username: password.username,
         timestamp: new Date().toISOString(),
-        action: 'delete_password'
-      }
+        action: 'delete_password',
+      },
     });
   }
 
   /**
    * Save a password to the history collection
    */
-  private async savePasswordToHistory(userId: string, password: PasswordDocument): Promise<PasswordHistoryDocument> {
+  private async savePasswordToHistory(
+    userId: string,
+    password: PasswordDocument,
+  ): Promise<PasswordHistoryDocument> {
     // Create a new history entry
     const historyEntry = new this.passwordHistoryModel({
       userId,
@@ -536,7 +623,10 @@ export class PasswordsService {
   /**
    * Get password history for a specific password
    */
-  async getPasswordHistory(userId: string, passwordId: string): Promise<PasswordHistoryResponseDto[]> {
+  async getPasswordHistory(
+    userId: string,
+    passwordId: string,
+  ): Promise<PasswordHistoryResponseDto[]> {
     // Verify the password exists and belongs to the user
     await this.findOne(userId, passwordId);
 
@@ -544,13 +634,13 @@ export class PasswordsService {
     const historyEntries = await this.passwordHistoryModel
       .find({
         userId,
-        passwordId: new Types.ObjectId(passwordId)
+        passwordId: new Types.ObjectId(passwordId),
       })
       .sort({ replacedAt: -1 })
       .exec();
 
     // Map to DTOs and decrypt passwords
-    return historyEntries.map(entry => {
+    return historyEntries.map((entry) => {
       const dto = new PasswordHistoryResponseDto();
       dto.id = entry._id ? entry._id.toString() : '';
       dto.passwordId = entry.passwordId;
@@ -566,7 +656,9 @@ export class PasswordsService {
   /**
    * Get all password history for a user
    */
-  async getAllPasswordHistory(userId: string): Promise<Record<string, PasswordHistoryResponseDto[]>> {
+  async getAllPasswordHistory(
+    userId: string,
+  ): Promise<Record<string, PasswordHistoryResponseDto[]>> {
     // Find all history entries for this user
     const historyEntries = await this.passwordHistoryModel
       .find({ userId })
@@ -576,7 +668,7 @@ export class PasswordsService {
     // Group by passwordId
     const groupedEntries: Record<string, PasswordHistoryResponseDto[]> = {};
 
-    historyEntries.forEach(entry => {
+    historyEntries.forEach((entry) => {
       const passwordId = entry.passwordId.toString();
       if (!groupedEntries[passwordId]) {
         groupedEntries[passwordId] = [];
@@ -607,11 +699,13 @@ export class PasswordsService {
     website: string,
     username: string,
   ): Promise<boolean> {
-    const existingPassword = await this.passwordModel.findOne({
-      userId,
-      website,
-      username,
-    }).exec();
+    const existingPassword = await this.passwordModel
+      .findOne({
+        userId,
+        website,
+        username,
+      })
+      .exec();
 
     return !!existingPassword;
   }
@@ -622,11 +716,13 @@ export class PasswordsService {
     username: string,
     currentPassword?: string,
   ): Promise<{ hasChanged: boolean; lastUpdated: Date | null }> {
-    const existingPassword = await this.passwordModel.findOne({
-      userId,
-      website,
-      username,
-    }).exec();
+    const existingPassword = await this.passwordModel
+      .findOne({
+        userId,
+        website,
+        username,
+      })
+      .exec();
 
     if (!existingPassword) {
       return { hasChanged: false, lastUpdated: null };
@@ -655,11 +751,13 @@ export class PasswordsService {
     username: string,
     newPassword: string,
   ): Promise<PasswordDocument> {
-    const existingPassword = await this.passwordModel.findOne({
-      userId,
-      website,
-      username,
-    }).exec();
+    const existingPassword = await this.passwordModel
+      .findOne({
+        userId,
+        website,
+        username,
+      })
+      .exec();
 
     if (!existingPassword) {
       throw new NotFoundException(
@@ -704,7 +802,10 @@ export class PasswordsService {
     userId: string,
     password: string,
     currentPasswordId?: string,
-  ): Promise<{ isReused: boolean; usedIn: { website: string; username: string }[] }> {
+  ): Promise<{
+    isReused: boolean;
+    usedIn: { website: string; username: string }[];
+  }> {
     // Get all passwords for the user
     const userPasswords = await this.passwordModel.find({ userId }).exec();
 
@@ -713,7 +814,11 @@ export class PasswordsService {
     // Check each password
     for (const storedPassword of userPasswords) {
       // Skip the current password if ID is provided
-      if (currentPasswordId && storedPassword._id && storedPassword._id.toString() === currentPasswordId) {
+      if (
+        currentPasswordId &&
+        storedPassword._id &&
+        storedPassword._id.toString() === currentPasswordId
+      ) {
         continue;
       }
 
@@ -803,15 +908,23 @@ export class PasswordsService {
 
         // Only send email if security status has changed
         const securityStatusChanged =
-          (securityInfo.isCompromised !== undefined && securityInfo.isCompromised !== wasCompromised) ||
-          (securityInfo.isUrlUnsafe !== undefined && securityInfo.isUrlUnsafe !== wasUrlUnsafe) ||
-          (securityInfo.isReused !== undefined && securityInfo.isReused !== wasReused);
+          (securityInfo.isCompromised !== undefined &&
+            securityInfo.isCompromised !== wasCompromised) ||
+          (securityInfo.isUrlUnsafe !== undefined &&
+            securityInfo.isUrlUnsafe !== wasUrlUnsafe) ||
+          (securityInfo.isReused !== undefined &&
+            securityInfo.isReused !== wasReused);
 
         if (securityStatusChanged) {
           await this.sendPasswordSecurityAlert(
             securityInfo.userId,
             securityInfo.isCompromised || false,
-            this.checkPasswordStrength(await this.decryptPassword(securityInfo.userId, securityInfo.passwordId)),
+            this.checkPasswordStrength(
+              await this.decryptPassword(
+                securityInfo.userId,
+                securityInfo.passwordId,
+              ),
+            ),
             {
               website: password.website,
               username: password.username,
@@ -820,8 +933,8 @@ export class PasswordsService {
               isUrlUnsafe: securityInfo.isUrlUnsafe,
               urlThreatTypes: securityInfo.urlThreatTypes,
               isReused: securityInfo.isReused,
-              reusedIn: securityInfo.reusedIn
-            }
+              reusedIn: securityInfo.reusedIn,
+            },
           );
 
           // Update lastAlertSent timestamp
@@ -836,7 +949,9 @@ export class PasswordsService {
           retryCount++;
           if (retryCount < maxRetries) {
             // Wait for a short time before retrying
-            await new Promise(resolve => setTimeout(resolve, 100 * retryCount));
+            await new Promise((resolve) =>
+              setTimeout(resolve, 100 * retryCount),
+            );
             continue;
           }
         }
@@ -871,7 +986,9 @@ export class PasswordsService {
 
         passwordMap.get(decryptedPassword)?.push(password);
       } catch (error) {
-        console.error(`Error decrypting password during sync: ${error.message}`);
+        console.error(
+          `Error decrypting password during sync: ${error.message}`,
+        );
       }
     }
 
@@ -885,10 +1002,15 @@ export class PasswordsService {
         for (const password of passwordGroup) {
           // Create a list of all other passwords in the group
           const reusedIn = passwordGroup
-            .filter(p => p._id && password._id && p._id.toString() !== password._id.toString())
-            .map(p => ({
+            .filter(
+              (p) =>
+                p._id &&
+                password._id &&
+                p._id.toString() !== password._id.toString(),
+            )
+            .map((p) => ({
               website: p.website,
-              username: p.username
+              username: p.username,
             }));
 
           // Check if we need to update this password
@@ -901,8 +1023,11 @@ export class PasswordsService {
           }
 
           // If reusedIn array doesn't match what we expect
-          if (!password.reusedIn ||
-            JSON.stringify(password.reusedIn.sort()) !== JSON.stringify(reusedIn.sort())) {
+          if (
+            !password.reusedIn ||
+            JSON.stringify(password.reusedIn.sort()) !==
+              JSON.stringify(reusedIn.sort())
+          ) {
             password.reusedIn = reusedIn;
             needsUpdate = true;
           }
@@ -944,7 +1069,8 @@ export class PasswordsService {
   }
 
   private async checkPasswordCompromise(password: string): Promise<boolean> {
-    const result = await this.securityUtilsService.checkPasswordSecurity(password);
+    const result =
+      await this.securityUtilsService.checkPasswordSecurity(password);
     return result.isCompromised;
   }
 
@@ -956,7 +1082,12 @@ export class PasswordsService {
     const hasNumbers = /\d/.test(password);
     const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
 
-    return !(password.length >= minLength && hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar);
+    return !(
+      password.length >= minLength &&
+      hasUpperCase &&
+      hasLowerCase &&
+      hasNumbers &&
+      hasSpecialChar
+    );
   }
 }
-

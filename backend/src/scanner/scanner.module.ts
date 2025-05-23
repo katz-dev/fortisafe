@@ -12,4 +12,4 @@ import { LogsModule } from '../logs/logs.module';
   providers: [ScannerService],
   exports: [ScannerService],
 })
-export class ScannerModule { }
+export class ScannerModule {}

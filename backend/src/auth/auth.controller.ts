@@ -2,7 +2,15 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Controller, Get, Post, UseGuards, Req, Res, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  UseGuards,
+  Req,
+  Res,
+  Query,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -16,7 +24,6 @@ import { Response } from 'express';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { UsersService } from 'src/users/users.service';
 
-
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
@@ -24,7 +31,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
     private readonly userService: UsersService,
-  ) { }
+  ) {}
 
   @Get('login')
   @ApiOperation({ summary: 'Redirect to Auth0 login page' })
@@ -137,14 +144,14 @@ export class AuthController {
                   window.opener.postMessage({
                     type: 'auth-success',
                     user: ${JSON.stringify({
-          id: user._id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          picture: user.picture,
-          accessToken: tokenData.access_token,
-          idToken: tokenData.id_token,
-        })}
+                      id: user._id,
+                      email: user.email,
+                      firstName: user.firstName,
+                      lastName: user.lastName,
+                      picture: user.picture,
+                      accessToken: tokenData.access_token,
+                      idToken: tokenData.id_token,
+                    })}
                   }, '${this.configService.get('EXTENSION_URL')}');
                   window.close();
                 } else {
