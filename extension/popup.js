@@ -180,11 +180,33 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     // Logout button
     if (logoutBtn) {
-        logoutBtn.onclick = function () {
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('id_token');
-            localStorage.removeItem('userProfile');
-            showLoginCard();
+        logoutBtn.onclick = async function () {
+            try {
+                // Clear local storage
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('id_token');
+                localStorage.removeItem('userProfile');
+
+                // Clear chrome storage
+                await chrome.storage.local.remove(['access_token', 'id_token', 'userProfile']);
+
+                // Call backend logout endpoint
+                const response = await fetch(`${BACKEND_URL}/auth/logout`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    // Show login card after successful logout
+                    showLoginCard();
+                } else {
+                    console.error('Logout failed:', response.statusText);
+                    showError('Logout failed. Please try again.');
+                }
+            } catch (error) {
+                console.error('Logout error:', error);
+                showError('Logout failed. Please try again.');
+            }
         };
     }
 

@@ -51,6 +51,11 @@ jobs:
             EXTENSION_URL=${{ secrets.EXTENSION_URL }}
             PASSWORD_ENCRYPTION_KEY=${{ secrets.PASSWORD_ENCRYPTION_KEY }}
             GOOGLE_SAFE_BROWSING_API_KEY=${{ secrets.GOOGLE_SAFE_BROWSING_API_KEY }}
+            BREVO_SMTP=${{ secrets.BREVO_SMTP }}
+            BREVO_SMTP_PORT=${{ secrets.BREVO_SMTP_PORT }}
+            BREVO_USER=${{ secrets.BREVO_USER }}
+            BREVO_PASS=${{ secrets.BREVO_PASS }}
+            EMAIL_FROM_ADDRESS=${{ secrets.EMAIL_FROM_ADDRESS }}
       
       # Deploy to VPS
       - name: Deploy to VPS
@@ -96,6 +101,11 @@ jobs:
                   - EXTENSION_URL=${{ secrets.EXTENSION_URL }}
                   - PASSWORD_ENCRYPTION_KEY=${{ secrets.PASSWORD_ENCRYPTION_KEY }}
                   - GOOGLE_SAFE_BROWSING_API_KEY=${{ secrets.GOOGLE_SAFE_BROWSING_API_KEY }}
+                  - BREVO_SMTP=${{ secrets.BREVO_SMTP }}
+                  - BREVO_SMTP_PORT=${{ secrets.BREVO_SMTP_PORT }}
+                  - BREVO_USER=${{ secrets.BREVO_USER }}
+                  - BREVO_PASS=${{ secrets.BREVO_PASS }}
+                  - EMAIL_FROM_ADDRESS=${{ secrets.EMAIL_FROM_ADDRESS }}
             EOL
             
             # Pull the latest images

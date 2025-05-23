@@ -119,6 +119,13 @@ export class Password {
   })
   @Prop()
   lastScanned: Date;
+
+  @ApiProperty({
+    example: '2023-01-01T00:00:00.000Z',
+    description: 'When the last security alert was sent for this password',
+  })
+  @Prop()
+  lastAlertSent: Date;
 }
 
 export const PasswordSchema = SchemaFactory.createForClass(Password);

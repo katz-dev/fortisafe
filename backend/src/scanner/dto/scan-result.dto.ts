@@ -56,6 +56,13 @@ export class MarkedPasswordInfo {
   username: string;
 
   @ApiProperty({
+    example: 'compromised',
+    description: 'The reason why the password was marked (compromised, weak, or reused)',
+    enum: ['compromised', 'weak', 'reused']
+  })
+  reason: 'compromised' | 'weak' | 'reused';
+
+  @ApiProperty({
     example: true,
     description: 'Whether the password has been found in data breaches',
   })
@@ -102,56 +109,48 @@ export class ScanResultDto {
   @ApiProperty({
     type: [UrlThreatInfo],
     description: 'Results of URL scanning',
-    required: false,
   })
-  urlResults?: UrlThreatInfo[];
+  urlResults: UrlThreatInfo[];
 
   @ApiProperty({
     type: PasswordCheckResult,
     description: 'Results of password checking',
-    required: false,
   })
-  passwordResult?: PasswordCheckResult;
+  passwordResult: PasswordCheckResult;
 
   @ApiProperty({
     example: true,
     description: 'Whether the email has been compromised',
-    required: false,
   })
-  isEmailCompromised?: boolean;
+  isEmailCompromised: boolean;
 
   @ApiProperty({
     type: [MarkedPasswordInfo],
     description: 'List of passwords with security markings',
-    required: false,
   })
-  markedPasswords?: MarkedPasswordInfo[];
-  
+  markedPasswords: MarkedPasswordInfo[];
+
   @ApiProperty({
     example: 5,
     description: 'Number of weak passwords found',
-    required: false,
   })
-  weakPasswords?: number;
-  
+  weakPasswords: number;
+
   @ApiProperty({
     example: 3,
     description: 'Number of reused passwords found',
-    required: false,
   })
-  reusedPasswords?: number;
-  
+  reusedPasswords: number;
+
   @ApiProperty({
     example: 10,
     description: 'Number of strong passwords found',
-    required: false,
   })
-  strongPasswords?: number;
-  
+  strongPasswords: number;
+
   @ApiProperty({
     example: 2,
     description: 'Number of compromised passwords found',
-    required: false,
   })
-  compromisedPasswords?: number;
+  compromisedPasswords: number;
 }
