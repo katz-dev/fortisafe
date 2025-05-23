@@ -58,7 +58,7 @@ jobs:
             EMAIL_FROM_ADDRESS=${{ secrets.EMAIL_FROM_ADDRESS }}
             BREVO_BASE_URL=${{ secrets.BREVO_BASE_URL }}
             EMAIL_FROM_NAME=${{ secrets.EMAIL_FROM_NAME }}
-            BREVO_API_URL=${{ secrets.BREVO_API_URL }}
+            BREVO_API_KEY=${{ secrets.BREVO_API_KEY }}
       
       # Deploy to VPS
       - name: Deploy to VPS
@@ -111,7 +111,7 @@ jobs:
                   - EMAIL_FROM_ADDRESS=${{ secrets.EMAIL_FROM_ADDRESS }}
                   - BREVO_BASE_URL=${{ secrets.BREVO_BASE_URL }}
                   - EMAIL_FROM_NAME=${{ secrets.EMAIL_FROM_NAME }}
-                  - BREVO_API_URL=${{ secrets.BREVO_API_URL }}
+                  - BREVO_API_KEY=${{ secrets.BREVO_API_KEY }}
             EOL
             
             # Pull the latest images
