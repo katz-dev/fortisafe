@@ -11,9 +11,7 @@ export class SecurityUtilsService {
   private readonly haveibeenpwnedApiUrl =
     'https://api.pwnedpasswords.com/range/';
 
-  constructor(
-    private configService: ConfigService,
-  ) {
+  constructor(private configService: ConfigService) {
     this.googleSafeBrowsingApiKey = this.configService.get<string>(
       'GOOGLE_SAFE_BROWSING_API_KEY',
     );
@@ -29,7 +27,9 @@ export class SecurityUtilsService {
    * @param password The password to check
    * @returns Object containing whether the password is compromised and breach count
    */
-  async checkPasswordSecurity(password: string): Promise<{ isCompromised: boolean; breachCount: number }> {
+  async checkPasswordSecurity(
+    password: string,
+  ): Promise<{ isCompromised: boolean; breachCount: number }> {
     try {
       // Use k-anonymity model from HaveIBeenPwned API
       // We only send the first 5 characters of the SHA-1 hash
@@ -73,7 +73,9 @@ export class SecurityUtilsService {
    * @param url The URL to check
    * @returns Object containing whether the URL is safe and threat types if any
    */
-  async checkUrlSafety(url: string): Promise<{ isSafe: boolean; threatTypes?: string[] }> {
+  async checkUrlSafety(
+    url: string,
+  ): Promise<{ isSafe: boolean; threatTypes?: string[] }> {
     if (!this.googleSafeBrowsingApiKey) {
       console.warn('Google Safe Browsing API key is not configured');
       return { isSafe: true }; // Default to safe if API key is not available
@@ -130,19 +132,19 @@ export class SecurityUtilsService {
   isStrongPassword(password: string): boolean {
     // Password should be at least 8 characters long
     if (password.length < 8) return false;
-    
+
     // Check for at least one uppercase letter
     if (!/[A-Z]/.test(password)) return false;
-    
+
     // Check for at least one lowercase letter
     if (!/[a-z]/.test(password)) return false;
-    
+
     // Check for at least one number
     if (!/[0-9]/.test(password)) return false;
-    
+
     // Check for at least one special character
     if (!/[^A-Za-z0-9]/.test(password)) return false;
-    
+
     return true;
   }
 }

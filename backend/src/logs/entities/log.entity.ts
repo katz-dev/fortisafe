@@ -33,7 +33,7 @@ export class Log {
   @ApiProperty()
   @Prop({ default: Date.now })
   timestamp: Date;
-  
+
   @ApiProperty({ required: false })
   @Prop()
   userId?: string;
