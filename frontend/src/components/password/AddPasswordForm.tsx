@@ -55,10 +55,20 @@ export default function AddPasswordForm({ isOpen, onClose, onPasswordAdded }: Ad
     try {
       setIsSubmitting(true);
       
+      // Format URL if provided but missing protocol
+      let formattedUrl = formData.url;
+      if (formattedUrl && formattedUrl.trim() !== "") {
+        // Check if URL already has a protocol
+        if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
+          // Add https:// prefix if missing
+          formattedUrl = `https://${formattedUrl}`;
+        }
+      }
+      
       // Prepare data for API
       const passwordData = {
         website: formData.website,
-        url: formData.url || undefined,
+        url: formattedUrl || undefined,
         username: formData.username,
         password: formData.password,
         notes: formData.notes || undefined,
