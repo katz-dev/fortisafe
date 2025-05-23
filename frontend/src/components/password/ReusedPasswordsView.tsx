@@ -25,9 +25,6 @@ interface PasswordGroup {
 export default function ReusedPasswordsView({ passwords, onSelectLogin, isLoading: parentLoading = false, onRefresh }: ReusedPasswordsViewProps) {
   const [passwordGroups, setPasswordGroups] = useState<PasswordGroup[]>([]);
   const [internalLoading, setInternalLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const isInitialRender = useRef(true);
   
   // Define isLoading by combining parent and internal loading states
   const isLoading = parentLoading || internalLoading;

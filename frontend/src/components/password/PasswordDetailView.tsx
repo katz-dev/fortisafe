@@ -266,7 +266,7 @@ export default function PasswordDetailView({ login, onDelete, onUpdate }: Passwo
                                             className="h-7 w-7 sm:h-8 sm:w-8 text-gray-400 group-hover:text-white hover:bg-slate-700"
                                             onClick={handleCopyUsername}
                                         >
-                                            <Copy className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                                            {copiedUsername ? <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-500" /> : <Copy className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
                                         </Button>
                                         <Button
                                             variant="ghost"
