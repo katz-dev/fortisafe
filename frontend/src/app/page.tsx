@@ -6,20 +6,54 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar } from '@/components/ui/avatar';
 import NavBar from '@/components/NavBar';
+import { motion } from 'framer-motion';
+import { FaShieldAlt, FaLock, FaUserShield, FaGithub, FaTwitter } from 'react-icons/fa';
+import { MdSecurity, MdPassword } from 'react-icons/md';
 
 export default function LandingPage() {
+  // Animation variants
+  const fadeIn = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
+  };
+  
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.2
+      }
+    }
+  };
+  
+  const itemVariant = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1, transition: { duration: 0.5 } }
+  };
+  
+  // Stats for the page
+  const stats = [
+    { value: '10M+', label: 'Passwords Protected' },
+    { value: '99.9%', label: 'Uptime' },
+    { value: '24/7', label: 'Support' },
+  ];
+  
   const testimonials = [
     {
-      name: 'John Doe',
-      text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis.',
+      name: 'Sarah Johnson',
+      role: 'Cybersecurity Analyst',
+      text: 'FortiSafe has completely transformed how I manage my credentials. The password health analysis feature helped me identify and fix several vulnerable passwords I didn\'t even realize were at risk.',
     },
     {
-      name: 'John Doe',
-      text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis.',
+      name: 'Michael Chen',
+      role: 'Software Developer',
+      text: 'As someone who deals with dozens of accounts daily, FortiSafe has been a game-changer. The autofill feature works flawlessly, and the security checks give me peace of mind.',
     },
     {
-      name: 'John Doe',
-      text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis.',
+      name: 'Emily Rodriguez',
+      role: 'Digital Marketing Manager',
+      text: 'I was constantly reusing passwords until FortiSafe alerted me to the risks. Now I have unique, strong passwords for every account, and I don\'t have to remember any of them!',
     }
   ];
 
@@ -28,34 +62,65 @@ export default function LandingPage() {
       <NavBar />
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-16 lg:py-20 bg-[#0a0f1a] rounded-3xl my-6 border border-slate-800/60 shadow-lg">
+      <motion.section 
+        initial="hidden"
+        animate="visible"
+        variants={fadeIn}
+        className="container mx-auto px-4 py-16 lg:py-20 bg-[#0a0f1a] rounded-3xl my-6 border border-slate-800/60 shadow-lg"
+      >
         <div className="grid md:grid-cols-2 gap-12 items-center">
-          <div>
-            <h1 className="text-4xl lg:text-5xl font-bold mb-6 text-white">Browse Smarter. Stay Safer.</h1>
-            <ul className="space-y-4 mb-8">
-              <li className="flex items-center gap-3">
-                <Image src="/shield-icon.svg" alt="Shield" width={24} height={24} />
-                <span className="text-lg text-gray-300">Blocks phishing & malware</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <Image src="/password-icon.svg" alt="Password" width={24} height={24} />
-                <span className="text-lg text-gray-300">Manages passwords securely</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <Image src="/browser-icon.svg" alt="Browser" width={24} height={24} />
-                <span className="text-lg text-gray-300">Works right in your browser</span>
-              </li>
-            </ul>
-            <Button variant="default" className="bg-[#7e5efc] hover:bg-[#6a4de0] px-8 py-6 text-lg">
-              <Link href="/login" className="flex items-center gap-2">
-                Download extension
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m9 18 6-6-6-6" />
-                </svg>
-              </Link>
-            </Button>
-          </div>
-          <div className="relative">
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
+            <motion.h1 
+              variants={itemVariant}
+              className="text-4xl lg:text-6xl font-bold mb-6 text-white leading-tight"
+            >
+              <span className="text-[#7e5efc]">FortiSafe</span>: Your Password <br/> Guardian in the Digital Age
+            </motion.h1>
+            <motion.ul 
+              variants={staggerContainer}
+              className="space-y-4 mb-8"
+            >
+              <motion.li variants={itemVariant} className="flex items-center gap-3">
+                <div className="bg-[#7e5efc]/20 p-2 rounded-full">
+                  <FaShieldAlt className="text-[#7e5efc]" size={20} />
+                </div>
+                <span className="text-lg text-gray-300">Detects compromised & reused passwords</span>
+              </motion.li>
+              <motion.li variants={itemVariant} className="flex items-center gap-3">
+                <div className="bg-[#7e5efc]/20 p-2 rounded-full">
+                  <MdPassword className="text-[#7e5efc]" size={20} />
+                </div>
+                <span className="text-lg text-gray-300">Securely stores & autofills credentials</span>
+              </motion.li>
+              <motion.li variants={itemVariant} className="flex items-center gap-3">
+                <div className="bg-[#7e5efc]/20 p-2 rounded-full">
+                  <MdSecurity className="text-[#7e5efc]" size={20} />
+                </div>
+                <span className="text-lg text-gray-300">Warns about unsafe websites & phishing</span>
+              </motion.li>
+            </motion.ul>
+            <motion.div variants={itemVariant}>
+              <Button variant="default" className="bg-[#7e5efc] hover:bg-[#6a4de0] px-8 py-6 text-lg relative overflow-hidden group">
+                <Link href="/login" className="flex items-center gap-2 relative z-10">
+                  Get Started Now
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m9 18 6-6-6-6" />
+                  </svg>
+                </Link>
+                <span className="absolute inset-0 bg-gradient-to-r from-[#9277fc] to-[#6a4de0] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+              </Button>
+            </motion.div>
+          </motion.div>
+          <motion.div 
+            className="relative"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.7, delay: 0.3 }}
+          >
             <Image
               src="/app-preview.svg"
               alt="Application Preview"
@@ -63,121 +128,214 @@ export default function LandingPage() {
               height={400}
               className="rounded-xl shadow-lg mx-auto"
             />
-          </div>
+            <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#7e5efc]/20 rounded-full blur-3xl"></div>
+            <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-[#7e5efc]/10 rounded-full blur-3xl"></div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Features Section */}
-      <section className="container mx-auto px-4 py-16">
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          <div className="flex flex-col items-center text-center p-6">
-            <div className="mb-4 p-4 bg-[#1a1f2e] rounded-full">
-              <Image src="/lock-icon.svg" alt="Lock" width={40} height={40} />
+      <motion.section 
+        className="container mx-auto px-4 py-16"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+        variants={staggerContainer}
+      >
+        <motion.div 
+          className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
+          variants={staggerContainer}
+        >
+          <motion.div 
+            className="flex flex-col items-center text-center p-6 bg-[#0a0f1a] rounded-xl border border-slate-800/60 shadow-lg hover:border-[#7e5efc]/30 transition-all duration-300"
+            variants={itemVariant}
+            whileHover={{ y: -10, transition: { duration: 0.3 } }}
+          >
+            <div className="mb-4 p-4 bg-[#1a1f2e] rounded-full relative overflow-hidden group">
+              <FaLock className="text-[#7e5efc] text-3xl relative z-10" />
+              <motion.div 
+                className="absolute inset-0 bg-[#7e5efc]/20"
+                initial={{ scale: 0 }}
+                whileHover={{ scale: 1, transition: { duration: 0.3 } }}
+              />
             </div>
             <h3 className="font-bold text-xl mb-3 text-white">Password Vault with Autofill</h3>
-            <p className="text-gray-400">Save and auto-fill passwords securely, right in your browser.</p>
-          </div>
+            <p className="text-gray-400">Store unlimited passwords with military-grade encryption and auto-fill them with a single click.</p>
+          </motion.div>
 
-          <div className="flex flex-col items-center text-center p-6">
-            <div className="mb-4 p-4 bg-[#1a1f2e] rounded-full">
-              <Image src="/phishing-icon.svg" alt="Phishing" width={40} height={40} />
+          <motion.div 
+            className="flex flex-col items-center text-center p-6 bg-[#0a0f1a] rounded-xl border border-slate-800/60 shadow-lg hover:border-[#7e5efc]/30 transition-all duration-300"
+            variants={itemVariant}
+            whileHover={{ y: -10, transition: { duration: 0.3 } }}
+          >
+            <div className="mb-4 p-4 bg-[#1a1f2e] rounded-full relative overflow-hidden">
+              <FaShieldAlt className="text-[#7e5efc] text-3xl relative z-10" />
+              <motion.div 
+                className="absolute inset-0 bg-[#7e5efc]/20"
+                initial={{ scale: 0 }}
+                whileHover={{ scale: 1, transition: { duration: 0.3 } }}
+              />
             </div>
-            <h3 className="font-bold text-xl mb-3 text-white">Phishing Site Blocker</h3>
-            <p className="text-gray-400">Blocks fake websites before they steal your data.</p>
-          </div>
+            <h3 className="font-bold text-xl mb-3 text-white">Phishing & Malware Protection</h3>
+            <p className="text-gray-400">Get real-time alerts about malicious websites and prevent your data from being stolen.</p>
+          </motion.div>
 
-          <div className="flex flex-col items-center text-center p-6">
-            <div className="mb-4 p-4 bg-[#1a1f2e] rounded-full">
-              <Image src="/scanning-icon.svg" alt="Scanning" width={40} height={40} />
+          <motion.div 
+            className="flex flex-col items-center text-center p-6 bg-[#0a0f1a] rounded-xl border border-slate-800/60 shadow-lg hover:border-[#7e5efc]/30 transition-all duration-300"
+            variants={itemVariant}
+            whileHover={{ y: -10, transition: { duration: 0.3 } }}
+          >
+            <div className="mb-4 p-4 bg-[#1a1f2e] rounded-full relative overflow-hidden">
+              <FaUserShield className="text-[#7e5efc] text-3xl relative z-10" />
+              <motion.div 
+                className="absolute inset-0 bg-[#7e5efc]/20"
+                initial={{ scale: 0 }}
+                whileHover={{ scale: 1, transition: { duration: 0.3 } }}
+              />
             </div>
-            <h3 className="font-bold text-xl mb-3 text-white">Real-Time Site Scanning</h3>
-            <p className="text-gray-400">Instantly checks websites for threats as you browse.</p>
-          </div>
-
-          <div className="flex flex-col items-center text-center p-6">
-            <div className="mb-4 p-4 bg-[#1a1f2e] rounded-full">
-              <Image src="/encryption-icon.svg" alt="Encryption" width={40} height={40} />
-            </div>
-            <h3 className="font-bold text-xl mb-3 text-white">End-to-End Encryption</h3>
-            <p className="text-gray-400">Only you can see your data — not even us.</p>
-          </div>
-        </div>
-      </section>
+            <h3 className="font-bold text-xl mb-3 text-white">Password Health Analysis</h3>
+            <p className="text-gray-400">Identifies weak, reused, and compromised passwords to enhance your security posture.</p>
+          </motion.div>
+        </motion.div>
+      </motion.section>
 
       {/* Testimonials Section */}
-      <section className="container mx-auto px-4 py-16 bg-[#0a0f1a] rounded-xl border border-slate-800/60 shadow-lg my-6">
-        <h2 className="text-3xl font-bold text-center mb-12 text-white">What people say about <span className="font-bold text-indigo-400">Fortisafe</span></h2>
+      <motion.section 
+        className="container mx-auto px-4 py-16 bg-[#0a0f1a] rounded-xl border border-slate-800/60 shadow-lg my-6"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+        variants={fadeIn}
+      >
+        <motion.h2 
+          className="text-3xl font-bold text-center mb-12 text-white"
+          variants={itemVariant}
+        >
+          What people say about <span className="font-bold text-[#7e5efc]">FortiSafe</span>
+        </motion.h2>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <motion.div 
+          className="grid md:grid-cols-3 gap-8"
+          variants={staggerContainer}
+        >
           {testimonials.map((testimonial, index) => (
-            <Card key={index} className="bg-[#1a1f2e] border-slate-800/60 shadow-lg hover:border-slate-700/60 transition-all duration-300">
-              <CardContent className="p-6">
-                <div className="flex flex-col gap-4">
-                  <div className="flex items-center gap-3">
-                    <Avatar alt={testimonial.name} />
-                    <h4 className="font-medium">{testimonial.name}</h4>
+            <motion.div key={index} variants={itemVariant}>
+              <Card className="bg-[#1a1f2e] border-slate-800/60 shadow-lg hover:border-[#7e5efc]/30 transition-all duration-300">
+                <CardContent className="p-6">
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-center gap-3">
+                      <Avatar alt={testimonial.name} className="border-2 border-[#7e5efc]/30" />
+                      <div>
+                        <h4 className="font-medium text-white">{testimonial.name}</h4>
+                        <p className="text-xs text-[#7e5efc]">{testimonial.role}</p>
+                      </div>
+                    </div>
+                    <p className="text-gray-400">{testimonial.text}</p>
                   </div>
-                  <p className="text-gray-400">{testimonial.text}</p>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </motion.div>
+      </motion.section>
+
+      {/* Stats Section */}
+      <motion.section
+        className="container mx-auto px-4 py-16"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true }}
+        variants={fadeIn}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {stats.map((stat, index) => (
+            <motion.div 
+              key={index} 
+              className="bg-[#0a0f1a] rounded-xl border border-slate-800/60 p-8 text-center"
+              variants={itemVariant}
+              whileHover={{ y: -5, boxShadow: '0 10px 30px -10px rgba(126, 94, 252, 0.2)' }}
+            >
+              <h3 className="text-4xl font-bold text-[#7e5efc] mb-2">{stat.value}</h3>
+              <p className="text-gray-400">{stat.label}</p>
+            </motion.div>
           ))}
         </div>
-      </section>
+      </motion.section>
 
       {/* Footer Section */}
-      <footer className="bg-[#0a0f1a] py-12 border-t border-slate-800/60">
+      <motion.footer 
+        className="bg-[#0a0f1a] py-12 border-t border-slate-800/60 mt-16"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true }}
+        variants={fadeIn}
+      >
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-3 gap-8">
             <div>
-              <h3 className="text-xl font-bold mb-4 text-white">Fortisafe</h3>
+              <h3 className="text-xl font-bold mb-4 text-white">FortiSafe</h3>
+              <p className="text-gray-400 mb-4">Secure password management solution that protects your digital identity with advanced encryption and security features.</p>
               <div className="flex gap-3 mt-4">
-                <a href="#" className="p-2 bg-[#7e5efc] text-white rounded-full">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
-                  </svg>
-                </a>
-                <a href="#" className="p-2 bg-[#7e5efc] text-white rounded-full">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
-                  </svg>
-                </a>
+                <motion.a 
+                  href="https://twitter.com" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="p-2 bg-[#0a0f1a] border border-slate-800 text-[#7e5efc] rounded-full hover:bg-[#7e5efc]/10 transition-colors duration-300"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <FaTwitter size={20} />
+                </motion.a>
+                <motion.a 
+                  href="https://github.com" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="p-2 bg-[#0a0f1a] border border-slate-800 text-[#7e5efc] rounded-full hover:bg-[#7e5efc]/10 transition-colors duration-300"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <FaGithub size={20} />
+                </motion.a>
               </div>
             </div>
 
             <div>
-              <h4 className="text-sm uppercase text-gray-400 font-medium mb-4">INFORMATION</h4>
+              <h4 className="text-sm uppercase text-gray-400 font-medium mb-4">RESOURCES</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-300 hover:text-[#7e5efc]">Privacy</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-[#7e5efc]">Privacy Policy</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-[#7e5efc]">Terms of Service</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-[#7e5efc]">Security Practices</a></li>
                 <li><a href="#" className="text-gray-300 hover:text-[#7e5efc]">FAQ</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-[#7e5efc]">Shipping and payment</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-[#7e5efc]">Partners</a></li>
                 <li><a href="#" className="text-gray-300 hover:text-[#7e5efc]">Blog</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-[#7e5efc]">Contacts</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-[#7e5efc]">Contact Support</a></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="text-sm uppercase text-gray-400 font-medium mb-4">MENU</h4>
+              <h4 className="text-sm uppercase text-gray-400 font-medium mb-4">FEATURES</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-300 hover:text-[#7e5efc]">For a couple</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-[#7e5efc]">For him</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-[#7e5efc]">For her</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-[#7e5efc]">Password Vault</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-[#7e5efc]">Security Dashboard</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-[#7e5efc]">Password Generator</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-[#7e5efc]">Browser Extension</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-[#7e5efc]">Mobile App</a></li>
               </ul>
 
               <div className="mt-6">
-                <Button variant="default" className="bg-[#7e5efc] hover:bg-[#6a4de0] w-full mb-3">Request a call</Button>
-                <p className="text-sm text-gray-400 text-center">+1 (999) 999-99-99</p>
-                <p className="text-sm text-gray-400 text-center">info@logipsum.com</p>
+                <Button variant="default" className="bg-[#7e5efc] hover:bg-[#6a4de0] w-full mb-3 relative overflow-hidden group">
+                  <span className="relative z-10">Get Started</span>
+                  <span className="absolute inset-0 bg-gradient-to-r from-[#9277fc] to-[#6a4de0] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                </Button>
+                <p className="text-sm text-gray-400 text-center mt-4">support@fortisafe.live</p>
               </div>
             </div>
           </div>
 
-          <div className="mt-12 text-center text-sm text-gray-400">
-            <p>1901 Thornridge Cir. Shiloh, Hawaii 81063</p>
+          <div className="mt-12 pt-6 border-t border-slate-800/60 text-center text-sm text-gray-400">
+            <p>© {new Date().getFullYear()} FortiSafe. All rights reserved.</p>
           </div>
         </div>
-      </footer>
+      </motion.footer>
     </main>
   );
 }
