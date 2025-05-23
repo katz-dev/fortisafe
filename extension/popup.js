@@ -3,7 +3,7 @@ const PRODUCTION_BACKEND_URL = 'https://api.fortisafe.live/api';
 const LOCAL_BACKEND_URL = 'http://localhost:8080/api';
 
 // Set this to false to use local backend, true to use production
-const USE_PRODUCTION = false;
+const USE_PRODUCTION = true;
 
 // The active backend URL based on environment setting
 const BACKEND_URL = USE_PRODUCTION ? PRODUCTION_BACKEND_URL : LOCAL_BACKEND_URL;
