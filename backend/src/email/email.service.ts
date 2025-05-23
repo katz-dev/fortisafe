@@ -38,9 +38,20 @@ export class EmailService {
         user: this.configService.get<string>('BREVO_USER'),
         pass: this.configService.get<string>('BREVO_PASS'),
       },
+      debug: true,
+      logger: true,
     };
 
     this.transporter = nodemailer.createTransport(transportOptions);
+
+    this.transporter.verify((error, success) => {
+      if (error) {
+        this.logger.error('SMTP Connection Error:', error);
+      } else {
+        this.logger.log('SMTP Server is ready to take our messages');
+      }
+    });
+
     this.fromAddress = `FortiSafe <${this.configService.get<string>('EMAIL_FROM_ADDRESS')}>`;
 
     this.templateDir = `${fs.existsSync('src') ? 'src' : 'dist'}/email/templates`;
