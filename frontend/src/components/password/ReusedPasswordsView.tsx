@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { AlertCircle, RefreshCw, ShieldAlert, ChevronDown, Eye, EyeOff, Copy, Shield, RotateCw } from "lucide-react";
+import { AlertCircle, RefreshCw, ShieldAlert, ChevronDown, ChevronRight, Shield, Eye, EyeOff, Copy, RotateCw } from "lucide-react";
 import { LoginItem, getDecryptedPassword, synchronizeReusedPasswords } from "@/lib/passwordService";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -20,12 +20,27 @@ interface PasswordGroup {
   riskLevel: 'high' | 'medium' | 'low';
 }
 
+// Helper functions moved inside the component
+
 export default function ReusedPasswordsView({ passwords, onSelectLogin, isLoading: parentLoading = false, onRefresh }: ReusedPasswordsViewProps) {
   const [passwordGroups, setPasswordGroups] = useState<PasswordGroup[]>([]);
   const [internalLoading, setInternalLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const isInitialRender = useRef(true);
+  
+  // Define isLoading by combining parent and internal loading states
   const isLoading = parentLoading || internalLoading;
   
-  // Store a reference to the previous password groups to maintain state across renders
+  const handleAccountClick = (accountId: string) => {
+    // Find the account by ID and pass the full LoginItem to onSelectLogin
+    const account = passwords.find(p => p.id === accountId);
+    if (account) {
+      console.log('Account selected:', accountId);
+      onSelectLogin(account);
+    }
+  };
+
   const passwordGroupsRef = useRef<PasswordGroup[]>(passwordGroups);
   
   // Update the ref when password groups change
@@ -318,26 +333,26 @@ export default function ReusedPasswordsView({ passwords, onSelectLogin, isLoadin
   
   return (
     <div className="p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold text-white">Reused Passwords</h2>
-        <div className="flex space-x-2">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3 sm:gap-0">
+        <h2 className="text-lg sm:text-xl font-semibold text-white">Reused Passwords</h2>
+        <div className="flex space-x-2 self-end sm:self-auto">
           <motion.button 
             onClick={handleSynchronize}
-            className="flex items-center space-x-1 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-md transition-colors"
+            className="flex items-center space-x-1 px-2 sm:px-3 py-1 sm:py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-md transition-colors text-xs sm:text-sm"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <RotateCw className="h-4 w-4" />
-            <span>Synchronize</span>
+            <RotateCw className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span>Sync</span>
           </motion.button>
           {onRefresh && (
             <motion.button 
               onClick={handleRefresh}
-              className="flex items-center space-x-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md transition-colors"
+              className="flex items-center space-x-1 px-2 sm:px-3 py-1 sm:py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md transition-colors text-xs sm:text-sm"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <RefreshCw className="h-4 w-4" />
+              <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               <span>Refresh</span>
             </motion.button>
           )}
@@ -375,32 +390,32 @@ export default function ReusedPasswordsView({ passwords, onSelectLogin, isLoadin
             transition={{ delay: index * 0.05 }}
           >
             <div 
-              className="p-4 flex items-center justify-between cursor-pointer"
+              className="p-3 sm:p-4 flex items-center justify-between cursor-pointer"
               onClick={() => toggleExpand(index)}
             >
-              <div className="flex items-center space-x-3">
-                <Shield className="h-5 w-5 text-indigo-400" />
-                <div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-white font-medium">Password used in {group.accounts.length} accounts</span>
+              <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+                <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-400 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center flex-wrap gap-1 sm:gap-2">
+                    <span className="text-white font-medium text-sm sm:text-base truncate">Password used in {group.accounts.length} {group.accounts.length === 1 ? 'account' : 'accounts'}</span>
                     {renderRiskBadge(group.riskLevel)}
                   </div>
-                  <div className="text-gray-400 text-sm">
+                  <div className="text-gray-400 text-xs sm:text-sm">
                     Strength: <span className={getStrengthColor(group.strength)}>{group.strength}</span>
                   </div>
                 </div>
               </div>
               
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
                     toggleShowPassword(index);
                   }}
-                  className="p-2 hover:bg-slate-700/50 rounded-full transition-colors"
+                  className="p-1.5 sm:p-2 hover:bg-slate-700/50 rounded-full transition-colors"
                   aria-label={group.showPassword ? "Hide password" : "Show password"}
                 >
-                  {group.showPassword ? <EyeOff className="h-4 w-4 text-gray-400" /> : <Eye className="h-4 w-4 text-gray-400" />}
+                  {group.showPassword ? <EyeOff className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400" /> : <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400" />}
                 </button>
                 
                 <button 
@@ -411,14 +426,14 @@ export default function ReusedPasswordsView({ passwords, onSelectLogin, isLoadin
                       copyPassword(account.password);
                     }
                   }}
-                  className="p-2 hover:bg-slate-700/50 rounded-full transition-colors"
+                  className="p-1.5 sm:p-2 hover:bg-slate-700/50 rounded-full transition-colors"
                   aria-label="Copy password"
                 >
-                  <Copy className="h-4 w-4 text-gray-400" />
+                  <Copy className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400" />
                 </button>
                 
                 <ChevronDown 
-                  className={`h-5 w-5 text-gray-400 transition-transform ${group.isExpanded ? 'rotate-180' : ''}`} 
+                  className={`h-4 w-4 sm:h-5 sm:w-5 text-gray-400 transition-transform ${group.isExpanded ? 'rotate-180' : ''}`} 
                 />
               </div>
             </div>
@@ -432,37 +447,34 @@ export default function ReusedPasswordsView({ passwords, onSelectLogin, isLoadin
                   transition={{ duration: 0.3 }}
                   className="overflow-hidden"
                 >
-                  <div className="p-4 pt-0 border-t border-slate-700/50">
+                  <div className="p-3 sm:p-4 pt-0 border-t border-slate-700/50">
                     {group.showPassword && (
-                      <div className="mb-3 p-3 bg-slate-900/50 rounded-lg">
-                        <div className="text-sm text-gray-400 mb-1">Password:</div>
-                        <div className="font-mono text-white">{group.accounts[0]?.password || '********'}</div>
+                      <div className="mb-3 p-2 sm:p-3 bg-slate-900/50 rounded-lg">
+                        <div className="text-xs sm:text-sm text-gray-400 mb-1">Password:</div>
+                        <div className="font-mono text-sm sm:text-base text-white break-all">{group.accounts[0]?.password || '********'}</div>
                       </div>
                     )}
                     
-                    <h4 className="text-white font-medium mb-2">Accounts using this password:</h4>
+                    {/* Account list */}
                     <div className="space-y-2">
-                      {group.accounts.map((account, idx) => (
+                      {group.accounts.map((account, accountIndex) => (
                         <div 
-                          key={idx} 
-                          className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg hover:bg-slate-900/80 transition-colors cursor-pointer"
-                          onClick={() => onSelectLogin(account)}
+                          key={`${account.id}-${accountIndex}`}
+                          className="flex items-center justify-between p-2 sm:p-3 bg-slate-900/50 rounded-lg hover:bg-slate-900/80 transition-colors cursor-pointer"
+                          onClick={() => account.id && handleAccountClick(account.id)}
                         >
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 rounded-md bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold">
-                              {account.website?.charAt(0).toUpperCase() || 'A'}
+                          <div className="flex items-center min-w-0 flex-1">
+                            <div className="flex-shrink-0 mr-2 sm:mr-3">
+                              <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs sm:text-sm font-medium">
+                                {account.website ? account.website.charAt(0).toUpperCase() : 'A'}
+                              </div>
                             </div>
-                            <div>
-                              <div className="text-white font-medium">{account.website || 'Unknown'}</div>
-                              <div className="text-gray-400 text-sm">{account.username || 'No username'}</div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm sm:text-base font-medium text-white truncate">{account.website || 'Unknown Website'}</div>
+                              <div className="text-xs sm:text-sm text-gray-400 truncate">{account.username || 'No username'}</div>
                             </div>
                           </div>
-                          {account.isCompromised && (
-                            <div className="text-red-400 text-xs flex items-center">
-                              <AlertCircle className="h-3.5 w-3.5 mr-1" />
-                              <span>At risk</span>
-                            </div>
-                          )}
+                          <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 flex-shrink-0" />
                         </div>
                       ))}
                     </div>
@@ -475,6 +487,4 @@ export default function ReusedPasswordsView({ passwords, onSelectLogin, isLoadin
       </div>
     </div>
   );
-
-
 }

@@ -55,7 +55,7 @@ export default function FilterTabs({ activeTab, onTabChange, weakCount, reusedCo
     ];
 
     return (
-        <div className="flex overflow-x-auto pb-2 hide-scrollbar space-x-2">
+        <div className="flex overflow-x-auto pb-2 hide-scrollbar space-x-1.5 sm:space-x-2 -mx-1 px-1">
             {tabs.map((tab, index) => (
                 <motion.button
                     key={tab.id}
@@ -63,32 +63,36 @@ export default function FilterTabs({ activeTab, onTabChange, weakCount, reusedCo
                     whileTap={{ scale: 0.98 }}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.2, delay: index * 0.05 }} className={`flex items-center rounded-lg px-4 py-2.5 transition-all duration-200 ${activeTab === tab.id
+                    transition={{ duration: 0.2, delay: index * 0.05 }} className={`flex items-center rounded-lg px-2 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base transition-all duration-200 ${activeTab === tab.id
                         ? "bg-gradient-to-r from-indigo-600 to-indigo-800 text-white shadow-lg border border-indigo-500/70 font-medium"
                         : "text-gray-400 hover:text-white bg-[#0a0f1a]/90 backdrop-blur-md border border-slate-800/60 hover:border-slate-700/70 hover:shadow-md"
                         }`}
                     onClick={() => onTabChange(tab.id)}
                 >
-                    <span className={`flex items-center justify-center w-5 h-5 mr-2 rounded-md ${tab.bgColor} text-white shadow-sm`}>
+                    <span className={`flex items-center justify-center w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2 rounded-md ${tab.bgColor} text-white shadow-sm`}>
                         {tab.icon}
                     </span>
-                    <span>{isLoading ? (
+                    <span className="whitespace-nowrap">{isLoading ? (
                         <span className="inline-flex items-center">
-                            <span className="animate-pulse">Loading...</span>
+                            <span className="animate-pulse text-xs sm:text-sm">Loading...</span>
                         </span>
-                    ) : tab.label}</span>
+                    ) : tab.id === 'security' ? (
+                        <span className="hidden sm:inline">{tab.label}</span>
+                    ) : (
+                        tab.label
+                    )}</span>
                     {!isLoading && tab.id === 'weak' && weakCount > 0 && (
-                        <span className="ml-2 text-xs bg-red-500/20 text-red-300 px-1.5 py-0.5 rounded-full">
+                        <span className="ml-2 text-xs bg-red-500/20 text-red-300 px-1.5 py-0.5 rounded-full font-medium">
                             {weakCount}
                         </span>
                     )}
                     {!isLoading && tab.id === 'reused' && reusedCount > 0 && (
-                        <span className="ml-2 text-xs bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded-full">
+                        <span className="ml-2 text-xs bg-teal-500/20 text-teal-300 px-1.5 py-0.5 rounded-full font-medium">
                             {reusedCount}
                         </span>
                     )}
                     {!isLoading && (tab.id === 'security') && (securityRiskCount > 0 || compromisedCount > 0) && (
-                        <span className="bg-red-500/20 text-red-300 text-xs px-2 py-0.5 rounded-full">
+                        <span className="ml-2 text-xs bg-orange-500/20 text-orange-300 px-1.5 py-0.5 rounded-full font-medium">
                             {securityRiskCount + compromisedCount}
                         </span>
                     )}

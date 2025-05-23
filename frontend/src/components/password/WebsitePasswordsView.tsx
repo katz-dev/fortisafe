@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, ChevronUp, Globe } from "lucide-react";
+import { ChevronDown, ChevronUp, Globe, ChevronRight } from "lucide-react";
 import { LoginItem } from "@/lib/passwordService";
 
 interface WebsitePasswordsViewProps {
@@ -24,18 +24,19 @@ const AccountItem = memo(({ account, onSelect }: { account: LoginItem; onSelect:
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.15 }}
-      className="flex items-center justify-between p-2 rounded-md hover:bg-slate-700/30 cursor-pointer"
+      className="flex items-center justify-between p-2 sm:p-3 rounded-md hover:bg-slate-700/30 cursor-pointer"
       onClick={() => onSelect(account)}
     >
-      <div className="flex items-center space-x-3">
-        <div className="w-8 h-8 rounded-md bg-gradient-to-br from-indigo-500/20 to-purple-600/20 flex items-center justify-center">
-          <Globe className="h-4 w-4 text-indigo-400" />
+      <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 w-full">
+        <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-md bg-gradient-to-br from-indigo-500/20 to-purple-600/20 flex items-center justify-center flex-shrink-0">
+          <Globe className="h-3 w-3 sm:h-4 sm:w-4 text-indigo-400" />
         </div>
-        <div>
-          <div className="text-white font-medium">{account.username}</div>
-          <div className="text-gray-400 text-sm">{account.url || "No URL"}</div>
+        <div className="min-w-0 flex-1">
+          <div className="text-white font-medium text-xs sm:text-base truncate">{account.username}</div>
+          <div className="text-gray-400 text-xs truncate">{account.url || "No URL"}</div>
         </div>
       </div>
+      <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-500 flex-shrink-0 ml-2" />
     </motion.div>
   );
 });
@@ -121,8 +122,8 @@ export default function WebsitePasswordsView({ passwords, onSelectLogin, isLoadi
   }
 
   return (
-    <div className="p-4">
-      <div className="space-y-4">
+    <div className="p-3 sm:p-4">
+      <div className="space-y-3 sm:space-y-4">
         {memoizedGroups.map((group, index) => (
           <motion.div
             key={group.domain}
@@ -132,24 +133,24 @@ export default function WebsitePasswordsView({ passwords, onSelectLogin, isLoadi
             className="bg-slate-800/50 border border-slate-700/50 rounded-lg overflow-hidden"
           >
             <div
-              className="flex items-center justify-between p-4 cursor-pointer"
+              className="flex items-center justify-between p-2.5 sm:p-4 cursor-pointer"
               onClick={() => toggleExpand(index)}
             >
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-md bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold">
+              <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+                <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-md bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs sm:text-base flex-shrink-0">
                   {group.domain.charAt(0).toUpperCase()}
                 </div>
-                <div>
-                  <h3 className="text-white font-medium">{group.domain}</h3>
-                  <div className="text-gray-400 text-sm">
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-white font-medium text-xs sm:text-base truncate">{group.domain}</h3>
+                  <div className="text-gray-400 text-xs">
                     {group.accounts.length} {group.accounts.length === 1 ? "account" : "accounts"}
                   </div>
                 </div>
               </div>
               {group.isExpanded ? (
-                <ChevronUp className="h-5 w-5 text-gray-400" />
+                <ChevronUp className="h-3.5 w-3.5 sm:h-5 sm:w-5 text-gray-400 flex-shrink-0 ml-2" />
               ) : (
-                <ChevronDown className="h-5 w-5 text-gray-400" />
+                <ChevronDown className="h-3.5 w-3.5 sm:h-5 sm:w-5 text-gray-400 flex-shrink-0 ml-2" />
               )}
             </div>
 

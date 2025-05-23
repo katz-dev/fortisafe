@@ -351,6 +351,9 @@ export default function PasswordVaultPage() {
     // Update the saved logins with the updated password
     setSavedLogins(updatedLogins);
     
+    // Ensure the reused password count is correctly updated
+    setReusedPasswordCount(reusedPasswordIds.size);
+    
     // Update the selected login if it was the one that was updated
     if (selectedLogin && selectedLogin.id === updatedPassword.id) {
       setSelectedLogin(updatedPassword);
@@ -361,17 +364,17 @@ export default function PasswordVaultPage() {
   };
 
   return (
-    <PageLayout className="h-screen flex flex-col bg-[#070b14]">
+    <PageLayout className="min-h-screen flex flex-col bg-[#070b14]">
       {/* Page content wrapper - take full height */}
-      <div className="flex-1 flex flex-col w-full px-4 sm:px-6 md:px-8 py-4">
+      <div className="flex-1 flex flex-col w-full px-3 sm:px-6 md:px-8 py-3 sm:py-4 overflow-x-hidden">
         {/* Page Title */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-white mb-2">Password Vault</h1>
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">Password Vault</h1>
           <p className="text-gray-400">Manage and secure your passwords in one place</p>
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-5 mb-4 sm:mb-6">
           {/* Vault Summary Card */}
           <motion.div
             whileHover={{ scale: 1.02 }}
@@ -419,7 +422,7 @@ export default function PasswordVaultPage() {
         />
 
         {/* Tabs and Add Button */}
-        <div className="flex items-center justify-between mb-5">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-3 sm:mb-5">
           <FilterTabs
             activeTab={activeTab}
             onTabChange={setActiveTab}
@@ -433,9 +436,9 @@ export default function PasswordVaultPage() {
         </div>
 
         {/* Content Area - Flex-1 to take remaining height */}
-        <div className="grid grid-cols-12 gap-5 flex-1 min-h-0">
+        <div className="grid grid-cols-12 gap-3 sm:gap-5 flex-1 min-h-0">
           {/* Left Sidebar - Logins List */}
-          <div className="col-span-12 md:col-span-5 lg:col-span-4 flex flex-col h-full">
+          <div className="col-span-12 md:col-span-5 lg:col-span-4 flex flex-col h-full mb-3 md:mb-0">
             <div className="bg-[#0a0f1a] border border-slate-800/60 rounded-xl overflow-hidden shadow-lg h-full backdrop-blur-md">
               {(() => {
                 switch (activeTab) {
@@ -475,13 +478,13 @@ export default function PasswordVaultPage() {
               onUpdate={handleUpdatePassword}
             />
           ) : (
-            <div className="flex items-center justify-center h-full bg-[#0a0f1a] border border-slate-800/60 rounded-xl p-6 shadow-lg backdrop-blur-md">
+            <div className="flex items-center justify-center h-full bg-[#0a0f1a] border border-slate-800/60 rounded-xl p-4 sm:p-6 shadow-lg backdrop-blur-md">
               <div className="text-center">
                 <div className="rounded-full bg-gradient-to-br from-slate-800/60 to-slate-800/40 p-4 mx-auto mb-5 w-16 h-16 flex items-center justify-center shadow-lg border border-slate-700/30">
                   <Plus className="h-7 w-7 text-indigo-400" />
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-2">No password selected</h3>
-                <p className="text-gray-400 max-w-md">
+                <h3 className="text-lg sm:text-xl font-semibold text-white mb-2">No password selected</h3>
+                <p className="text-gray-400 text-sm sm:text-base max-w-md">
                   Select a password from the list or add a new one to view details
                 </p>
               </div>
