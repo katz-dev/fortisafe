@@ -40,13 +40,25 @@ export class ScannerService {
   }
 
   async create(createScannerDto: CreateScannerDto): Promise<ScanResultDto> {
-    const result: ScanResultDto = {};
+    const result: ScanResultDto = {
+      urlResults: [],
+      passwordResult: {
+        isCompromised: false,
+        breachCount: 0
+      },
+      isEmailCompromised: false,
+      markedPasswords: [],
+      weakPasswords: 0,
+      reusedPasswords: 0,
+      strongPasswords: 0,
+      compromisedPasswords: 0
+    };
     const userId = createScannerDto.userId;
 
     // Process URLs if provided
     if (createScannerDto.urls && createScannerDto.urls.length > 0) {
       result.urlResults = await this.scanUrls(createScannerDto.urls);
-      
+
       // If userId is provided, update the password entries with URL safety information
       if (userId && createScannerDto.passwordId) {
         for (const urlResult of result.urlResults) {
@@ -69,13 +81,13 @@ export class ScannerService {
       result.passwordResult = await this.checkPasswordSecurity(
         createScannerDto.password,
       );
-      
+
       // If userId is provided, update the password entry with security information
       if (userId && createScannerDto.passwordId) {
         // Check if password is reused (if userId is provided)
-        let reusedCheck: { isReused: boolean; usedIn: { website: string; username: string }[] } = { 
-          isReused: false, 
-          usedIn: [] 
+        let reusedCheck: { isReused: boolean; usedIn: { website: string; username: string }[] } = {
+          isReused: false,
+          usedIn: []
         };
         if (userId) {
           reusedCheck = await this.passwordsService.checkReusedPassword(
@@ -84,7 +96,7 @@ export class ScannerService {
             createScannerDto.passwordId
           );
         }
-        
+
         await this.passwordsService.updateSecurityInfo({
           userId,
           passwordId: createScannerDto.passwordId,
@@ -118,7 +130,7 @@ export class ScannerService {
     try {
       // Process each URL individually using the SecurityUtilsService
       const results: UrlThreatInfo[] = [];
-      
+
       for (const url of urls) {
         const urlCheck = await this.securityUtilsService.checkUrlSafety(url);
         results.push({
@@ -127,7 +139,7 @@ export class ScannerService {
           threatTypes: urlCheck.threatTypes
         });
       }
-      
+
       return results;
     } catch (error) {
       console.error('Error scanning URLs:', error);
@@ -163,7 +175,8 @@ export class ScannerService {
       weakPasswords: 0,
       reusedPasswords: 0,
       strongPasswords: 0,
-      compromisedPasswords: 0
+      compromisedPasswords: 0,
+      isEmailCompromised: false
     };
 
     try {
@@ -173,7 +186,7 @@ export class ScannerService {
       // Collect all URLs to scan
       const urls = passwords.filter((p) => p.url).map((p) => p.url);
       const urlToPasswordMap = new Map<string, PasswordDocument[]>();
-      
+
       // Create a mapping of URLs to password entries
       passwords.forEach(password => {
         if (password.url) {
@@ -190,15 +203,14 @@ export class ScannerService {
       // Scan URLs if any exist
       if (urls.length > 0) {
         result.urlResults = await this.scanUrls(urls);
-        
+
         // Update URL safety status in the database
         for (const urlResult of result.urlResults) {
           const passwordsWithUrl = urlToPasswordMap.get(urlResult.url) || [];
-          
+
           for (const passwordEntry of passwordsWithUrl) {
             // Ensure the password entry has an _id before updating
             if (passwordEntry._id) {
-              // Update the password entry with URL safety information
               await this.passwordsService.updateSecurityInfo({
                 userId,
                 passwordId: passwordEntry._id.toString(),
@@ -211,37 +223,19 @@ export class ScannerService {
         }
       }
 
-      // Check each password for compromise and reuse
-      for (const passwordEntry of passwords) {
-        // Ensure _id is properly typed and converted to string
-        const passwordId = passwordEntry._id
-          ? passwordEntry._id.toString()
-          : '';
+      // Scan each password
+      for (const password of passwords) {
+        if (!password._id) continue;
 
-        // Decrypt the password
-        const decryptedPassword = await this.passwordsService.decryptPassword(
-          userId,
-          passwordId,
-        );
+        const decryptedPassword = await this.passwordsService.decryptPassword(userId, password._id.toString());
+        const passwordCheck = await this.checkPasswordSecurity(decryptedPassword);
+        const isWeak = !this.isStrongPassword(decryptedPassword);
+        const reusedCheck = await this.passwordsService.checkReusedPassword(userId, decryptedPassword, password._id.toString());
 
-        // Check if password is compromised
-        const passwordCheck =
-          await this.checkPasswordSecurity(decryptedPassword);
-          
-        // Check if password is reused
-        const reusedCheck: { isReused: boolean; usedIn: { website: string; username: string }[] } = 
-          await this.passwordsService.checkReusedPassword(
-            userId,
-            decryptedPassword,
-            passwordId
-          );
-        
-        // Security scan logs removed
-
-        // Update password security information in the database
+        // Update password security info
         await this.passwordsService.updateSecurityInfo({
           userId,
-          passwordId,
+          passwordId: password._id.toString(),
           isCompromised: passwordCheck.isCompromised,
           breachCount: passwordCheck.breachCount || 0,
           isReused: reusedCheck.isReused,
@@ -249,59 +243,63 @@ export class ScannerService {
           lastScanned: new Date()
         });
 
-        // If any password is compromised, mark the overall result as compromised
+        // Update result statistics
         if (passwordCheck.isCompromised) {
-          if (!result.passwordResult) {
-            result.passwordResult = {
-              isCompromised: false,
-              breachCount: 0,
-            };
-          }
-
-          result.passwordResult.isCompromised = true;
-          result.passwordResult.breachCount =
-            (result.passwordResult.breachCount || 0) +
-            (passwordCheck.breachCount || 0);
-            
-          // Increment compromised passwords count
-          if (result.compromisedPasswords !== undefined) {
-            result.compromisedPasswords++;
-          }
+          result.compromisedPasswords++;
+          result.markedPasswords.push({
+            id: password._id.toString(),
+            website: password.website,
+            username: password.username,
+            reason: 'compromised',
+            isCompromised: true,
+            breachCount: passwordCheck.breachCount || 0,
+            isUrlUnsafe: password.isUrlUnsafe || false,
+            urlThreatTypes: password.urlThreatTypes || [],
+            isReused: password.isReused || false,
+            reusedIn: password.reusedIn || [],
+            lastScanned: new Date()
+          });
         }
-        
-        // Increment reused passwords count if applicable
-        if (reusedCheck.isReused && result.reusedPasswords !== undefined) {
-          result.reusedPasswords++;
-        }
-        
-        // Simple password strength check (this is a basic implementation)
-        // You might want to use a more sophisticated password strength algorithm
-        const isStrong = this.isStrongPassword(decryptedPassword);
-        if (isStrong && result.strongPasswords !== undefined) {
-          result.strongPasswords++;
-        } else if (!isStrong && result.weakPasswords !== undefined) {
-          // Count all weak passwords regardless of other security statuses
-          // This ensures accurate reporting of weak passwords
+        if (isWeak) {
           result.weakPasswords++;
+          if (!result.markedPasswords.some(p => p.website === password.website && p.username === password.username)) {
+            result.markedPasswords.push({
+              id: password._id.toString(),
+              website: password.website,
+              username: password.username,
+              reason: 'weak',
+              isCompromised: password.isCompromised || false,
+              breachCount: password.breachCount || 0,
+              isUrlUnsafe: password.isUrlUnsafe || false,
+              urlThreatTypes: password.urlThreatTypes || [],
+              isReused: password.isReused || false,
+              reusedIn: password.reusedIn || [],
+              lastScanned: new Date()
+            });
+          }
+        }
+        if (reusedCheck.isReused) {
+          result.reusedPasswords++;
+          if (!result.markedPasswords.some(p => p.website === password.website && p.username === password.username)) {
+            result.markedPasswords.push({
+              id: password._id.toString(),
+              website: password.website,
+              username: password.username,
+              reason: 'reused',
+              isCompromised: password.isCompromised || false,
+              breachCount: password.breachCount || 0,
+              isUrlUnsafe: password.isUrlUnsafe || false,
+              urlThreatTypes: password.urlThreatTypes || [],
+              isReused: true,
+              reusedIn: reusedCheck.usedIn,
+              lastScanned: new Date()
+            });
+          }
+        }
+        if (!isWeak && !passwordCheck.isCompromised && !reusedCheck.isReused) {
+          result.strongPasswords++;
         }
       }
-      
-      // Fetch the updated passwords with security markings
-      const updatedPasswords = await this.passwordsService.findAll(userId);
-      
-      // Map the passwords to the MarkedPasswordInfo format
-      result.markedPasswords = updatedPasswords.map(password => ({
-        id: password._id ? password._id.toString() : '',
-        website: password.website,
-        username: password.username,
-        isCompromised: password.isCompromised || false,
-        breachCount: password.breachCount || 0,
-        isUrlUnsafe: password.isUrlUnsafe || false,
-        urlThreatTypes: password.urlThreatTypes || [],
-        isReused: password.isReused || false,
-        reusedIn: password.reusedIn || [],
-        lastScanned: password.lastScanned
-      }));
 
       return result;
     } catch (error) {
@@ -312,7 +310,7 @@ export class ScannerService {
       );
     }
   }
-  
+
   /**
    * Simple password strength check
    * @param password The password to check
@@ -321,19 +319,19 @@ export class ScannerService {
   private isStrongPassword(password: string): boolean {
     // Password should be at least 8 characters long
     if (password.length < 8) return false;
-    
+
     // Check for at least one uppercase letter
     if (!/[A-Z]/.test(password)) return false;
-    
+
     // Check for at least one lowercase letter
     if (!/[a-z]/.test(password)) return false;
-    
+
     // Check for at least one number
     if (!/[0-9]/.test(password)) return false;
-    
+
     // Check for at least one special character
     if (!/[^A-Za-z0-9]/.test(password)) return false;
-    
+
     return true;
   }
 

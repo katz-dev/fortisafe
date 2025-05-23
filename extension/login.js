@@ -1,26 +1,21 @@
-const BACKEND_URL = 'http://localhost:8080/api';
-const BACKEND_ORIGIN = 'http://localhost:8080';
+// Backend URLs for different environments
+const PRODUCTION_BACKEND_URL = 'https://api.fortisafe.live/api';
+const LOCAL_BACKEND_URL = 'http://localhost:8080/api';
+
+// Set this to false to use local backend, true to use production
+const USE_PRODUCTION = false;
+
+// The active backend URL based on environment setting
+const BACKEND_URL = USE_PRODUCTION ? PRODUCTION_BACKEND_URL : LOCAL_BACKEND_URL;
+const BACKEND_ORIGIN = USE_PRODUCTION ? 'https://api.fortisafe.live' : 'http://localhost:8080';
 
 document.addEventListener('DOMContentLoaded', function () {
     const loginButton = document.getElementById('login-button');
     const signupLink = document.getElementById('signup-link');
     const errorMessage = document.getElementById('error-message');
 
-    // Check if user is already logged in
-    chrome.storage.local.get(['access_token', 'userProfile'], function (result) {
-        if (result.access_token) {
-            // Verify token and get user profile
-            getUserProfile(result.access_token)
-                .then(() => {
-                    // If successful, redirect to main popup
-                    window.location.href = 'popup.html';
-                })
-                .catch(() => {
-                    // If token is invalid, clear it
-                    chrome.storage.local.remove(['access_token', 'id_token', 'userProfile']);
-                });
-        }
-    });
+    // Clear any existing session data when opening the login page
+    chrome.storage.local.remove(['access_token', 'id_token', 'userProfile']);
 
     // Listen for messages from the Auth0 callback
     window.addEventListener('message', function (event) {
@@ -69,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const top = (screen.height - height) / 2;
 
         const popup = window.open(
-            `${BACKEND_URL}/auth/login?client=extension`,
+            `${BACKEND_URL}/auth/login?client=extension&prompt=login&max_age=0&auth_type=reauthenticate`,
             'Auth0 Login',
             `width=${width},height=${height},left=${left},top=${top}`
         );

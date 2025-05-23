@@ -7,6 +7,8 @@ import { Password, PasswordSchema } from './entities/password.schema';
 import { PasswordHistory, PasswordHistorySchema } from './entities/password-history.schema';
 import { LogsModule } from '../logs/logs.module';
 import { UtilsModule } from '../utils/utils.module';
+import { EmailModule } from '../email/email.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
@@ -17,9 +19,11 @@ import { UtilsModule } from '../utils/utils.module';
     ConfigModule,
     LogsModule,
     UtilsModule,
+    EmailModule,
+    UsersModule,
   ],
   controllers: [PasswordsController],
   providers: [PasswordsService],
   exports: [PasswordsService],
 })
-export class PasswordsModule {}
+export class PasswordsModule { }

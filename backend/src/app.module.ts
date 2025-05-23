@@ -34,4 +34,4 @@ import { EmailModule } from './email/email.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

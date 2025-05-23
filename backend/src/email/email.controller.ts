@@ -1,74 +1,30 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, UseGuards, Req } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Post, Body } from '@nestjs/common';
 import { EmailService } from './email.service';
-import { CreateEmailDto } from './dto/create-email.dto';
-import { UpdateEmailDto } from './dto/update-email.dto';
-import { SendPasswordResetEmailDto } from './dto/send-password-reset-email.dto';
-import { SendSecurityAlertEmailDto } from './dto/send-security-alert-email.dto';
-import { SendTestEmailDto } from './dto/send-test-email.dto';
-import { AuthGuard } from '@nestjs/passport';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { TestEmailDto } from './dto/test-email.dto';
 
 @ApiTags('email')
-@Controller('email')
+@Controller({ path: 'email', version: '1' })
 export class EmailController {
-  constructor(private readonly emailService: EmailService) {}
+  constructor(private readonly emailService: EmailService) { }
 
-  @Post()
-  @ApiOperation({ summary: 'Create a new email' })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Email created successfully' })
-  create(@Body() createEmailDto: CreateEmailDto) {
-    return this.emailService.create(createEmailDto);
-  }
-  
-  @Post('password-reset')
-  @ApiOperation({ summary: 'Send a password reset email' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Password reset email sent successfully' })
-  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input data' })
-  async sendPasswordResetEmail(@Body() sendPasswordResetEmailDto: SendPasswordResetEmailDto) {
-    const { email, resetToken, username } = sendPasswordResetEmailDto;
-    return this.emailService.sendPasswordResetEmail(email, resetToken, username);
-  }
-  
-  @Post('security-alert')
-  @ApiOperation({ summary: 'Send a security alert email' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Security alert email sent successfully' })
-  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input data' })
-  async sendSecurityAlertEmail(@Body() sendSecurityAlertEmailDto: SendSecurityAlertEmailDto) {
-    const { email, alertType, details, username } = sendSecurityAlertEmailDto;
-    return this.emailService.sendSecurityAlertEmail(email, alertType, details, username);
-  }
-  
   @Post('test')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Send a test email to the authenticated user' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Test email sent successfully' })
-  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'User is not authenticated' })
-  async sendTestEmail(@Req() req, @Body() sendTestEmailDto: SendTestEmailDto) {
-    // If no email is provided, use the authenticated user's email
-    const email = sendTestEmailDto.email || req.user.email;
-    const username = sendTestEmailDto.username || req.user.firstName || 'User';
-    
-    return this.emailService.sendTestEmail(email, username);
-  }
+  @ApiOperation({ summary: 'Send a test email' })
+  @ApiResponse({ status: 200, description: 'Test email sent successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  async sendTestEmail(@Body() testEmailDto: TestEmailDto) {
+    const html = await this.emailService.renderTemplate('test-email.hbs', {
+      name: testEmailDto.name,
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development',
+    });
 
-  @Get()
-  findAll() {
-    return this.emailService.findAll();
-  }
+    await this.emailService.sendEmail(
+      [testEmailDto.email],
+      'FortiSafe Test Email',
+      html,
+    );
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.emailService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateEmailDto: UpdateEmailDto) {
-    return this.emailService.update(+id, updateEmailDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.emailService.remove(+id);
+    return { message: 'Test email sent successfully' };
   }
 }

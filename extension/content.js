@@ -340,7 +340,7 @@ function showCombinedNotification(website, isDuplicate, hasChanged) {
                 throw new Error('No password field found');
             }
 
-            const response = await fetch(`http://localhost:8080/api/passwords/update-password`, {
+            const response = await fetch(`https://api.fortisafe.live/api/passwords/update-password`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -449,7 +449,7 @@ async function checkForDuplicateCredentials(website, username, currentPassword) 
         }
 
         // Check for duplicates
-        const duplicateResponse = await fetch(`http://localhost:8080/api/passwords/check-duplicate?website=${encodeURIComponent(website)}&username=${encodeURIComponent(username)}`, {
+        const duplicateResponse = await fetch(`https://api.fortisafe.live/api/passwords/check-duplicate?website=${encodeURIComponent(website)}&username=${encodeURIComponent(username)}`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${accessToken}`
@@ -464,7 +464,7 @@ async function checkForDuplicateCredentials(website, username, currentPassword) 
 
         // If credentials exist, check for password changes
         if (exists) {
-            const changeResponse = await fetch(`http://localhost:8080/api/passwords/check-password-change?website=${encodeURIComponent(website)}&username=${encodeURIComponent(username)}&currentPassword=${encodeURIComponent(currentPassword)}`, {
+            const changeResponse = await fetch(`https://api.fortisafe.live/api/passwords/check-password-change?website=${encodeURIComponent(website)}&username=${encodeURIComponent(username)}&currentPassword=${encodeURIComponent(currentPassword)}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${accessToken}`
@@ -518,7 +518,7 @@ async function sendCredentialsToBackend(credentials) {
         const website = getMainUrl(credentials.url);
 
         // Check for duplicates first
-        const duplicateCheckUrl = `http://localhost:8080/api/passwords/check-duplicate?website=${encodeURIComponent(website)}&username=${encodeURIComponent(credentials.username)}`;
+        const duplicateCheckUrl = `https://api.fortisafe.live/api/passwords/check-duplicate?website=${encodeURIComponent(website)}&username=${encodeURIComponent(credentials.username)}`;
 
         const duplicateCheckResponse = await fetch(duplicateCheckUrl, {
             method: 'GET',
@@ -554,7 +554,7 @@ async function sendCredentialsToBackend(credentials) {
 
         // Send the password to the backend
         console.log(`Saving credentials for ${website}...`);
-        const saveResponse = await fetch('http://localhost:8080/api/passwords', {
+        const saveResponse = await fetch('https://api.fortisafe.live/api/passwords', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -745,7 +745,7 @@ async function loadPasswords(container, searchInput, filterCurrentSite = false) 
         const accessToken = await getAccessToken();
 
         // Fetch passwords from backend
-        const response = await fetch('http://localhost:8080/api/passwords', {
+        const response = await fetch('https://api.fortisafe.live/api/passwords', {
             headers: {
                 'Authorization': `Bearer ${accessToken}`
             }
@@ -808,7 +808,7 @@ async function loadPasswords(container, searchInput, filterCurrentSite = false) 
             item.onclick = async () => {
                 try {
                     // Decrypt password
-                    const decryptResponse = await fetch(`http://localhost:8080/api/passwords/${password._id}/decrypt`, {
+                    const decryptResponse = await fetch(`https://api.fortisafe.live/api/passwords/${password._id}/decrypt`, {
                         headers: {
                             'Authorization': `Bearer ${accessToken}`
                         }
@@ -1089,7 +1089,7 @@ async function checkForDuplicateCredentials(website, username, currentPassword) 
         }
 
         // Check for duplicates
-        const duplicateResponse = await fetch(`http://localhost:8080/api/passwords/check-duplicate?website=${encodeURIComponent(website)}&username=${encodeURIComponent(username)}`, {
+        const duplicateResponse = await fetch(`https://api.fortisafe.live/api/passwords/check-duplicate?website=${encodeURIComponent(website)}&username=${encodeURIComponent(username)}`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${accessToken}`
@@ -1104,7 +1104,7 @@ async function checkForDuplicateCredentials(website, username, currentPassword) 
 
         // If credentials exist, check for password changes
         if (exists) {
-            const changeResponse = await fetch(`http://localhost:8080/api/passwords/check-password-change?website=${encodeURIComponent(website)}&username=${encodeURIComponent(username)}&currentPassword=${encodeURIComponent(currentPassword)}`, {
+            const changeResponse = await fetch(`https://api.fortisafe.live/api/passwords/check-password-change?website=${encodeURIComponent(website)}&username=${encodeURIComponent(username)}&currentPassword=${encodeURIComponent(currentPassword)}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${accessToken}`
@@ -1153,7 +1153,7 @@ async function sendCredentialsToBackend(credentials) {
         const website = getMainUrl(credentials.url);
 
         // Check for duplicates first
-        const duplicateCheckUrl = `http://localhost:8080/api/passwords/check-duplicate?website=${encodeURIComponent(website)}&username=${encodeURIComponent(credentials.username)}`;
+        const duplicateCheckUrl = `https://api.fortisafe.live/api/passwords/check-duplicate?website=${encodeURIComponent(website)}&username=${encodeURIComponent(credentials.username)}`;
 
         const duplicateCheckResponse = await fetch(duplicateCheckUrl, {
             method: 'GET',
@@ -1189,7 +1189,7 @@ async function sendCredentialsToBackend(credentials) {
 
         // Send the password to the backend
         console.log(`Saving credentials for ${website}...`);
-        const saveResponse = await fetch('http://localhost:8080/api/passwords', {
+        const saveResponse = await fetch('https://api.fortisafe.live/api/passwords', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1380,7 +1380,7 @@ async function loadPasswords(container, searchInput, filterCurrentSite = false) 
         const accessToken = await getAccessToken();
 
         // Fetch passwords from backend
-        const response = await fetch('http://localhost:8080/api/passwords', {
+        const response = await fetch('https://api.fortisafe.live/api/passwords', {
             headers: {
                 'Authorization': `Bearer ${accessToken}`
             }
@@ -1443,7 +1443,7 @@ async function loadPasswords(container, searchInput, filterCurrentSite = false) 
             item.onclick = async () => {
                 try {
                     // Decrypt password
-                    const decryptResponse = await fetch(`http://localhost:8080/api/passwords/${password._id}/decrypt`, {
+                    const decryptResponse = await fetch(`https://api.fortisafe.live/api/passwords/${password._id}/decrypt`, {
                         headers: {
                             'Authorization': `Bearer ${accessToken}`
                         }
