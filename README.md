@@ -25,7 +25,7 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repo.
 
-## Project setups
+## Project setup
 
 ```bash
 $ pnpm install
