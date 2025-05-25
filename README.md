@@ -1,98 +1,258 @@
 <p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
+  <img src="https://img.shields.io/badge/FortiSafe-Cybersecurity%20Platform-blue" alt="FortiSafe Logo" />
 </p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+<p align="center">A comprehensive cybersecurity solution combining browser extension, web application, and secure backend for password management and real-time threat protection.</p>
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
+<p align="center">
+  <img src="https://img.shields.io/badge/Node.js-339933?style=flat&logo=node.js&logoColor=white" alt="Node.js" />
+  <img src="https://img.shields.io/badge/NestJS-E0234E?style=flat&logo=nestjs&logoColor=white" alt="NestJS" />
+  <img src="https://img.shields.io/badge/Next.js-000000?style=flat&logo=next.js&logoColor=white" alt="Next.js" />
+  <img src="https://img.shields.io/badge/MongoDB-47A248?style=flat&logo=mongodb&logoColor=white" alt="MongoDB" />
+  <img src="https://img.shields.io/badge/Auth0-EB5424?style=flat&logo=auth0&logoColor=white" alt="Auth0" />
 </p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
-## Description
+## 🛡️ About FortiSafe
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repo.
+FortiSafe is a comprehensive cybersecurity platform that addresses modern digital security challenges through an integrated three-tier architecture:
 
-## Project setup
+- **Browser Extension**: Real-time protection and password management
+- **Web Application**: Comprehensive password management dashboard
+- **Backend API**: Secure authentication, password storage, and security scanning
 
+## 🏗️ System Architecture
+
+### Technology Stack
+
+**Frontend**
+- Next.js with React
+- Framer Motion for animations
+- Tailwind CSS for styling
+
+**Backend**
+- NestJS framework
+- MongoDB for data storage
+- Auth0 for authentication
+- JWT token management
+
+**Browser Extension**
+- JavaScript with Chrome Extension API
+- Real-time website scanning
+- Secure credential management
+
+**DevOps & Infrastructure**
+- Nginx reverse proxy
+- Cloudflare for SSL/TLS and security
+- Docker containerization
+- GitHub Actions CI/CD pipeline
+
+## ✨ Key Features
+
+### 🔐 Password Management
+- Secure password storage with end-to-end encryption
+- Password strength analysis
+- Automated password generation
+- Secure credential sharing
+
+### 🛡️ Real-time Protection
+- Website security scanning
+- Phishing detection using Google Safe Browsing API
+- Real-time threat alerts
+- Cross-origin secure communication
+
+### 👤 User Management
+- Auth0 integration for secure authentication
+- User profile management
+- Session handling with JWT tokens
+- Account preferences and settings
+
+### 📧 Email Services
+- Brevo SMTP integration for notifications
+- Security alerts and updates
+- Account verification emails
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js (v18 or higher)
+- pnpm package manager
+- MongoDB Atlas account
+- Auth0 account
+
+### Project Setup
+
+1. **Clone the repository**
 ```bash
-$ pnpm install
+git clone <repository-url>
+cd fortisafe
 ```
 
-## Compile and run the project
-
+2. **Install dependencies**
 ```bash
-# development
-$ pnpm run start
+# Backend
+cd backend
+pnpm install
 
-# watch mode
-$ pnpm run start:dev
-
-# production mode
-$ pnpm run start:prod
+# Frontend
+cd ../frontend
+pnpm install
 ```
 
-## Run tests
+3. **Environment Configuration**
 
-```bash
-# unit tests
-$ pnpm run test
+Backend ([backend/.env](backend/.env)):
+```env
+# MongoDB Configuration
+MONGODB_URI=your_mongodb_connection_string
 
-# e2e tests
-$ pnpm run test:e2e
+# Auth0 Configuration
+AUTH0_DOMAIN=your_auth0_domain
+AUTH0_AUDIENCE=your_auth0_audience
+AUTH0_CLIENT_ID=your_auth0_client_id
+AUTH0_CLIENT_SECRET=your_auth0_client_secret
+AUTH0_CALLBACK_URL=http://localhost:8080/api/auth/callback
 
-# test coverage
-$ pnpm run test:cov
+# App Configuration
+PORT=8080
+NODE_ENV=development
+FRONTEND_URL=http://localhost:3000
+EXTENSION_URL=chrome-extension://your_extension_id
+
+# Security
+PASSWORD_ENCRYPTION_KEY=your_encryption_key
+GOOGLE_SAFE_BROWSING_API_KEY=your_google_api_key
+
+# Email Configuration (Brevo)
+BREVO_SMTP=smtp-relay.brevo.com
+BREVO_SMTP_PORT=587
+BREVO_USER=your_brevo_user
+BREVO_PASS=your_brevo_password
+EMAIL_FROM_ADDRESS=your_email
+BREVO_API_KEY=your_brevo_api_key
+EMAIL_FROM_NAME=fortisafe
+BREVO_BASE_URL=https://api.brevo.com/v3
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
+Frontend ([frontend/.env](frontend/.env)):
+```env
+NEXT_PUBLIC_BACKEND_URL=http://localhost:8080/api
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## 🏃‍♂️ Running the Application
 
-## Resources
+### Backend Development
+```bash
+cd backend
 
-Check out a few resources that may come in handy when working with NestJS:
+# Development mode
+pnpm run start:dev
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+# Production mode
+pnpm run start:prod
 
-## Support
+# Watch mode
+pnpm run start
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### Frontend Development
+```bash
+cd frontend
 
-## Stay in touch
+# Development server
+npm run dev
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+# Build for production
+npm run build
 
-## License
+# Start production server
+npm start
+```
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+### Browser Extension
+1. Open Chrome and navigate to `chrome://extensions/`
+2. Enable "Developer mode"
+3. Click "Load unpacked" and select the [extension](extension) folder
+
+## 🧪 Testing
+
+```bash
+# Backend tests
+cd backend
+
+# Unit tests
+pnpm run test
+
+# End-to-end tests
+pnpm run test:e2e
+
+# Test coverage
+pnpm run test:cov
+```
+
+## 🚀 Deployment
+
+The application supports containerized deployment with Docker and includes CI/CD pipeline configuration with GitHub Actions.
+
+### Docker Deployment
+```bash
+# Backend
+cd backend
+docker build -t fortisafe-backend .
+
+# Frontend
+cd frontend
+docker build -t fortisafe-frontend .
+```
+
+### Production Deployment
+- **Nginx**: Configured as reverse proxy (see [nginx](nginx) directory)
+- **Cloudflare**: SSL/TLS termination and additional security layer
+- **MongoDB Atlas**: Cloud database hosting
+- **Auth0**: Authentication service
+
+## 🔒 Security Features
+
+- **End-to-end encryption** for password storage
+- **HTTPS** with proper CORS configuration
+- **JWT token-based** authentication
+- **Password hashing** with secure algorithms
+- **Cross-origin communication** security
+- **Real-time threat detection** with Google Safe Browsing API
+
+## 🔮 Future Enhancements
+
+- Multi-Factor Authentication (MFA)
+- Advanced threat detection with machine learning
+- Mobile application development
+- Enterprise features for team management
+- Enhanced password sharing capabilities
+
+## 📁 Project Structure
+
+```
+fortisafe/
+├── backend/          # NestJS backend API
+├── frontend/         # Next.js web application
+├── extension/        # Chrome browser extension
+├── nginx/           # Nginx configuration
+├── .github/         # GitHub Actions workflows
+└── docs/            # Project documentation
+```
+
+## 🤝 Contributing
+
+We welcome contributions! Please read our contributing guidelines and submit pull requests for any improvements.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 📞 Support & Contact
+
+For support, questions, or feedback:
+- Create an issue in this repository
+- Contact the development team
+
+---
+
+<p align="center">Built with ❤️ for digital security and privacy</p>
