@@ -6,7 +6,7 @@
 - **Problem Statement**: In today's digital landscape, password reuse, weak credentials, and phishing attacks pose significant security risks to users.
 - **Solution**: FortiSafe provides password management, real-time website scanning, and credential protection in one integrated platform.
 
-## 2. System Architecture (3-4 minutes)
+## 2. System Architecture 
 
 - **Three-Tier Architecture**:
   - **Browser Extension**: Chrome extension for real-time protection and password management
