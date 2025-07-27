@@ -83,7 +83,7 @@ FortiSafe is a comprehensive cybersecurity platform that addresses modern digita
 
 1. **Clone the repository**
 ```bash
-git clone <repository-url>
+git clone https://github.com/katz-dev/fortisafe
 cd fortisafe
 ```
 
