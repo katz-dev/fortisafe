@@ -1,19 +1,15 @@
 # Base image
-FROM node:20-alpine AS base
-
-# Install pnpm globally in base image
-RUN npm install -g pnpm
+FROM oven/bun:1.2-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
 WORKDIR /app
 
-# Copy package.json and pnpm-lock.yaml
-COPY package.json pnpm-lock.yaml* ./
+# Copy package.json and Bun lockfiles
+COPY package.json bun.lock* bun.lockb* ./
 
 # Install dependencies
-# Note: If pnpm-lock.yaml exists, it will be used; otherwise, it will generate one
-RUN pnpm install --no-frozen-lockfile
+RUN bun install
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -22,7 +18,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Build the application
-RUN pnpm run build
+RUN bun run build
 
 # Production image, copy all the files and run next
 FROM base AS runner
@@ -54,4 +50,4 @@ COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
 EXPOSE 8080
 
 # Start the application
-CMD ["node", "dist/main"]
+CMD ["bun", "dist/main.js"]
