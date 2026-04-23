@@ -1,19 +1,15 @@
 # Base image
-FROM node:20-alpine AS base
+FROM oven/bun:1.2-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
 WORKDIR /app
 
-# Copy package.json and pnpm-lock.yaml
-COPY package.json pnpm-lock.yaml* ./
-COPY pnpm-workspace.yaml* ./
-
-# Install pnpm
-RUN npm install -g pnpm
+# Copy package.json and Bun lockfiles
+COPY package.json bun.lock* bun.lockb* ./
 
 # Install dependencies
-RUN pnpm install
+RUN bun install
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -26,7 +22,7 @@ ARG NEXT_PUBLIC_BACKEND_URL
 ENV NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}
 
 # Build the application
-RUN npm run build
+RUN bun run build
 
 # Production image, copy all the files and run next
 FROM base AS runner
@@ -61,4 +57,4 @@ ENV NEXT_PUBLIC_BACKEND_URL=$NEXT_PUBLIC_BACKEND_URL
 EXPOSE 3000
 
 # Start the application
-CMD ["npm", "run", "start"]
+CMD ["bun", "run", "start"]
